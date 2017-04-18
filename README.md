@@ -10,8 +10,8 @@
    >[TensorFlow](https://www.tensorflow.org/)   
    >[OpenCV3](http://www.opencv.org/)   
    >[Python3](https://www.python.org/)  
-   >[requests](http://www.python-requests.org/en/master/)   
-   >[itchat](https://pypi.python.org/pypi/itchat/1.3.5) 
+   >[requests](http://www.python-requests.org/en/master/)     
+   >[itchat](https://pypi.python.org/pypi/itchat/1.3.5)    
    >[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.html)
   
 ## How to use

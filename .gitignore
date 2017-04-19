@@ -1,7 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
 .idea
 log.log
-res
+res/config.ini
 facescore/__pycache__/
 test/
 util/__pycache__/

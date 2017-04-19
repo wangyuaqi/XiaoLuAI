@@ -13,4 +13,3 @@
             where 1 stands for the label byte(0, 1, 2, 3, 4),
             and 62280 stands for 144(width) * 144(height) * depth(channel)
       
-   We design this format

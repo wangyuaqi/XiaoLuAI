@@ -21,7 +21,14 @@ def _raw_image_to_list(image_dir, id_and_score):
         image = cv2.imread(os.path.join(image_dir, each_image))
         label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
         b, g, r = cv2.split(image)
-        line = label + r + g + b
+        r_list = []
+        g_list = []
+        b_list = []
+        for row_index in range(len(r)):
+            r_list += list(r[row_index])
+            g_list += list(g[row_index])
+            b_list += list(b[row_index])
+        line = [label] + r_list + g_list + b_list
         v_list.append(line)
 
     return v_list
@@ -71,13 +78,12 @@ def mkdirs_if_dir_not_exists(dir_):
 def _generate_train_and_test_data_bin():
     id_and_score = _get_id_and_labels_from_csv_score_file(SCORE_CSV_FILE)
     v_list_train = _raw_image_to_list(TRAING_IMAGE_DIR, id_and_score)
+    print(len(v_list_train))
     pickle_list_to_bin(v_list_train, '/tmp/face/', 'training_set.bin')
     v_list_test = _raw_image_to_list(TEST_IMAGE_DIR, id_and_score)
     pickle_list_to_bin(v_list_test, '/tmp/face/', 'test_set.bin')
 
 
 if __name__ == '__main__':
-    # id_and_score = _get_id_and_labels_from_csv_score_file(SCORE_CSV_FILE)
-    # v_list = _raw_image_to_list(TEST_IMAGE_DIR, id_and_score)
-    # pickle_list_to_bin(v_list, '/tmp/face/', 'test_set.bin')
-    print(unpickle_bin_to_dict('/tmp/face/test_set.bin'))
+    _generate_train_and_test_data_bin()
+    # unpickle_bin_to_dict('/tmp/face/test_set.bin')

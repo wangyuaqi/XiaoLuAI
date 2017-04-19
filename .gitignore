@@ -2,3 +2,6 @@
 .idea
 log.log
 res
+facescore/__pycache__/
+test/
+util/__pycache__/

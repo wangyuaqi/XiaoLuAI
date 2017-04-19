@@ -2,21 +2,23 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from datetime import datetime
 import os.path
 import re
 import time
+from datetime import datetime
 
 import numpy as np
 import tensorflow as tf
+
 from facescore import face
+from util.image_util import _generate_train_and_test_data_bin
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', '/tmp/face',
+tf.app.flags.DEFINE_string('train_dir', '/tmp/face/',
                            """Directory where to write event logs """
                            """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 1000000,
+tf.app.flags.DEFINE_integer('max_steps', 5000,
                             """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('num_gpus', 2,
                             """How many GPUs to use.""")
@@ -147,10 +149,10 @@ def train():
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-    face.maybe_download_and_extract()
     if tf.gfile.Exists(FLAGS.train_dir):
         tf.gfile.DeleteRecursively(FLAGS.train_dir)
     tf.gfile.MakeDirs(FLAGS.train_dir)
+    _generate_train_and_test_data_bin()
     train()
 
 

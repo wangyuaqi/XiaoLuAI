@@ -4,9 +4,9 @@ from __future__ import print_function
 
 import os
 import re
-import sys
 
 import tensorflow as tf
+
 from facescore import face_input
 
 FLAGS = tf.app.flags.FLAGS
@@ -14,7 +14,7 @@ FLAGS = tf.app.flags.FLAGS
 # Basic model parameters.
 tf.app.flags.DEFINE_integer('batch_size', 128,
                             """Number of images to process in a batch.""")
-tf.app.flags.DEFINE_string('data_dir', '/tmp/face_data',
+tf.app.flags.DEFINE_string('data_dir', '/tmp/face/',
                            """Path to the Face data directory.""")
 tf.app.flags.DEFINE_boolean('use_fp16', False,
                             """Train the model using fp16.""")
@@ -58,7 +58,8 @@ def _variable_with_weight_decay(name, shape, stddev, wd):
 def distorted_inputs():
     if not FLAGS.data_dir:
         raise ValueError('Please supply a data_dir')
-    data_dir = os.path.join(FLAGS.data_dir, 'training_set.bin')
+    # data_dir = os.path.join(FLAGS.data_dir, 'training_set.bin')
+    data_dir = FLAGS.data_dir
     images, labels = face_input.distorted_inputs(data_dir=data_dir, batch_size=FLAGS.batch_size)
 
     if FLAGS.use_fp16:

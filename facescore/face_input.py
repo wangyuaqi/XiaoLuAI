@@ -6,7 +6,7 @@ import tensorflow as tf
 import os
 
 IMAGE_SIZE = 144
-NUM_CLASSED = 5
+NUM_CLASSES = 5
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 10000
 
@@ -53,7 +53,7 @@ def distorted_inputs(data_dir, batch_size):
     filenames = [os.path.join(data_dir, 'training_set.bin')]
     for f in filenames:
         if not tf.gfile.Exists(f):
-            raise ValueError('Error to find file' + f)
+            raise ValueError('Error to find file ' + f)
     filename_queue = tf.train.string_input_producer(filenames)
     read_input = read_face(filename_queue)
     reshaped_image = tf.cast(read_input.uint8image, tf.float32)

@@ -3,5 +3,4 @@
 log.log
 res/config.ini
 facescore/__pycache__/
-test/
 util/__pycache__/

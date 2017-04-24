@@ -17,28 +17,6 @@ PICKLE_BIN_DIR = '/tmp/face/'
 logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s  \t', level=logging.DEBUG)
 
 
-def _raw_image_to_list(image_dir, id_and_score):
-    """parse an image file into a list object
-        Format: <label><rgb channel values>
-    """
-    v_list = list()
-    for each_image in os.listdir(image_dir):
-        image = cv2.imread(os.path.join(image_dir, each_image))
-        label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
-        b, g, r = cv2.split(image)
-        r_list = []
-        g_list = []
-        b_list = []
-        for row_index in range(len(r)):
-            r_list += list(r[row_index])
-            g_list += list(g[row_index])
-            b_list += list(b[row_index])
-        line = [label] + r_list + g_list + b_list
-        v_list.append(line)
-
-    return v_list
-
-
 def _raw_image_to_dict(image_dir, id_and_score):
     images_dict = dict()
     images_dict['batch_label'] = 'training batch 1 of 1 of HZAU 2016'
@@ -48,15 +26,14 @@ def _raw_image_to_dict(image_dir, id_and_score):
     for each_image in os.listdir(image_dir):
         image = cv2.imread(os.path.join(image_dir, each_image))
         b, g, r = cv2.split(image)
-        rgb = np.concatenate((r.reshape((1, IMAGE_HEIGHT * IMAGE_WIDTH)), g.reshape((1, IMAGE_HEIGHT * IMAGE_WIDTH)),
-                              b.reshape((1, IMAGE_HEIGHT * IMAGE_WIDTH))),
-                             axis=0).reshape(
-            1, IMAGE_HEIGHT * IMAGE_WIDTH * IMAGE_WIDTH)
+        rgb = np.concatenate((r.reshape((IMAGE_HEIGHT * IMAGE_WIDTH)), g.reshape((IMAGE_HEIGHT * IMAGE_WIDTH)),
+                              b.reshape((IMAGE_HEIGHT * IMAGE_WIDTH))),
+                             axis=0).reshape(IMAGE_HEIGHT * IMAGE_WIDTH * IMAGE_DEPTH)
         label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
-        data_list.append(rgb)
+        data_list.append(rgb.tolist())
         label_list.append(label)
         filename_list.append(each_image)
-    images_dict['data'] = data_list
+    images_dict['data'] = np.array(data_list, dtype=np.uint8)
     images_dict['label'] = label_list
     images_dict['filenames'] = filename_list
 
@@ -120,7 +97,7 @@ def _generate_train_and_test_data_bin():
 
 
 if __name__ == '__main__':
-    # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
+    print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
     # print(len(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1')[b'data'][0]))
-    _generate_train_and_test_data_bin()
+    # _generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

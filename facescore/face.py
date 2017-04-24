@@ -4,9 +4,6 @@ from __future__ import print_function
 
 import os
 import re
-import sys
-
-sys.path.append('..')
 
 import tensorflow as tf
 
@@ -35,7 +32,7 @@ TOWER_NAME = 'tower'
 
 
 def _activation_summary(x):
-    tensor_name = re.sub('%s_[0-9]' % TOWER_NAME, '', x.op.name)
+    tensor_name = re.sub('%s_[0-9]*/' % TOWER_NAME, '', x.op.name)
     tf.summary.histogram(tensor_name + '/activations', x)
     tf.summary.scalar(tensor_name + '/sparsity', tf.nn.zero_fraction(x))
 
@@ -43,7 +40,7 @@ def _activation_summary(x):
 def _variable_on_cpu(name, shape, initializer):
     with tf.device('/cpu:0'):
         dtype = tf.float32 if FLAGS.use_fp16 else tf.float32
-        var = tf.get_variable(name, shape, initializer, dtype)
+        var = tf.get_variable(name, shape, initializer=initializer, dtype=dtype)
 
     return var
 
@@ -76,7 +73,7 @@ def input(eval_data):
     if not FLAGS.data_dir:
         raise ValueError('Please supply a data_dir')
     data_dir = os.path.join(FLAGS.data_dir, 'training_set.bin')
-    images, labels = face_input.distorted_inputs(eval_data=eval_data, data_dir=data_dir, batch_size=FLAGS.batch_size)
+    images, labels = face_input.inputs(eval_data=eval_data, data_dir=data_dir, batch_size=FLAGS.batch_size)
 
     if FLAGS.use_fp16:
         images = tf.cast(images, tf.float16)

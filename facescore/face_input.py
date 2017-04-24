@@ -5,10 +5,17 @@ from __future__ import print_function
 import tensorflow as tf
 import os
 
+"""
 IMAGE_SIZE = 144
 NUM_CLASSES = 5
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 766
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 240
+"""
+
+IMAGE_SIZE = 28
+NUM_CLASSES = 10
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 10000
+NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 10000
 
 
 def read_face(filename_queue):
@@ -26,25 +33,49 @@ def read_face(filename_queue):
     face.key, value = reader.read(filename_queue)
 
     record_bytes = tf.decode_raw(value, tf.uint8)
-    face.label = tf.cast(tf.strided_slice(record_bytes, [0], tf.int32))
+    face.label = tf.cast(tf.strided_slice(record_bytes, [0], tf.uint8))
 
-    depth_major = tf.reshape(record_bytes, [label_bytes], [label_bytes + image_bytes])
+    depth_major = tf.reshape(
+        tf.strided_slice(record_bytes, [label_bytes], [label_bytes + image_bytes]),
+        [face.depth, face.height, face.width])
     face.uint8image = tf.transpose(depth_major, [1, 2, 0])
 
     return face
 
 
-def _generate_image_and_label_batch(image, label, min_queue_examples, batch_size, shuffle):
-    num_process_threads = 16
+def _generate_image_and_label_batch(image, label, min_queue_examples,
+                                    batch_size, shuffle):
+    """Construct a queued batch of images and labels.
+    Args:
+      image: 3-D Tensor of [height, width, 3] of type.float32.
+      label: 1-D Tensor of type.int32
+      min_queue_examples: int32, minimum number of samples to retain
+        in the queue that provides of batches of examples.
+      batch_size: Number of images per batch.
+      shuffle: boolean indicating whether to use a shuffling queue.
+    Returns:
+      images: Images. 4D tensor of [batch_size, height, width, 3] size.
+      labels: Labels. 1D tensor of [batch_size] size.
+    """
+    # Create a queue that shuffles the examples, and then
+    # read 'batch_size' images + labels from the example queue.
+    num_preprocess_threads = 16
     if shuffle:
-        images, label_batch = tf.train.shuffle_batch([image, label], batch_size=batch_size,
-                                                     num_threads=num_process_threads,
-                                                     capacity=min_queue_examples + 3 * batch_size,
-                                                     min_after_dequeue=min_queue_examples)
+        images, label_batch = tf.train.shuffle_batch(
+            [image, label],
+            batch_size=batch_size,
+            num_threads=num_preprocess_threads,
+            capacity=min_queue_examples + 3 * batch_size,
+            min_after_dequeue=min_queue_examples)
     else:
-        images, label_batch = tf.train.batch([image, label], batch_size=batch_size, num_threads=num_process_threads,
-                                             capacity=min_queue_examples + 3 * batch_size)
-    tf.summary.image('image', images)
+        images, label_batch = tf.train.batch(
+            [image, label],
+            batch_size=batch_size,
+            num_threads=num_preprocess_threads,
+            capacity=min_queue_examples + 3 * batch_size)
+
+    # Display the training images in the visualizer.
+    tf.summary.image('images', images)
 
     return images, tf.reshape(label_batch, [batch_size])
 
@@ -71,7 +102,7 @@ def distorted_inputs(data_dir, batch_size):
     # ensure that the random shuffling has a good mixing properties
     min_fraction_of_examples_in_queue = 0.4
     min_queue_examples = int(NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN * min_fraction_of_examples_in_queue)
-    print('Filling queue with %d CIFAR images before starting to train. '
+    print('Filling queue with %d Face images before starting to train. '
           'This will take a few minutes.' % min_queue_examples)
 
     return _generate_image_and_label_batch(float_image, read_input.label, min_queue_examples, batch_size, shuffle=True)

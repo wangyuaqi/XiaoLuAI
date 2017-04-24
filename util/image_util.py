@@ -90,7 +90,7 @@ def mkdirs_if_dir_not_exists(dir_):
         os.makedirs(dir_)
 
 
-def _generate_train_and_test_data_bin():
+def generate_train_and_test_data_bin():
     id_and_score = _get_id_and_labels_from_csv_score_file(SCORE_CSV_FILE)
     dict_train = _raw_image_to_dict(TRAING_IMAGE_DIR, id_and_score)
     pickle_dict_to_bin(dict_train, PICKLE_BIN_DIR, 'training_set.bin')

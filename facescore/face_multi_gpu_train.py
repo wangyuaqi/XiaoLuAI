@@ -11,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 
 from facescore import face
-from util.image_util import _generate_train_and_test_data_bin
+from util.image_util import generate_train_and_test_data_bin
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -20,7 +20,7 @@ tf.app.flags.DEFINE_string('train_dir', '/tmp/face/',
                            """and checkpoint.""")
 tf.app.flags.DEFINE_integer('max_steps', 5000,
                             """Number of batches to run.""")
-tf.app.flags.DEFINE_integer('num_gpus', 2,
+tf.app.flags.DEFINE_integer('num_gpus', 1,
                             """How many GPUs to use.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
@@ -34,7 +34,7 @@ def tower_loss(scope):
     losses = tf.get_collection('losses', scope)
     total_loss = tf.add_n(losses, name='total_loss')
     for i in losses + [total_loss]:
-        loss_name = re.sub('%s_[0-9]' % face.TOWER_NAME, '', i.op.name)
+        loss_name = re.sub('%s_[0-9]*/' % face.TOWER_NAME, '', i.op.name)
         tf.summary.scalar(loss_name, i)
 
     return total_loss
@@ -48,7 +48,7 @@ def average_gradients(tower_grads):
             expanded_g = tf.expand_dims(g, 0)
             grads.append(expanded_g)
 
-        grad = tf.concat(axis=0, values=grad_and_vars)
+        grad = tf.concat(axis=0, values=grad)
         grad = tf.reduce_mean(grad, 0)
 
         v = grad_and_vars[0][1]
@@ -65,7 +65,7 @@ def train():
         decay_steps = int(num_batches_per_epoch * face.NUM_EPOCHS_PER_DECAY)
 
         lr = tf.train.exponential_decay(face.INITIAL_LEARNING_RATE, global_step, decay_steps,
-                                        face.LEARNING_RATE_DECAY_FACTOR)
+                                        face.LEARNING_RATE_DECAY_FACTOR, staircase=True)
         opt = tf.train.GradientDescentOptimizer(lr)
 
         tower_grads = []
@@ -73,7 +73,7 @@ def train():
             for i in range(FLAGS.num_gpus):
                 with tf.device('/gpu:%d' % i):
                     with tf.name_scope('%s_%d' % (face.TOWER_NAME, i)) as scope:
-                        loss = tower_loss((scope))
+                        loss = tower_loss(scope)
                         tf.get_variable_scope().reuse_variables()
                         summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
                         grads = opt.compute_gradients(loss)
@@ -84,7 +84,7 @@ def train():
             if grad is not None:
                 summaries.append(tf.summary.histogram(var.op.name + '/gradients', grad))
 
-                # Apply the gradients to adjust the shared variables.
+        # Apply the gradients to adjust the shared variables.
         apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
 
         # Add histograms for trainable variables.
@@ -111,9 +111,8 @@ def train():
         # Start running operations on the Graph. allow_soft_placement must be set to
         # True to build towers on GPU, as some of the ops do not have GPU
         # implementations.
-        sess = tf.Session(config=tf.ConfigProto(
-            allow_soft_placement=True,
-            log_device_placement=FLAGS.log_device_placement))
+        sess = tf.Session(
+            config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement))
         sess.run(init)
 
         # Start the queue runners.
@@ -149,10 +148,12 @@ def train():
 
 
 def main(argv=None):  # pylint: disable=unused-argument
+    """
     if tf.gfile.Exists(FLAGS.train_dir):
         tf.gfile.DeleteRecursively(FLAGS.train_dir)
     tf.gfile.MakeDirs(FLAGS.train_dir)
-    _generate_train_and_test_data_bin()
+    generate_train_and_test_data_bin()
+    """
     train()
 
 

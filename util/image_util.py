@@ -34,10 +34,19 @@ def _raw_image_to_dict(image_dir, id_and_score):
         label_list.append(label)
         filename_list.append(each_image)
     images_dict['data'] = np.array(data_list, dtype=np.uint8)
-    images_dict['label'] = label_list
+    images_dict['labels'] = label_list
     images_dict['filenames'] = filename_list
 
     return images_dict
+
+
+def out_hzau_face_metafile():
+    content = 'ugly\rmedium down\rmedium\rmedium up\rbeautiful'
+    with open(PICKLE_BIN_DIR + 'batch.meta', mode='wt') as f:
+        f.write(content)
+        f.flush()
+        f.close()
+    logging.debug('meta data has been generated successfully~')
 
 
 def label_by_range(score):
@@ -69,13 +78,6 @@ def unpickle_bin_to_dict(file):
     return dict
 
 
-def pickle_list_to_bin(list_, dir_, filename):
-    mkdirs_if_dir_not_exists(dir_)
-    with open(os.path.join(dir_, filename), 'wb') as f:
-        pickle.dump(list_, f)
-    logging.debug('all images have been pickled done!')
-
-
 def pickle_dict_to_bin(dict_, dir_, filename):
     mkdirs_if_dir_not_exists(dir_)
     with open(os.path.join(dir_, filename), 'wb') as f:
@@ -91,13 +93,14 @@ def mkdirs_if_dir_not_exists(dir_):
 def _generate_train_and_test_data_bin():
     id_and_score = _get_id_and_labels_from_csv_score_file(SCORE_CSV_FILE)
     dict_train = _raw_image_to_dict(TRAING_IMAGE_DIR, id_and_score)
-    pickle_list_to_bin(dict_train, PICKLE_BIN_DIR, 'training_set.bin')
+    pickle_dict_to_bin(dict_train, PICKLE_BIN_DIR, 'training_set.bin')
     dict_test = _raw_image_to_dict(TEST_IMAGE_DIR, id_and_score)
-    pickle_list_to_bin(dict_test, PICKLE_BIN_DIR, 'test_set.bin')
+    pickle_dict_to_bin(dict_test, PICKLE_BIN_DIR, 'test_set.bin')
+    out_hzau_face_metafile()
 
 
 if __name__ == '__main__':
-    print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
-    # print(len(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1')[b'data'][0]))
+    # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
+    print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
     # _generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

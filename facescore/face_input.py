@@ -7,8 +7,8 @@ import os
 
 IMAGE_SIZE = 144
 NUM_CLASSES = 5
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 50000
-NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 10000
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 766
+NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 240
 
 
 def read_face(filename_queue):
@@ -17,8 +17,8 @@ def read_face(filename_queue):
 
     face = Face()
     label_bytes = 1
-    face.height = 144
-    face.width = 144
+    face.height = IMAGE_SIZE
+    face.width = IMAGE_SIZE
     face.depth = 3
     image_bytes = face.height * face.width * face.depth
     record_bytes = image_bytes + label_bytes

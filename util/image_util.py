@@ -3,8 +3,12 @@ import csv
 import pickle
 
 import cv2
+import numpy as np
 import logging
 
+IMAGE_WIDTH = 144
+IMAGE_HEIGHT = 144
+IMAGE_DEPTH = 3
 TRAING_IMAGE_DIR = '/home/lucasx/Documents/crop_images/training_set/'
 TEST_IMAGE_DIR = '/home/lucasx/Documents/crop_images/test_set/'
 SCORE_CSV_FILE = '/home/lucasx/Documents/Dataset/ImageDataSet/cvlh_hzau_face.csv'
@@ -44,16 +48,12 @@ def _raw_image_to_dict(image_dir, id_and_score):
     for each_image in os.listdir(image_dir):
         image = cv2.imread(os.path.join(image_dir, each_image))
         b, g, r = cv2.split(image)
-        r_list = []
-        g_list = []
-        b_list = []
-        for row_index in range(len(r)):
-            r_list += list(r[row_index])
-            g_list += list(g[row_index])
-            b_list += list(b[row_index])
-        rgb_channel_data = r_list + g_list + b_list
+        rgb = np.concatenate((r.reshape((1, IMAGE_HEIGHT * IMAGE_WIDTH)), g.reshape((1, IMAGE_HEIGHT * IMAGE_WIDTH)),
+                              b.reshape((1, IMAGE_HEIGHT * IMAGE_WIDTH))),
+                             axis=0).reshape(
+            1, IMAGE_HEIGHT * IMAGE_WIDTH * IMAGE_WIDTH)
         label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
-        data_list.append(rgb_channel_data)
+        data_list.append(rgb)
         label_list.append(label)
         filename_list.append(each_image)
     images_dict['data'] = data_list

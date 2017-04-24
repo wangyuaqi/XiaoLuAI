@@ -43,8 +43,17 @@ def _raw_image_to_dict(image_dir, id_and_score):
     filename_list = []
     for each_image in os.listdir(image_dir):
         image = cv2.imread(os.path.join(image_dir, each_image))
+        b, g, r = cv2.split(image)
+        r_list = []
+        g_list = []
+        b_list = []
+        for row_index in range(len(r)):
+            r_list += list(r[row_index])
+            g_list += list(g[row_index])
+            b_list += list(b[row_index])
+        rgb_channel_data = r_list + g_list + b_list
         label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
-        data_list.append(image)
+        data_list.append(rgb_channel_data)
         label_list.append(label)
         filename_list.append(each_image)
     images_dict['data'] = data_list
@@ -111,6 +120,7 @@ def _generate_train_and_test_data_bin():
 
 
 if __name__ == '__main__':
-    print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
-    # _generate_train_and_test_data_bin()
+    # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
+    # print(len(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1')[b'data'][0]))
+    _generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

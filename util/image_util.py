@@ -100,7 +100,7 @@ def generate_train_and_test_data_bin():
 
 
 if __name__ == '__main__':
-    # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
-    print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
+    print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
+    # print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
     # _generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

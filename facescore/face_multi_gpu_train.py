@@ -27,59 +27,134 @@ tf.app.flags.DEFINE_boolean('log_device_placement', False,
 
 
 def tower_loss(scope):
+    """Calculate the total loss on a single tower running the FACE model.
+  
+    Args:
+      scope: unique prefix string identifying the FACE tower, e.g. 'tower_0'
+  
+    Returns:
+       Tensor of shape [] containing the total loss for a batch of data
+    """
+    # Get images and labels for FACE-10.
     images, labels = face.distorted_inputs()
+
+    # Build inference Graph.
     logits = face.inference(images)
 
+    # Build the portion of the Graph calculating the losses. Note that we will
+    # assemble the total_loss using a custom function below.
     _ = face.loss(logits, labels)
+
+    # Assemble all of the losses for the current tower only.
     losses = tf.get_collection('losses', scope)
+
+    # Calculate the total loss for the current tower.
     total_loss = tf.add_n(losses, name='total_loss')
-    for i in losses + [total_loss]:
-        loss_name = re.sub('%s_[0-9]*/' % face.TOWER_NAME, '', i.op.name)
-        tf.summary.scalar(loss_name, i)
+
+    # Attach a scalar summary to all individual losses and the total loss; do the
+    # same for the averaged version of the losses.
+    for l in losses + [total_loss]:
+        # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
+        # session. This helps the clarity of presentation on tensorboard.
+        loss_name = re.sub('%s_[0-9]*/' % face.TOWER_NAME, '', l.op.name)
+        tf.summary.scalar(loss_name, l)
 
     return total_loss
 
 
 def average_gradients(tower_grads):
+    """Calculate the average gradient for each shared variable across all towers.
+  
+    Note that this function provides a synchronization point across all towers.
+  
+    Args:
+      tower_grads: List of lists of (gradient, variable) tuples. The outer list
+        is over individual gradients. The inner list is over the gradient
+        calculation for each tower.
+    Returns:
+       List of pairs of (gradient, variable) where the gradient has been averaged
+       across all towers.
+    """
     average_grads = []
     for grad_and_vars in zip(*tower_grads):
+        # Note that each grad_and_vars looks like the following:
+        #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
         grads = []
         for g, _ in grad_and_vars:
+            # Add 0 dimension to the gradients to represent the tower.
             expanded_g = tf.expand_dims(g, 0)
+
+            # Append on a 'tower' dimension which we will average over below.
             grads.append(expanded_g)
 
-        grad = tf.concat(axis=0, values=grad)
+        # Average over the 'tower' dimension.
+        grad = tf.concat(axis=0, values=grads)
         grad = tf.reduce_mean(grad, 0)
 
+        # Keep in mind that the Variables are redundant because they are shared
+        # across towers. So .. we will just return the first tower's pointer to
+        # the Variable.
         v = grad_and_vars[0][1]
         grad_and_var = (grad, v)
         average_grads.append(grad_and_var)
-
     return average_grads
 
 
 def train():
+    """Train FACE for a number of steps."""
     with tf.Graph().as_default(), tf.device('/cpu:0'):
-        global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-        num_batches_per_epoch = (face.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / FLAGS.batch_size)
+        # Create a variable to count the number of train() calls. This equals the
+        # number of batches processed * FLAGS.num_gpus.
+        global_step = tf.get_variable(
+            'global_step', [],
+            initializer=tf.constant_initializer(0), trainable=False)
+
+        # Calculate the learning rate schedule.
+        num_batches_per_epoch = (face.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN /
+                                 FLAGS.batch_size)
         decay_steps = int(num_batches_per_epoch * face.NUM_EPOCHS_PER_DECAY)
 
-        lr = tf.train.exponential_decay(face.INITIAL_LEARNING_RATE, global_step, decay_steps,
-                                        face.LEARNING_RATE_DECAY_FACTOR, staircase=True)
+        # Decay the learning rate exponentially based on the number of steps.
+        lr = tf.train.exponential_decay(face.INITIAL_LEARNING_RATE,
+                                        global_step,
+                                        decay_steps,
+                                        face.LEARNING_RATE_DECAY_FACTOR,
+                                        staircase=True)
+
+        # Create an optimizer that performs gradient descent.
         opt = tf.train.GradientDescentOptimizer(lr)
 
+        # Calculate the gradients for each model tower.
         tower_grads = []
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(FLAGS.num_gpus):
                 with tf.device('/gpu:%d' % i):
                     with tf.name_scope('%s_%d' % (face.TOWER_NAME, i)) as scope:
+                        # Calculate the loss for one tower of the CIFAR model. This function
+                        # constructs the entire CIFAR model but shares the variables across
+                        # all towers.
                         loss = tower_loss(scope)
+
+                        # Reuse variables for the next tower.
                         tf.get_variable_scope().reuse_variables()
+
+                        # Retain the summaries from the final tower.
                         summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
+
+                        # Calculate the gradients for the batch of data on this CIFAR tower.
                         grads = opt.compute_gradients(loss)
+
+                        # Keep track of the gradients across all towers.
                         tower_grads.append(grads)
+
+        # We must calculate the mean of each gradient. Note that this is the
+        # synchronization point across all towers.
         grads = average_gradients(tower_grads)
+
+        # Add a summary to track the learning rate.
         summaries.append(tf.summary.scalar('learning_rate', lr))
+
+        # Add histograms for gradients.
         for grad, var in grads:
             if grad is not None:
                 summaries.append(tf.summary.histogram(var.op.name + '/gradients', grad))
@@ -111,8 +186,9 @@ def train():
         # Start running operations on the Graph. allow_soft_placement must be set to
         # True to build towers on GPU, as some of the ops do not have GPU
         # implementations.
-        sess = tf.Session(
-            config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=FLAGS.log_device_placement))
+        sess = tf.Session(config=tf.ConfigProto(
+            allow_soft_placement=True,
+            log_device_placement=FLAGS.log_device_placement))
         sess.run(init)
 
         # Start the queue runners.
@@ -148,12 +224,10 @@ def train():
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-    """
     if tf.gfile.Exists(FLAGS.train_dir):
         tf.gfile.DeleteRecursively(FLAGS.train_dir)
     tf.gfile.MakeDirs(FLAGS.train_dir)
     generate_train_and_test_data_bin()
-    """
     train()
 
 

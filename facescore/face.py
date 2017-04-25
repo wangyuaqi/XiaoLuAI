@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os
 import re
 
 import tensorflow as tf
@@ -12,7 +11,7 @@ from facescore import face_input
 FLAGS = tf.app.flags.FLAGS
 
 # Basic model parameters.
-tf.app.flags.DEFINE_integer('batch_size', 128,
+tf.app.flags.DEFINE_integer('batch_size', 32,
                             """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_string('data_dir', '/tmp/face/',
                            """Path to the Face data directory.""")
@@ -23,11 +22,11 @@ IMAGE_SIZE = face_input.IMAGE_SIZE
 NUM_CLASSES = face_input.NUM_CLASSES
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = face_input.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = face_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
-MOVING_AVERAGE_DECAY = 0.9999
-NUM_EPOCHS_PER_DECAY = 350
+MOVING_AVERAGE_DECAY = 0.2
+NUM_EPOCHS_PER_DECAY = 100
 
 LEARNING_RATE_DECAY_FACTOR = 0.1
-INITIAL_LEARNING_RATE = 0.1
+INITIAL_LEARNING_RATE = 0.01
 TOWER_NAME = 'tower'
 
 

@@ -1,4 +1,4 @@
-"""Tests for cifar10 input."""
+"""Tests for face input."""
 
 from __future__ import absolute_import
 from __future__ import division

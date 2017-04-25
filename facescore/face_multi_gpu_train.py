@@ -7,8 +7,8 @@ import re
 import time
 from datetime import datetime
 
-import numpy as np
 import tensorflow as tf
+import numpy as np
 
 from facescore import face
 from util.image_util import generate_train_and_test_data_bin
@@ -18,7 +18,7 @@ FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('train_dir', '/tmp/face/',
                            """Directory where to write event logs """
                            """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 5000,
+tf.app.flags.DEFINE_integer('max_steps', 10000,
                             """Number of batches to run.""")
 tf.app.flags.DEFINE_integer('num_gpus', 1,
                             """How many GPUs to use.""")
@@ -130,8 +130,8 @@ def train():
             for i in range(FLAGS.num_gpus):
                 with tf.device('/gpu:%d' % i):
                     with tf.name_scope('%s_%d' % (face.TOWER_NAME, i)) as scope:
-                        # Calculate the loss for one tower of the CIFAR model. This function
-                        # constructs the entire CIFAR model but shares the variables across
+                        # Calculate the loss for one tower of the FACE model. This function
+                        # constructs the entire FACE model but shares the variables across
                         # all towers.
                         loss = tower_loss(scope)
 
@@ -141,7 +141,7 @@ def train():
                         # Retain the summaries from the final tower.
                         summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
 
-                        # Calculate the gradients for the batch of data on this CIFAR tower.
+                        # Calculate the gradients for the batch of data on this FACE tower.
                         grads = opt.compute_gradients(loss)
 
                         # Keep track of the gradients across all towers.

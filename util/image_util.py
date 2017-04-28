@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 import logging
 
+import requests
+
 IMAGE_WIDTH = 144
 IMAGE_HEIGHT = 144
 IMAGE_DEPTH = 3
@@ -99,8 +101,34 @@ def generate_train_and_test_data_bin():
     out_hzau_face_metafile()
 
 
+def crop_images(image_dir, new_size_width, new_size_height, out_dir):
+    mkdirs_if_dir_not_exists(out_dir)
+    for image in os.listdir(image_dir):
+        filepath = os.path.join(image_dir, image)
+        res = cv2.resize(cv2.imread(filepath), (new_size_width, new_size_height), interpolation=cv2.INTER_AREA)
+        out_path = os.path.join(out_dir, image)
+        cv2.imwrite(out_path, res)
+
+
+def maybe_download_and_unzip():
+    data_url = ''
+    data_target = '/tmp/face/' + data_url.split('/')[-1]
+    if not os.path.isdir('/tmp/face/') or not os.path.exists('/tmp/face/'):
+        mkdirs_if_dir_not_exists('/tmp/face/')
+    if not os.path.exists(data_target):
+        response = requests.get(data_url)
+        if response.status_code == 200:
+            with open(data_target, mode='wb') as f:
+                f.write(response.content)
+                f.flush()
+                f.close()
+        else:
+            print(response.status_code)
+
+
 if __name__ == '__main__':
-    print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
+    crop_images('/home/lucasx/Documents/crop_images/test_set/', 128, 128, '/home/lucasx/Documents/crop_images/testSet/')
+    # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
     # print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
     # _generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

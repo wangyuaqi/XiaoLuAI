@@ -120,7 +120,6 @@ def train():
                                         decay_steps,
                                         face.LEARNING_RATE_DECAY_FACTOR,
                                         staircase=True)
-
         # Create an optimizer that performs gradient descent.
         opt = tf.train.GradientDescentOptimizer(lr)
 

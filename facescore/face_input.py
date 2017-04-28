@@ -5,7 +5,7 @@ from __future__ import print_function
 import tensorflow as tf
 import os
 
-IMAGE_SIZE = 144
+IMAGE_SIZE = 128
 NUM_CLASSES = 5
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 766
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 240

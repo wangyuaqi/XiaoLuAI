@@ -2,8 +2,12 @@ import csv
 import logging
 import os
 import pickle
-import sys
 import urllib.request
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+from util import config
 
 import cv2
 import numpy as np
@@ -12,11 +16,11 @@ import tensorflow as tf
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 IMAGE_DEPTH = 3
-TRAING_IMAGE_DIR = '/home/lucasx/Documents/face_data/training_set/'
-TEST_IMAGE_DIR = '/home/lucasx/Documents/face_data/test_set/'
-SCORE_CSV_FILE = '/home/lucasx/PycharmProjects/XiaoLuAI/res/cvlh_hzau_face.csv'
+
+TRAING_IMAGE_DIR = '/tmp/face/face_image/training_set/'
+TEST_IMAGE_DIR = '/tmp/face/face_image/test_set/'
+SCORE_CSV_FILE = '/tmp/face/face_image/cvlh_hzau_face.csv'
 PICKLE_BIN_DIR = '/tmp/face/face_bin/'
-DATA_DOWNLOAD_DIR = '/tmp/face/'
 
 logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s  \t', level=logging.DEBUG)
 
@@ -79,6 +83,7 @@ def _get_id_and_labels_from_csv_score_file(csv_score_file):
 def unpickle_bin_to_dict(file):
     with open(file, 'rb') as fo:
         dict = pickle.load(fo, encoding='bytes')
+
     return dict
 
 
@@ -95,6 +100,7 @@ def mkdirs_if_dir_not_exists(dir_):
 
 
 def generate_train_and_test_data_bin():
+    extract(config.SOURCE_ZIP_FILE)
     id_and_score = _get_id_and_labels_from_csv_score_file(SCORE_CSV_FILE)
     dict_train = _raw_image_to_dict(TRAING_IMAGE_DIR, id_and_score)
     pickle_dict_to_bin(dict_train, PICKLE_BIN_DIR, 'training_set.bin')
@@ -112,29 +118,17 @@ def crop_images(image_dir, new_size_width, new_size_height, out_dir):
         cv2.imwrite(out_path, res)
 
 
-def maybe_download_and_extract(url):
-    if not tf.gfile.Exists(DATA_DOWNLOAD_DIR):
-        tf.gfile.MakeDirs(DATA_DOWNLOAD_DIR)
-    filepath = os.path.join(DATA_DOWNLOAD_DIR, url.split('/')[-1])
-    """
-    if not tf.gfile.Exists(filepath):
-        urllib.request.urlretrieve(url, filepath)
-        with tf.gfile.GFile(filepath) as f:
-            size = f.size()
-        print('Successfully downloaded', url.split('/')[-1], size, 'bytes.')
-    """
+def extract(zip_filepath):
+    extracted_dir = '/tmp/face/'
+    if not tf.gfile.Exists(extracted_dir):
+        tf.gfile.MakeDirs(extracted_dir)
 
-    extracted_dir_path = os.path.join(DATA_DOWNLOAD_DIR, 'face_bin')
-    if not os.path.exists(extracted_dir_path):
-        import zipfile
-        zip_ref = zipfile.ZipFile(filepath, 'r')
-        zip_ref.extractall(extracted_dir_path)
-        zip_ref.close()
+    import zipfile
+    zip_ref = zipfile.ZipFile(zip_filepath, mode='r')
+    zip_ref.extractall(extracted_dir)
+    zip_ref.close()
 
 
 if __name__ == '__main__':
-    # maybe_download_and_extract()
-    # print(unpickle_bin_to_dict('/tmp/face/face_bin/training_set.bin')['data'].shape)
-    # print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
     generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

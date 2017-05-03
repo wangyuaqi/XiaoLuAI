@@ -40,6 +40,6 @@ if __name__ == '__main__':
     if not os.path.exists(extracted_dir_path):
         import zipfile
 
-        zip_ref = zipfile.ZipFile('/home/lucasx/PycharmProjects/XiaoLuAI/res/face_data.zip', 'r')
+        zip_ref = zipfile.ZipFile('/home/lucasx/PycharmProjects/XiaoLuAI/res/face_image.zip', 'r')
         zip_ref.extractall(extracted_dir_path)
         zip_ref.close()

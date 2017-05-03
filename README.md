@@ -15,5 +15,8 @@
    >[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.html)
   
 ## How to use
+       pip3 install -r requirements.txt
+   Install __OpenCV3.2__ with the help of this [guidance](http://cyaninfinite.com/tutorials/installing-opencv-in-ubuntu-for-python-3/).
+   
    Change the directory parameters in source code, and everything will be OK~~
    This repo has been tested OK on Ubuntu16.04.

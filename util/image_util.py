@@ -8,12 +8,12 @@ import urllib.request
 import cv2
 import numpy as np
 
-IMAGE_WIDTH = 144
-IMAGE_HEIGHT = 144
+IMAGE_WIDTH = 128
+IMAGE_HEIGHT = 128
 IMAGE_DEPTH = 3
 TRAING_IMAGE_DIR = '/tmp/face/Documents/face_dataset/training_set/'
 TEST_IMAGE_DIR = '/tmp/face/face_dataset/test_set/'
-SCORE_CSV_FILE = '/tmp/face/face_dataset/cvlh_hzau_face.csv'
+SCORE_CSV_FILE = '/home/lucasx/PycharmProjects/XiaoLuAI/res/cvlh_hzau_face.csv'
 PICKLE_BIN_DIR = '/tmp/face/face_bin/'
 
 logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s  \t', level=logging.DEBUG)
@@ -137,8 +137,8 @@ def maybe_download_and_extract():
 
 
 if __name__ == '__main__':
-    maybe_download_and_extract()
+    # maybe_download_and_extract()
     # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
     # print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
-    # _generate_train_and_test_data_bin()
+    generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')

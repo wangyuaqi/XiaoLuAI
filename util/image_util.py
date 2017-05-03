@@ -112,15 +112,17 @@ def crop_images(image_dir, new_size_width, new_size_height, out_dir):
         cv2.imwrite(out_path, res)
 
 
-def maybe_download(url):
+def maybe_download_and_extract(url):
     if not tf.gfile.Exists(DATA_DOWNLOAD_DIR):
         tf.gfile.MakeDirs(DATA_DOWNLOAD_DIR)
     filepath = os.path.join(DATA_DOWNLOAD_DIR, url.split('/')[-1])
+    """
     if not tf.gfile.Exists(filepath):
         urllib.request.urlretrieve(url, filepath)
         with tf.gfile.GFile(filepath) as f:
             size = f.size()
         print('Successfully downloaded', url.split('/')[-1], size, 'bytes.')
+    """
 
     extracted_dir_path = os.path.join(DATA_DOWNLOAD_DIR, 'face_bin')
     if not os.path.exists(extracted_dir_path):

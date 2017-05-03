@@ -7,6 +7,10 @@ import re
 import time
 from datetime import datetime
 
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
 import tensorflow as tf
 import numpy as np
 

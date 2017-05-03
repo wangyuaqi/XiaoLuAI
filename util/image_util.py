@@ -7,14 +7,16 @@ import urllib.request
 
 import cv2
 import numpy as np
+import tensorflow as tf
 
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 IMAGE_DEPTH = 3
-TRAING_IMAGE_DIR = '/tmp/face/Documents/face_dataset/training_set/'
-TEST_IMAGE_DIR = '/tmp/face/face_dataset/test_set/'
+TRAING_IMAGE_DIR = '/home/lucasx/Documents/crop_images/training_set/'
+TEST_IMAGE_DIR = '/home/lucasx/Documents/crop_images/test_set/'
 SCORE_CSV_FILE = '/home/lucasx/PycharmProjects/XiaoLuAI/res/cvlh_hzau_face.csv'
 PICKLE_BIN_DIR = '/tmp/face/face_bin/'
+DATA_DOWNLOAD_DIR = '/tmp/face/'
 
 logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s  \t', level=logging.DEBUG)
 
@@ -110,35 +112,28 @@ def crop_images(image_dir, new_size_width, new_size_height, out_dir):
         cv2.imwrite(out_path, res)
 
 
-def maybe_download_and_extract():
-    """Download and extract the zip file"""
-    data_url = 'https://github.com/EclipseXuLu/XiaoLuAI/blob/master/res/face_dataset.zip'
-    dest_directory = '/tmp/face/'
-    if not os.path.exists(dest_directory):
-        os.makedirs(dest_directory)
-    filename = data_url.split('/')[-1]
-    filepath = os.path.join(dest_directory, filename)
-    if not os.path.exists(filepath):
-        def _progress(count, block_size, total_size):
-            sys.stdout.write('\r>> Downloading %s %.1f%%' % (filename,
-                                                             float(count * block_size) / float(total_size) * 100.0))
-            sys.stdout.flush()
+def maybe_download(url):
+    if not tf.gfile.Exists(DATA_DOWNLOAD_DIR):
+        tf.gfile.MakeDirs(DATA_DOWNLOAD_DIR)
+    filepath = os.path.join(DATA_DOWNLOAD_DIR, url.split('/')[-1])
+    if not tf.gfile.Exists(filepath):
+        urllib.request.urlretrieve(url, filepath)
+        with tf.gfile.GFile(filepath) as f:
+            size = f.size()
+        print('Successfully downloaded', url.split('/')[-1], size, 'bytes.')
 
-        filepath, _ = urllib.request.urlretrieve(data_url, filepath, _progress)
-        print()
-        statinfo = os.stat(filepath)
-        print('Successfully downloaded', filepath, statinfo.st_size, 'bytes.')
-    extracted_dir_path = os.path.join(dest_directory, 'face_bin')
+    extracted_dir_path = os.path.join(DATA_DOWNLOAD_DIR, 'face_bin')
     if not os.path.exists(extracted_dir_path):
         import zipfile
         zip_ref = zipfile.ZipFile(filepath, 'r')
-        zip_ref.extractall(dest_directory)
+        zip_ref.extractall(extracted_dir_path)
         zip_ref.close()
 
 
 if __name__ == '__main__':
     # maybe_download_and_extract()
-    # print(unpickle_bin_to_dict('/tmp/face/training_set.bin'))
+    # print(unpickle_bin_to_dict('/tmp/face/face_bin/training_set.bin')['data'].shape)
     # print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
-    generate_train_and_test_data_bin()
+    # generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')
+    crop_images('/home/lucasx/Documents/crop_images/test_set/', 128, 128, '/home/lucasx/Documents/cropedImage/test_set')

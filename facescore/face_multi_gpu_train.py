@@ -15,12 +15,12 @@ from util.image_util import generate_train_and_test_data_bin
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', '/tmp/face/',
+tf.app.flags.DEFINE_string('train_dir', '/tmp/face/face_bin/',
                            """Directory where to write event logs """
                            """and checkpoint.""")
-tf.app.flags.DEFINE_integer('max_steps', 10000,
+tf.app.flags.DEFINE_integer('max_steps', 5000,
                             """Number of batches to run.""")
-tf.app.flags.DEFINE_integer('num_gpus', 1,
+tf.app.flags.DEFINE_integer('num_gpus', 2,
                             """How many GPUs to use.""")
 tf.app.flags.DEFINE_boolean('log_device_placement', False,
                             """Whether to log device placement.""")
@@ -35,7 +35,7 @@ def tower_loss(scope):
     Returns:
        Tensor of shape [] containing the total loss for a batch of data
     """
-    # Get images and labels for FACE-10.
+    # Get images and labels for FACE.
     images, labels = face.distorted_inputs()
 
     # Build inference Graph.

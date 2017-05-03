@@ -2,20 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
 import os
+
+import tensorflow as tf
 
 IMAGE_SIZE = 128
 NUM_CLASSES = 5
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 766
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 240
-
-"""
-IMAGE_SIZE = 28
-NUM_CLASSES = 10
-NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = 10000
-NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = 10000
-"""
 
 
 def read_face(filename_queue):
@@ -103,6 +97,8 @@ def distorted_inputs(data_dir, batch_size):
 
     # Randomly crop a [height, width] section of the image.
     distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+
+    distorted_image = tf.image.per_image_standardization(distorted_image)
 
     # Randomly flip the image horizontally.
     distorted_image = tf.image.random_flip_left_right(distorted_image)

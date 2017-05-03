@@ -12,8 +12,8 @@ import tensorflow as tf
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 IMAGE_DEPTH = 3
-TRAING_IMAGE_DIR = '/home/lucasx/Documents/crop_images/training_set/'
-TEST_IMAGE_DIR = '/home/lucasx/Documents/crop_images/test_set/'
+TRAING_IMAGE_DIR = '/home/lucasx/Documents/face_data/training_set/'
+TEST_IMAGE_DIR = '/home/lucasx/Documents/face_data/test_set/'
 SCORE_CSV_FILE = '/home/lucasx/PycharmProjects/XiaoLuAI/res/cvlh_hzau_face.csv'
 PICKLE_BIN_DIR = '/tmp/face/face_bin/'
 DATA_DOWNLOAD_DIR = '/tmp/face/'
@@ -134,6 +134,5 @@ if __name__ == '__main__':
     # maybe_download_and_extract()
     # print(unpickle_bin_to_dict('/tmp/face/face_bin/training_set.bin')['data'].shape)
     # print(unpickle_bin_to_dict('/home/lucasx/Documents/cifar-10-batches-py/data_batch_1'))
-    # generate_train_and_test_data_bin()
+    generate_train_and_test_data_bin()
     # unpickle_bin_to_dict('/tmp/face/test_set.bin')
-    crop_images('/home/lucasx/Documents/crop_images/test_set/', 128, 128, '/home/lucasx/Documents/cropedImage/test_set')

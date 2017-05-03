@@ -11,7 +11,7 @@ from facescore import face_input
 FLAGS = tf.app.flags.FLAGS
 
 # Basic model parameters.
-tf.app.flags.DEFINE_integer('batch_size', 16,
+tf.app.flags.DEFINE_integer('batch_size', 128,
                             """Number of images to process in a batch.""")
 tf.app.flags.DEFINE_string('data_dir', '/tmp/face/face_bin/',
                            """Path to the Face data directory.""")
@@ -22,11 +22,10 @@ IMAGE_SIZE = face_input.IMAGE_SIZE
 NUM_CLASSES = face_input.NUM_CLASSES
 NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = face_input.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
 NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = face_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
-MOVING_AVERAGE_DECAY = 0.01
-NUM_EPOCHS_PER_DECAY = 100
-
-LEARNING_RATE_DECAY_FACTOR = 100
-INITIAL_LEARNING_RATE = 0.001
+MOVING_AVERAGE_DECAY = 0.9999  # The decay to use for the moving average.
+NUM_EPOCHS_PER_DECAY = 350.0  # Epochs after which learning rate decays.
+LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
+INITIAL_LEARNING_RATE = 0.1  # Initial learning rate.
 TOWER_NAME = 'tower'
 
 

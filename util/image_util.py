@@ -2,7 +2,6 @@ import csv
 import logging
 import os
 import pickle
-import urllib.request
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))

@@ -367,8 +367,8 @@ def face_detect_with_baidu(image_path):
 
 
 if __name__ == '__main__':
-    face_detect_with_url('http://epaper.gxnews.com.cn/ddshb/res/1/20160228/37831456613038950.jpg')
-    # face_detect_with_url('http://211.69.132.96/Uploadfiles/StudentPhoto/2016317110015.jpg')
+    # face_detect_with_url('http://epaper.gxnews.com.cn/ddshb/res/1/20160228/37831456613038950.jpg')
+    face_detect_with_url('http://211.69.132.96/Uploadfiles/StudentPhoto/2016317110015.jpg')
     # face_detect('/home/lucasx/zhangzy.jpg')
     # itchat.auto_login(True)
     # itchat.run()

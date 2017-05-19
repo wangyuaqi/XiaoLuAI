@@ -13,7 +13,6 @@ def fetch(url_):
 
 
 def trans_json(jsonpath):
-    data = ''
     with open(jsonpath, mode='rt', encoding='utf-8') as f:
         data = ''.join(f.readlines())
     data_json = json.loads(data)
@@ -31,8 +30,20 @@ def trans_json(jsonpath):
     df.to_excel('data.xlsx', sheet_name='Sheet1')
 
 
+def fetch_all(path):
+    with open(path, mode='rt', encoding='utf-8') as f:
+        result = ''.join(f.readlines()).replace('\"', '').replace("v:", '"v":').replace("c:", '"c":').replace("'", '"') \
+            .replace(',,', ',').replace('<a', '"<a').replace('</a>', '</a>"').replace('href="', "href='") \
+            .replace('[uid]"', "[uid]'").replace('target="', "target='").replace('">', "'>")
+
+    print(result)
+    data = json.loads(result)
+    print(len(data['rows']))
+
+
 if __name__ == '__main__':
-    trans_json('./data.json')
+    fetch_all('/home/lucasx/Desktop/all_data.json')
+    # trans_json('./data.json')
     """
     fetch(
         'http://arabidopsis.gmi.oeaw.ac.at:5000/DisplayResultsGene/fetchTopCandidateGenesFromOneResultOneGeneList?type_id'

@@ -12,13 +12,13 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-IMAGE_WIDTH = 128
-IMAGE_HEIGHT = 128
+IMAGE_WIDTH = 32
+IMAGE_HEIGHT = 32
 IMAGE_DEPTH = 3
 
-TRAING_IMAGE_DIR = '/tmp/face/face_image/training_set/'
-TEST_IMAGE_DIR = '/tmp/face/face_image/test_set/'
-SCORE_CSV_FILE = '/tmp/face/face_image/cvlh_hzau_face.csv'
+TRAING_IMAGE_DIR = '/tmp/face/training_set/'
+TEST_IMAGE_DIR = '/tmp/face/test_set/'
+SCORE_CSV_FILE = '/tmp/face/cvlh_hzau_face.csv'
 PICKLE_BIN_DIR = '/tmp/face/face_bin/'
 
 logging.basicConfig(format='%(levelname)s:%(asctime)s:%(message)s  \t', level=logging.DEBUG)
@@ -126,6 +126,14 @@ def extract(zip_filepath):
     zip_ref = zipfile.ZipFile(zip_filepath, mode='r')
     zip_ref.extractall(extracted_dir)
     zip_ref.close()
+
+
+def resize_images(image_dir, save_dir):
+    for image in os.listdir(image_dir):
+        print(os.path.join(image_dir, image))
+        img = cv2.imread(os.path.join(image_dir, image))
+        res = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), interpolation=cv2.INTER_AREA)
+        cv2.imwrite(os.path.join(save_dir, image), res)
 
 
 if __name__ == '__main__':

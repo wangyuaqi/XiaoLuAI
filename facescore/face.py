@@ -25,7 +25,7 @@ NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = face_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
 MOVING_AVERAGE_DECAY = 0.9  # The decay to use for the moving average.
 NUM_EPOCHS_PER_DECAY = 350.0  # Epochs after which learning rate decays.
 LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
-INITIAL_LEARNING_RATE = 0.1  # Initial learning rate.
+INITIAL_LEARNING_RATE = 0.000001  # Initial learning rate.
 TOWER_NAME = 'tower'
 
 

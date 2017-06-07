@@ -37,10 +37,12 @@ def _raw_image_to_dict(image_dir, id_and_score):
                               b.reshape((IMAGE_HEIGHT * IMAGE_WIDTH))),
                              axis=0).reshape(IMAGE_HEIGHT * IMAGE_WIDTH * IMAGE_DEPTH)
         label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
-        data_list.append(rgb.tolist())
+        arr = rgb.tolist()
+        # data_list.append(arr)
+        data_list.append((arr - np.min(arr)) / (np.max(arr) - np.min(arr)))
         label_list.append(label)
         filename_list.append(each_image)
-    images_dict['data'] = np.array(data_list, dtype=np.uint8)
+    images_dict['data'] = np.array(data_list, dtype=np.float32)
     images_dict['labels'] = label_list
     images_dict['filenames'] = filename_list
 
@@ -134,6 +136,14 @@ def resize_images(image_dir, save_dir):
         img = cv2.imread(os.path.join(image_dir, image))
         res = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), interpolation=cv2.INTER_AREA)
         cv2.imwrite(os.path.join(save_dir, image), res)
+
+
+def one_hot_encoding(labels, class_num):
+    one_hot_labels = np.zeros([len(labels), class_num], dtype=np.int32)
+    for i in range(len(labels)):
+        np.transpose(one_hot_labels)[labels[i]][i] = 1
+
+    return np.transpose(one_hot_labels)
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ def main():
     training_set = unpickle_bin_to_dict(TRAINING_DATA)
     test_set = unpickle_bin_to_dict(TEST_DATA)
 
-    classifier = tf.contrib.learn.DNNClassifier(feature_columns=feature_columns, hidden_units=[1000, 2000, 3000, 2000, 1000],
+    classifier = tf.contrib.learn.DNNClassifier(feature_columns=feature_columns, hidden_units=[10, 10, 10, 10, 20, 20 , 20, 10, 10, 10, 10, 10],
                                                 n_classes=5,
                                                 model_dir="/tmp/dnn_model")
     training_image_nums = len(training_set['labels'])
@@ -36,7 +36,7 @@ def main():
             np.array(test_set['labels'], dtype=np.int))
         return x, y
 
-    classifier.fit(input_fn=get_train_inputs, steps=5000)
+    classifier.fit(input_fn=get_train_inputs, steps=20000)
     accuracy_score = classifier.evaluate(input_fn=get_test_inputs,
                                          steps=1)["accuracy"]
 

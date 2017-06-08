@@ -5,7 +5,7 @@ import sys
     This code is provided for face detection!
 """
 
-imagePath = '../res/dxx.jpg'
+imagePath = 'talor.jpg'
 cascPath = '../res/haarcascade_frontalface_default.xml'
 EYE_CASCADE_PATH = '../res/haarcascade_eye.xml'
 

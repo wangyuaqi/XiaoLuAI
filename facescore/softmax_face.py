@@ -42,6 +42,8 @@ def main():
         if (_ + 1) % 100 == 0:
             saver.save(session, "/tmp/face/model.ckpt")
         print('start train %dth epoch...' % _)
+    writer = tf.summary.FileWriter('./graphs', session.graph)
+    writer.close()
 
     test_image_nums = len(test_set['labels'])
     x_test, y_test = np.array(test_set['data']).reshape(

@@ -19,7 +19,7 @@ def main():
     test_set = unpickle_bin_to_dict(TEST_DATA)
 
     classifier = tf.contrib.learn.DNNClassifier(feature_columns=feature_columns,
-                                                hidden_units=[10, 10, 10, 20, 20, 20, 20, 10, 10],
+                                                hidden_units=[10, 10, 10, 20, 20, 20, 20, 20, 10, 10],
                                                 n_classes=5,
                                                 model_dir="/tmp/dnn_model")
     training_image_nums = len(training_set['labels'])

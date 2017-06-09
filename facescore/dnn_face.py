@@ -7,7 +7,7 @@ import numpy as np
 
 TRAINING_DATA = '/tmp/face/face_bin/training_set.bin'
 TEST_DATA = '/tmp/face/face_bin/test_set.bin'
-IMAGE_SIZE = 32
+IMAGE_SIZE = 64
 CHANNEL_NUM = 3
 CLASS_NUM = 5
 
@@ -18,7 +18,8 @@ def main():
     training_set = unpickle_bin_to_dict(TRAINING_DATA)
     test_set = unpickle_bin_to_dict(TEST_DATA)
 
-    classifier = tf.contrib.learn.DNNClassifier(feature_columns=feature_columns, hidden_units=[10, 10, 10, 10, 20, 20 , 20, 10, 10, 10, 10, 10],
+    classifier = tf.contrib.learn.DNNClassifier(feature_columns=feature_columns,
+                                                hidden_units=[10, 10, 10, 20, 20, 20, 20, 10, 10],
                                                 n_classes=5,
                                                 model_dir="/tmp/dnn_model")
     training_image_nums = len(training_set['labels'])
@@ -65,5 +66,7 @@ def unpickle_bin_to_dict(file):
 
 
 if __name__ == '__main__':
+    if tf.gfile.Exists('/tmp/dnn_model'):
+        tf.gfile.DeleteRecursively('/tmp/dnn_model')
     # init_data()
     main()

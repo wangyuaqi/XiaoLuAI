@@ -12,8 +12,8 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-IMAGE_WIDTH = 32
-IMAGE_HEIGHT = 32
+IMAGE_WIDTH = 64
+IMAGE_HEIGHT = 64
 IMAGE_DEPTH = 3
 
 TRAING_IMAGE_DIR = '/tmp/face/training_set/'
@@ -147,5 +147,6 @@ def one_hot_encoding(labels, class_num):
 
 
 if __name__ == '__main__':
-    generate_train_and_test_data_bin()
-    # unpickle_bin_to_dict('/tmp/face/test_set.bin')
+    # generate_train_and_test_data_bin()
+    resize_images('/tmp/face/training_set/', '/tmp/face/training_set/')
+    # print(unpickle_bin_to_dict('/tmp/face/face_bin/test_set.bin')['data'].shape)

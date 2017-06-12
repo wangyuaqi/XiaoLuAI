@@ -6,3 +6,4 @@ facescore/__pycache__/
 util/__pycache__/
 test/MNIST_data/
 facescore/graphs
+bots/itchat.pkl

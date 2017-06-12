@@ -1,30 +1,26 @@
-from datetime import datetime
 import configparser
-
-import itchat, time, os
-from itchat.content import *
-import requests
-from bs4 import BeautifulSoup
+from datetime import datetime
 from random import randrange
 
 import cv2
+import itchat
+import os
+import requests
+from bs4 import BeautifulSoup
+from itchat.content import *
 
 config = configparser.ConfigParser()
 config.read('/home/lucasx/PycharmProjects/XiaoLuAI/res/config.ini')
 
-# CHATFILE_DIR = 'D:/wechat_file/'
-# STICKER_DIR = 'D:/stickers/'
-
-CHATFILE_DIR = '/home/lucasx/'
+CHATFILE_DIR = '/home/lucasx/wechat/'
 STICKER_DIR = '/home/lucasx/stickers/'
-TEMP_IMAGE_DOWNLOAD_DIR = '/home/lucasx/tmpimg/'
+TEMP_IMAGE_DOWNLOAD_DIR = '/tmp/tmpimg/'
 GIRL_DIR = '/home/lucasx/girl/'
 
 
 @itchat.msg_register([TEXT, MAP, CARD, NOTE, SHARING, PICTURE])
 def text_reply(msg):
     NickName = itchat.search_friends(userName=msg['FromUserName'])['NickName']
-    print(NickName)
     mkdirs_if_not_exists(CHATFILE_DIR)
     with open(CHATFILE_DIR + str(NickName) + '.txt', mode='a', encoding='utf-8') as f:
         f.write(str(datetime.now()) + ' : ' + msg['Content'] + '\r')
@@ -34,6 +30,9 @@ def text_reply(msg):
     if msg['Type'] == 'Text':
         itchat.send('[Auto Reply]\r\n' + chat_with_ai(config['Turing']['apikey'], msg['Text']),
                     msg['FromUserName'])
+    elif msg['Type'] == 'PICTURE':
+        mkdirs_if_not_exists(CHATFILE_DIR + msg['FromUserName'])
+        download_wechat_sticker(msg['Content'], CHATFILE_DIR + str(NickName) + '/', str(datetime.now()) + '.gif')
     else:
         itchat.send('[Auto Reply]\r\nSorry, 小璐机器人目前还没有表情识别功能哟，别着急，爸爸正在给我加上啦~嘻嘻', msg['FromUserName'])
 
@@ -42,6 +41,15 @@ def text_reply(msg):
 def download_files(msg):
     msg['Text'](msg['FileName'])
     return '@%s@%s' % ({'Picture': 'img', 'Video': 'vid'}.get(msg['Type'], 'fil'), msg['FileName'])
+
+
+"""
+@itchat.msg_register(['Picture', 'Recording', 'Attachment', 'Video'])
+def download_files(msg):
+    msg['Text'](msg['FileName'])
+    itchat.send('@%s@%s' % ('img' if msg['Type'] == 'Picture' else 'fil', msg['FileName']), msg['FromUserName'])
+    return '%s received' % msg['Type']
+"""
 
 
 @itchat.msg_register(FRIENDS)
@@ -56,19 +64,48 @@ def text_reply(msg):
     groupName = msg['User']['NickName']
     # if msg['isAt']:
     with open(CHATFILE_DIR + str(groupName) + '.txt', mode='a', encoding='utf-8') as f:
-        f.write(msg['ActualNickName'] + ' : ' + str(datetime.now()) + '  :  ' + msg['Content'] + '\r')
-        f.flush()
-        f.close()
-        # itchat.send(u'@%s\u2005I received: %s' % (msg['ActualNickName'], msg['Content']), msg['FromUserName'])
+        if msg['Type'] == 'Text':
+            f.write(msg['ActualNickName'] + ' : ' + str(datetime.now()) + '  :  ' + msg['Content'] + '\r')
+            f.flush()
+            f.close()
+            # itchat.send(u'@%s\u2005I received: %s' % (msg['ActualNickName'], msg['Content']), msg['FromUserName'])
+        elif msg['Type'] == 'PICTURE':
+            download_wechat_sticker(msg['Content'], CHATFILE_DIR + groupName, msg['ActualNickName'] + '.jpg')
 
     if '大叔' in groupName:
-        # itchat.send(u'@%s\u2005I received: %s' % (msg['ActualNickName'], msg['Content']), msg['FromUserName'])
-        # itchat.send('[Auto Reply]\r\n' + weather_service('武汉'), msg['FromUserName'])
         # itchat.send('[Auto Reply]\r\n@' + msg['ActualNickName'] + '\t' + chat_with_ai('68312595a53e4feb8165cd1335d7be7f', msg['Content']), msg['FromUserName'])
-        all_stickers = os.listdir(GIRL_DIR)
-        print(GIRL_DIR + str(all_stickers[randrange(len(all_stickers))]))
-        itchat.send('@img@' + GIRL_DIR + str(all_stickers[randrange(len(all_stickers))]),
+        all_stickers = os.listdir(STICKER_DIR)
+        print(STICKER_DIR + str(all_stickers[randrange(len(all_stickers))]))
+        itchat.send('@img@' + STICKER_DIR + str(all_stickers[randrange(len(all_stickers))]),
                     toUserName=msg['FromUserName'])
+
+
+def download_wechat_sticker(message_xml, dirname, filename):
+    """
+    unfinished
+    :param message_xml:
+    :param dirname:
+    :param filename:
+    :return:
+    """
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/'
+                      '58.0.3029.110 Chrome/58.0.3029.110 Safari/537.36',
+        'Host': 'emoji.qpic.cn',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    }
+    msg_xml_soup = BeautifulSoup(message_xml, 'html5lib')
+    cdurl = msg_xml_soup.msg.emoji['cdnurl']
+    response = requests.get(cdurl, headers=headers)
+    mkdirs_if_not_exists(CHATFILE_DIR + dirname)
+    if response.status_code == 200:
+        with open(CHATFILE_DIR + dirname + filename, mode='wb') as f:
+            f.write(response.content)
+            f.flush()
+            f.close()
+            print('Write sticker successfully~')
+    else:
+        print(response.status_code)
 
 
 def get_group(search_filter_username):
@@ -132,7 +169,8 @@ def crawl_sticker():
                 'http://qq.yh31.com/zjbq/0551964_3.html']
     headers = {
         'Host': 'qq.yh31.com',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/56.0.2924.76 Chrome/56.0.2924.76 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/'
+                      '56.0.2924.76 Chrome/56.0.2924.76 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
     }
 
@@ -235,15 +273,6 @@ def face_detect(image_path):
     except Exception as e:
         print('Invalid image')
         print(str(e))
-
-
-def cal_face_score(face_json):
-    result_list = []
-    for face in face_json['faces']:
-        result = dict()
-        result['gender'] = face_json['attributes']['gender']['value']
-        result['age'] = face_json['attributes']['age']['value']
-        face_json['faces']['landmark']
 
 
 def face_detect_with_url(image_url):
@@ -362,16 +391,9 @@ def face_detect_with_url(image_url):
         print(str(e))
 
 
-def face_detect_with_baidu(image_path):
-    pass
-
-
 if __name__ == '__main__':
-    # face_detect_with_url('http://epaper.gxnews.com.cn/ddshb/res/1/20160228/37831456613038950.jpg')
-    face_detect_with_url('http://211.69.132.96/Uploadfiles/StudentPhoto/2016317110015.jpg')
-    # face_detect('/home/lucasx/zhangzy.jpg')
-    # itchat.auto_login(True)
-    # itchat.run()
+    itchat.auto_login(True)
+    itchat.run()
     # group_send('Hello~')
     # crawl_sticker()
     # crawl_girl()

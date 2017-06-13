@@ -1,5 +1,6 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+
 from util.image_util import generate_train_and_test_data_bin, unpickle_bin_to_dict
 
 IMAGE_SIZE = 64
@@ -9,6 +10,7 @@ TRAINING_DATA = '/tmp/face/face_bin/training_set.bin'
 TEST_DATA = '/tmp/face/face_bin/test_set.bin'
 BATCH_SIZE = 128
 TRAINING_SIZE = 766
+VALIDATION_SIZE = 66
 TEST_SIZE = 240
 MODEL_CKPT_DIR = "/tmp/face/cnn-face"
 
@@ -45,6 +47,14 @@ def main():
     train_data = unpickle_bin_to_dict(TRAINING_DATA)['data'].reshape(
         [TRAINING_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
     train_labels = one_hot_encoding(unpickle_bin_to_dict(TRAINING_DATA)['labels'])
+
+    # train_data = tf.image.random_brightness(train_data, 50)
+    validation_data = train_data[-1 - VALIDATION_SIZE: -1]
+    validation_labels = train_labels[-1 - VALIDATION_SIZE: -1]
+
+    train_data = train_data[0: TRAINING_SIZE - VALIDATION_SIZE]
+    train_labels = train_labels[0: TRAINING_SIZE - VALIDATION_SIZE]
+
     test_data = unpickle_bin_to_dict(TEST_DATA)['data'].reshape([TEST_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
     test_labels = one_hot_encoding(unpickle_bin_to_dict(TEST_DATA)['labels'])
 
@@ -61,9 +71,14 @@ def main():
     h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
     h_pool2 = max_pool_2x2(h_conv2)
 
-    W_fc1 = weight_variable([16 * 16 * 64, 1024])
+    W_conv3 = weight_variable([4, 4, 64, 128])
+    b_conv3 = bias_variable([128])
+    h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
+    h_pool3 = max_pool_2x2(h_conv3)
+
+    W_fc1 = weight_variable([8 * 8 * 128, 1024])
     b_fc1 = bias_variable([1024])
-    h_pool2_flat = tf.reshape(h_pool2, [-1, 16 * 16 * 64])
+    h_pool2_flat = tf.reshape(h_pool3, [-1, 8 * 8 * 128])
     h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
     keep_prob = tf.placeholder(tf.float32)
@@ -80,9 +95,6 @@ def main():
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
     saver = tf.train.Saver()
-    if tf.gfile.Exists(MODEL_CKPT_DIR):
-        tf.gfile.DeleteRecursively(MODEL_CKPT_DIR)
-    tf.gfile.MakeDirs(MODEL_CKPT_DIR)
 
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
@@ -95,9 +107,13 @@ def main():
             if i % 100 == 0:
                 train_accuracy = accuracy.eval(feed_dict={
                     x: batch_data, y_: batch_labels, keep_prob: 1.0})
-                print("step %d, training accuracy %g" % (i, train_accuracy))
+                validation_accuracy = accuracy.eval(feed_dict={
+                    x: validation_data, y_: validation_labels, keep_prob: 1.0
+                })
+                print(
+                    "step %d, training accuracy %g, validation accuracy %g" % (i, train_accuracy, validation_accuracy))
                 saver.save(sess, MODEL_CKPT_DIR)
-            train_step.run(feed_dict={x: batch_data, y_: batch_labels, keep_prob: 0.5})
+            train_step.run(feed_dict={x: batch_data, y_: batch_labels, keep_prob: 0.7})
 
         print("test accuracy %g" % accuracy.eval(
             feed_dict={x: test_data, y_: test_labels, keep_prob: 1.0}))

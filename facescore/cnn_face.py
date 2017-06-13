@@ -7,7 +7,9 @@ CLASS_NUM = 5
 CHANNEL_NUM = 3  # 3 for RGB and 1 for gray scale
 TRAINING_DATA = '/tmp/face/face_bin/training_set.bin'
 TEST_DATA = '/tmp/face/face_bin/test_set.bin'
-BATCH_SIZE = 50
+BATCH_SIZE = 64
+TRAINING_SIZE = 766
+TEST_SIZE = 240
 
 
 def weight_variable(shape):
@@ -39,16 +41,17 @@ def one_hot_encoding(labels):
 
 def main():
     generate_train_and_test_data_bin()
-    train_data = unpickle_bin_to_dict(TRAINING_DATA)['data'].reshape([766, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
+    train_data = unpickle_bin_to_dict(TRAINING_DATA)['data'].reshape(
+        [TRAINING_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
     train_labels = one_hot_encoding(unpickle_bin_to_dict(TRAINING_DATA)['labels'])
-    test_data = unpickle_bin_to_dict(TEST_DATA)['data'].reshape([240, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
+    test_data = unpickle_bin_to_dict(TEST_DATA)['data'].reshape([TEST_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
     test_labels = one_hot_encoding(unpickle_bin_to_dict(TEST_DATA)['labels'])
 
-    train_x = tf.placeholder(tf.float32, [766, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
-    train_y_ = tf.placeholder(tf.float32, [766, CLASS_NUM])
+    train_x = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
+    train_y_ = tf.placeholder(tf.float32, [None, CLASS_NUM])
 
-    test_x = tf.placeholder(tf.float32, [240, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
-    test_y_ = tf.placeholder(tf.float32, [240, CLASS_NUM])
+    test_x = tf.placeholder(tf.float32, [TEST_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
+    test_y_ = tf.placeholder(tf.float32, [TEST_SIZE, CLASS_NUM])
 
     W_conv1 = weight_variable([4, 4, 3, 32])
     b_conv1 = bias_variable([32])
@@ -81,16 +84,24 @@ def main():
     sess.run(tf.global_variables_initializer())
 
     with sess.as_default():
+        current_batch_num = 0
         for i in range(20000):
-            batch_data = train_data[0:BATCH_SIZE]
-            batch_labels = train_labels[0:BATCH_SIZE]
+            batch_data = train_data[current_batch_num:BATCH_SIZE + current_batch_num]
+            batch_labels = train_labels[current_batch_num:BATCH_SIZE + current_batch_num]
+            current_batch_num += BATCH_SIZE
             if i % 100 == 0:
                 train_accuracy = accuracy.eval(feed_dict={
-                    train_x: train_data, train_y_: train_labels, keep_prob: 1.0})
+                    train_x: batch_data, train_y_: batch_labels, keep_prob: 1.0})
                 print("step %d, training accuracy %g" % (i, train_accuracy))
-            train_step.run(feed_dict={train_x: train_data, train_y_: train_labels, keep_prob: 0.5})
+            train_step.run(feed_dict={train_x: batch_data, train_y_: batch_labels, keep_prob: 0.5})
 
         print("test accuracy %g" % accuracy.eval(feed_dict={test_x: test_data, test_y_: test_labels, keep_prob: 1.0}))
+        sess.close()
+
+
+def next_batch(data, current_batch_num):
+    return data[current_batch_num, current_batch_num + BATCH_SIZE] \
+        if current_batch_num < len(data) else data[current_batch_num:]
 
 
 if __name__ == '__main__':

@@ -1,6 +1,9 @@
+import os, sys
+
 import numpy as np
 import tensorflow as tf
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from util.image_util import generate_train_and_test_data_bin, unpickle_bin_to_dict
 
 IMAGE_SIZE = 64

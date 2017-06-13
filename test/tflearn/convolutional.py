@@ -12,6 +12,7 @@ import numpy
 from six.moves import urllib
 from six.moves import xrange  # pylint: disable=redefined-builtin
 import tensorflow as tf
+from tensorflow.contrib.learn.python.learn.datasets import mnist
 
 SOURCE_URL = 'http://yann.lecun.com/exdb/mnist/'
 WORK_DIRECTORY = 'data'
@@ -97,6 +98,7 @@ def error_rate(predictions, labels):
 
 
 def main(_):
+    batch = mnist.train.next_batch(50)
     if FLAGS.self_test:
         print('Running self-test.')
         train_data, train_labels = fake_data(256)

@@ -7,9 +7,10 @@ CLASS_NUM = 5
 CHANNEL_NUM = 3  # 3 for RGB and 1 for gray scale
 TRAINING_DATA = '/tmp/face/face_bin/training_set.bin'
 TEST_DATA = '/tmp/face/face_bin/test_set.bin'
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 TRAINING_SIZE = 766
 TEST_SIZE = 240
+MODEL_CKPT_DIR = "/tmp/face/cnn-face"
 
 
 def weight_variable(shape):
@@ -47,15 +48,12 @@ def main():
     test_data = unpickle_bin_to_dict(TEST_DATA)['data'].reshape([TEST_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
     test_labels = one_hot_encoding(unpickle_bin_to_dict(TEST_DATA)['labels'])
 
-    train_x = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
-    train_y_ = tf.placeholder(tf.float32, [None, CLASS_NUM])
-
-    test_x = tf.placeholder(tf.float32, [TEST_SIZE, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM])
-    test_y_ = tf.placeholder(tf.float32, [TEST_SIZE, CLASS_NUM])
+    x = tf.placeholder(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, CHANNEL_NUM], name='TrainX')
+    y_ = tf.placeholder(tf.float32, [None, CLASS_NUM])
 
     W_conv1 = weight_variable([4, 4, 3, 32])
     b_conv1 = bias_variable([32])
-    h_conv1 = tf.nn.relu(conv2d(train_x, W_conv1) + b_conv1)
+    h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
     h_pool1 = max_pool_2x2(h_conv1)
 
     W_conv2 = weight_variable([4, 4, 32, 64])
@@ -75,33 +73,35 @@ def main():
     b_fc2 = bias_variable([5])
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
-    sess = tf.Session()
     cross_entropy = tf.reduce_mean(
-        tf.nn.softmax_cross_entropy_with_logits(labels=train_y_, logits=y_conv))
+        tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
-    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(train_y_, 1))
+    correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    sess.run(tf.global_variables_initializer())
 
-    with sess.as_default():
+    saver = tf.train.Saver()
+    if tf.gfile.Exists(MODEL_CKPT_DIR):
+        tf.gfile.DeleteRecursively(MODEL_CKPT_DIR)
+    tf.gfile.MakeDirs(MODEL_CKPT_DIR)
+
+    with tf.Session() as sess:
+        tf.global_variables_initializer().run()
         current_batch_num = 0
-        for i in range(20000):
-            batch_data = train_data[current_batch_num:BATCH_SIZE + current_batch_num]
-            batch_labels = train_labels[current_batch_num:BATCH_SIZE + current_batch_num]
-            current_batch_num += BATCH_SIZE
+        print('start processing %dth batch...' % (current_batch_num / BATCH_SIZE))
+        for i in range(2000):
+            offset = (i * BATCH_SIZE) % (train_labels.shape[0] - BATCH_SIZE)
+            batch_data = train_data[offset: offset + BATCH_SIZE]
+            batch_labels = train_labels[offset: offset + BATCH_SIZE]
             if i % 100 == 0:
                 train_accuracy = accuracy.eval(feed_dict={
-                    train_x: batch_data, train_y_: batch_labels, keep_prob: 1.0})
+                    x: batch_data, y_: batch_labels, keep_prob: 1.0})
                 print("step %d, training accuracy %g" % (i, train_accuracy))
-            train_step.run(feed_dict={train_x: batch_data, train_y_: batch_labels, keep_prob: 0.5})
+                saver.save(sess, MODEL_CKPT_DIR)
+            train_step.run(feed_dict={x: batch_data, y_: batch_labels, keep_prob: 0.5})
 
-        print("test accuracy %g" % accuracy.eval(feed_dict={test_x: test_data, test_y_: test_labels, keep_prob: 1.0}))
+        print("test accuracy %g" % accuracy.eval(
+            feed_dict={x: test_data, y_: test_labels, keep_prob: 1.0}))
         sess.close()
-
-
-def next_batch(data, current_batch_num):
-    return data[current_batch_num, current_batch_num + BATCH_SIZE] \
-        if current_batch_num < len(data) else data[current_batch_num:]
 
 
 if __name__ == '__main__':

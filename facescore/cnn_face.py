@@ -11,7 +11,7 @@ CLASS_NUM = 5
 CHANNEL_NUM = 3  # 3 for RGB and 1 for gray scale
 TRAINING_DATA = '/tmp/face/face_bin/training_set.bin'
 TEST_DATA = '/tmp/face/face_bin/test_set.bin'
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 TRAINING_SIZE = 766
 VALIDATION_SIZE = 66
 TEST_SIZE = 240
@@ -91,9 +91,23 @@ def main():
     b_fc2 = bias_variable([5])
     y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
 
+    # L2 regularization for the fully connected parameters to avoid over-fitting.
+    regularizers = (tf.nn.l2_loss(W_fc1) + tf.nn.l2_loss(b_fc1) +
+                    tf.nn.l2_loss(W_fc2) + tf.nn.l2_loss(b_fc2))
+
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
-    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+    # Add the regularization term to the loss.
+    cross_entropy += 1e-4 * regularizers
+
+    global_step = tf.placeholder(tf.float32)
+    learning_rate = tf.train.exponential_decay(
+        0.01,  # Base learning rate.
+        global_step,  # Current index into the dataset.
+        1000,  # Decay step.
+        0.95,  # Decay rate.
+        staircase=True)
+    train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -117,7 +131,7 @@ def main():
                 print(
                     "step %d, training accuracy %g, validation accuracy %g" % (i, train_accuracy, validation_accuracy))
                 saver.save(sess, MODEL_CKPT_DIR)
-            train_step.run(feed_dict={x: batch_data, y_: batch_labels, keep_prob: 0.7})
+            train_step.run(feed_dict={x: batch_data, y_: batch_labels, global_step: i, keep_prob: 0.7})
 
         print("test accuracy %g" % accuracy.eval(
             feed_dict={x: test_data, y_: test_labels, keep_prob: 1.0}))

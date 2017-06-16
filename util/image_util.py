@@ -39,7 +39,8 @@ def _raw_image_to_dict(image_dir, id_and_score):
         label = label_by_range(float(id_and_score[each_image.split(".")[0]]))['label']
         arr = rgb.tolist()
         # data_list.append(arr)
-        data_list.append((arr - np.min(arr)) / (np.max(arr) - np.min(arr)))
+        # data_list.append((arr - np.min(arr)) / (np.max(arr) - np.min(arr)))
+        data_list.append((arr - np.mean(arr)) / np.sqrt(np.var(arr)))
         label_list.append(label)
         filename_list.append(each_image)
     images_dict['data'] = np.array(data_list, dtype=np.float32)
@@ -148,5 +149,5 @@ def one_hot_encoding(labels, class_num):
 
 if __name__ == '__main__':
     # generate_train_and_test_data_bin()
-    resize_images('/tmp/face/training_set/', '/tmp/face/training_set/')
-    # print(unpickle_bin_to_dict('/tmp/face/face_bin/test_set.bin')['data'].shape)
+    # resize_images('/tmp/face/training_set/', '/tmp/face/training_set/')
+    print(unpickle_bin_to_dict('/tmp/face/face_bin/test_set.bin')['data'].shape)

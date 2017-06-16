@@ -14,9 +14,8 @@ def read_bulk_images(image_dir):
 
 if __name__ == '__main__':
     # read_bulk_images('/home/lucasx/Documents/Dataset/ImageDataSet/Beauty-Faces')
-    arr = tf.Variable([[[1, 2, 3]], [[4, 5, 6]], [[7, 8, 9]]], dtype=tf.int64)
-    label = [1, 2, 3, 4]
+    arr = tf.Variable([[[1, 2, 3]], [[4, 5, 6]], [[7, 8, 9]]], dtype=tf.float32)
     with tf.Session() as session:
         tf.global_variables_initializer().run()
-        one_hot_labels = tf.one_hot(label, depth=4, on_value=1, off_value=0, axis=0)
-        print(one_hot_labels.eval())
+
+        print(arr.eval())

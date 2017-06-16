@@ -111,6 +111,7 @@ def main():
         print('start processing %dth batch...' % (current_batch_num / BATCH_SIZE))
         for i in range(2000):
             offset = (i * BATCH_SIZE) % (training_label.shape[0] - BATCH_SIZE)
+            print('offset is %d ...' % offset)
             batch_data = training_data[offset: offset + BATCH_SIZE, :, :, :]
             batch_labels = training_label[offset: offset + BATCH_SIZE]
             if i % 100 == 0:

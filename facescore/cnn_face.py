@@ -100,14 +100,14 @@ def main():
     # Add the regularization term to the loss.
     cross_entropy += 1e-4 * regularizers
 
-    global_step = tf.placeholder(tf.float32)
+    global_step = tf.placeholder(tf.float32, name='GlobalStep')
     learning_rate = tf.train.exponential_decay(
         0.01,  # Base learning rate.
         global_step,  # Current index into the dataset.
         1000,  # Decay step.
         0.95,  # Decay rate.
         staircase=True)
-    train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
+    train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -118,7 +118,7 @@ def main():
         tf.contrib.layers.xavier_initializer(uniform=True, seed=None, dtype=tf.float32)
         current_batch_num = 0
         print('start processing %dth batch...' % (current_batch_num / BATCH_SIZE))
-        for i in range(2000):
+        for i in range(10000):
             offset = (i * BATCH_SIZE) % (train_labels.shape[0] - BATCH_SIZE)
             batch_data = train_data[offset: offset + BATCH_SIZE]
             batch_labels = train_labels[offset: offset + BATCH_SIZE]
@@ -131,7 +131,8 @@ def main():
                 print(
                     "step %d, training accuracy %g, validation accuracy %g" % (i, train_accuracy, validation_accuracy))
                 saver.save(sess, MODEL_CKPT_DIR)
-            train_step.run(feed_dict={x: batch_data, y_: batch_labels, global_step: i, keep_prob: 0.7})
+            train_step.run(feed_dict={x: batch_data, y_: batch_labels, global_step: i, keep_prob: 0.5})
+            # print(learning_rate.eval())
 
         print("test accuracy %g" % accuracy.eval(
             feed_dict={x: test_data, y_: test_labels, keep_prob: 1.0}))

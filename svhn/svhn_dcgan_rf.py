@@ -66,7 +66,7 @@ def main():
     training_data, training_label = tf.transpose(training_data[:, :, :, 0: 70000], perm=(3, 0, 1, 2)), one_hot_encoding(
         training_label[0: 70000])
     test_data, test_label = load_data(TEST_DATA)
-    test_data, test_label = test_data[:, :, :, 0:TEST_NUM], test_label
+    test_data, test_label = tf.transpose(test_data, perm=(3, 0, 1, 2)), one_hot_encoding(test_label)
 
     x = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL], name='Data')
     y_ = tf.placeholder(tf.float32, [None, CLASS_NUM], name='Label')

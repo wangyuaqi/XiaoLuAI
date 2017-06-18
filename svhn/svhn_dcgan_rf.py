@@ -3,7 +3,7 @@ import scipy.io as sio
 import numpy as np
 
 CLASS_NUM = 10
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 TRAINING_DATA = '/home/lucasx/Documents/Dataset/ImageDataSet/SVHN/train_32x32.mat'
 TEST_DATA = '/home/lucasx/Documents/Dataset/ImageDataSet/SVHN/test_32x32.mat'
 IMAGE_WIDTH = 32
@@ -51,11 +51,11 @@ def one_hot_encoding(labels):
 def load_data(mat_file):
     """
     load the mat file and return the data as well as label
-    :param mat_file:
-    :return:
+    :param mat_file: matlab file which contains images' rgb gray value and correspondent value
+    :return: data and its label
     """
     data = sio.loadmat(mat_file)
-    return data['X'], data['y']
+    return np.array(data['X'], dtype=np.float32), np.array(data['y'], dtype=np.int64)
 
 
 def main():
@@ -113,6 +113,7 @@ def main():
             offset = (i * BATCH_SIZE) % (training_label.shape[0] - BATCH_SIZE)
             print('offset is %d ...' % offset)
             batch_data = training_data[offset: offset + BATCH_SIZE, :, :, :]
+            batch_data = batch_data - np.mean(batch_data.eval()) / (np.sqrt(np.var(batch_data.eval())))
             batch_labels = training_label[offset: offset + BATCH_SIZE]
             if i % 100 == 0:
                 train_accuracy = accuracy.eval(feed_dict={

@@ -28,7 +28,7 @@ def read_svhn(filename_queue):
     svhn.depth = 3
     image_bytes = svhn.width * svhn.height * svhn.depth
     record_bytes = image_bytes + label_bytes
-    reader = tf.FixedLengthRecordReader()
+    reader = tf.FixedLengthRecordReader(record_bytes)
     svhn.key, value = reader.read(filename_queue)
     record_bytes = tf.decode_raw(value, tf.uint8)
 

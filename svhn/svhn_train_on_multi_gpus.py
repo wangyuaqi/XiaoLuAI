@@ -197,7 +197,6 @@ def train():
 
 
 def main(argv=None):  # pylint: disable=unused-argument
-    tf.gfile.MakeDirs(FLAGS.train_dir)
     train()
 
 

@@ -1,3 +1,6 @@
+import os
+import time
+
 import tensorflow as tf
 import scipy.io as sio
 import numpy as np
@@ -6,6 +9,7 @@ CLASS_NUM = 10
 BATCH_SIZE = 128
 TRAINING_DATA = '/home/lucasx/Documents/Dataset/ImageDataSet/SVHN/train_32x32.mat'
 TEST_DATA = '/home/lucasx/Documents/Dataset/ImageDataSet/SVHN/test_32x32.mat'
+MODEL_CKPT_DIR = '/tmp/model/svhn'
 IMAGE_WIDTH = 32
 IMAGE_HEIGHT = 32
 IMAGE_CHANNEL = 3
@@ -111,6 +115,11 @@ def main():
     train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
     correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    saver = tf.train.Saver()
+
+    if tf.gfile.Exists(os.path.abspath(os.path.join(MODEL_CKPT_DIR, os.pardir))):
+        tf.gfile.DeleteRecursively(MODEL_CKPT_DIR)
+    tf.gfile.MakeDirs(os.path.abspath(os.path.join(MODEL_CKPT_DIR, os.pardir)))
 
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
@@ -133,7 +142,7 @@ def main():
                 })
                 print(
                     "step %d, training accuracy %g, validation accuracy %g" % (i, train_accuracy, validation_accuracy))
-                # saver.save(sess, MODEL_CKPT_DIR)
+                saver.save(sess, MODEL_CKPT_DIR)
             train_step.run(feed_dict={x: batch_data.eval(), y_: batch_labels, keep_prob: 0.5})
 
         print("test accuracy %g" % accuracy.eval(
@@ -142,4 +151,10 @@ def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    end_time = time.time()
+    elapse = end_time - start_time
+    print('======================================================')
+    print(elapse)
+    print('======================================================')

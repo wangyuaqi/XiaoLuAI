@@ -126,7 +126,7 @@ def main():
         tf.contrib.layers.xavier_initializer(uniform=True, seed=None, dtype=tf.float32)
         current_batch_num = 0
         print('start processing %dth batch...' % (current_batch_num / BATCH_SIZE))
-        for i in range(2000):
+        for i in range(20000):
             offset = (i * BATCH_SIZE) % (training_label.shape[0] - BATCH_SIZE)
             print('offset is %d ...' % offset)
             batch_data = training_data[offset: offset + BATCH_SIZE, :, :, :]

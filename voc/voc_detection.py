@@ -4,11 +4,7 @@ import random
 import cv2
 from lxml import etree
 
-import tensorflow as tf
-
-BASE_DIR = '/home/lucasx/Documents/Dataset/VOC/VOCtrainval_06-Nov-2007/VOC2007/'
-ANNOTATION_XML_DIR = BASE_DIR + 'Annotations/'
-JPG_IMAGES_DIR = BASE_DIR + 'JPEGImages/'
+from voc.config import *
 
 
 def parse_boject_location_from_xml(xml_filepath):
@@ -55,27 +51,3 @@ def draw_bbox():
         cv2.imshow('image', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-
-def get_classify_train_and_test_file(classify_filepath):
-    with open(classify_filepath, mode='rt', encoding='UTF-8') as f:
-        for _ in f.readlines():
-            if int(_.split(' ')[-1].strip()) == -1:
-                pass
-            elif int(_.split(' ')[-1].strip()) == 1:
-                pass
-
-
-def data_initialize():
-    # get train absolute filename list and validation filename list
-    with open(BASE_DIR + '/ImageSets/Main/train.txt', mode='rt', encoding='UTF-8') as f:
-        train_filenames = [JPG_IMAGES_DIR + '%s.jpg' % _.strip() for _ in f.readlines()]
-    with open(BASE_DIR + '/ImageSets/Main/val.txt', mode='rt', encoding='UTF-8') as f:
-        validation_filenames = [JPG_IMAGES_DIR + '%s.jpg' % _.strip() for _ in f.readlines()]
-
-    print(validation_filenames)
-
-
-if __name__ == '__main__':
-    classify_file_dir = '/home/lucasx/Documents/Dataset/VOC/VOCtrainval_06-Nov-2007/VOC2007/ImageSets/Main/'
-    data_initialize()

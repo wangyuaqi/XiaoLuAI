@@ -10,3 +10,5 @@ bots/itchat.pkl
 test/tflearn/data
 facedetection/face/
 svhn/__pycache__/svhn_input.cpython-35.pyc
+bots/wechat.xlsx
+voc/__pycache__/

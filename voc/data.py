@@ -1,6 +1,10 @@
+"""
+for Pascal VOC data pre processing, the min size of the image is 96*127*3
+"""
 import os
 
 import tensorflow as tf
+import numpy as np
 import cv2
 
 from voc.config import *
@@ -56,4 +60,4 @@ if __name__ == '__main__':
     train_set, val_set = get_voc_train_and_val_files_and_labels(imageset_main_folder)
 
     list_ = get_images_shape(JPG_IMAGES_DIR)
-    print(pre_processing(list_))
+    print(np.min([_[1] for _ in list_]))

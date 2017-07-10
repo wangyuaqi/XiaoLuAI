@@ -80,35 +80,41 @@ def main():
     h_conv1 = tf.nn.relu(conv2d(x, W_conv1) + b_conv1)
     h_pool1 = max_pool_2x2(h_conv1)
 
-    # norm1
-    norm1 = tf.nn.lrn(h_pool1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
-                      name='norm1')
-
     W_conv2 = weight_variable([5, 5, 64, 64])
     b_conv2 = bias_variable([64])
-    h_conv2 = tf.nn.relu(conv2d(norm1, W_conv2) + b_conv2)
+    h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2)
+    h_pool2 = max_pool_2x2(h_conv2)
 
-    # norm2
-    norm2 = tf.nn.lrn(h_conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
-                      name='norm2')
-    h_pool2 = max_pool_2x2(norm2)
-
-    W_conv3 = weight_variable([5, 5, 64, 64])
-    b_conv3 = bias_variable([64])
+    W_conv3 = weight_variable([5, 5, 64, 128])
+    b_conv3 = bias_variable([128])
     h_conv3 = tf.nn.relu(conv2d(h_pool2, W_conv3) + b_conv3)
     h_pool3 = max_pool_2x2(h_conv3)
 
-    W_fc1 = weight_variable([4 * 4 * 64, 1024])
+    W_conv4 = weight_variable([5, 5, 128, 256])
+    b_conv4 = weight_variable([256])
+    h_conv4 = tf.nn.relu(conv2d(h_pool3, W_conv4) + b_conv4)
+    h_pool4 = max_pool_2x2(h_conv4)
+
+    W_conv5 = weight_variable([5, 5, 256, 64])
+    b_conv5 = weight_variable([64])
+    h_conv5 = tf.nn.relu(conv2d(h_pool4, W_conv5) + b_conv5)
+    h_pool5 = max_pool_2x2(h_conv5)
+
+    W_fc1 = weight_variable([64, 1024])
     b_fc1 = bias_variable([1024])
-    h_pool2_flat = tf.reshape(h_pool3, [-1, 4 * 4 * 64])
-    h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+    h_pool1_flat = tf.reshape(h_pool5, [-1, 64])
+    h_fc1 = tf.nn.relu(tf.matmul(h_pool1_flat, W_fc1) + b_fc1)
 
     keep_prob = tf.placeholder(tf.float32)
     h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
-    W_fc2 = weight_variable([1024, CLASS_NUM])
-    b_fc2 = bias_variable([CLASS_NUM])
-    y_conv = tf.matmul(h_fc1_drop, W_fc2) + b_fc2
+    W_fc2 = weight_variable([1024, 256])
+    b_fc2 = bias_variable([256])
+    h_fc2 = tf.nn.relu(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
+
+    W_fc3 = weight_variable([256, CLASS_NUM])
+    b_fc3 = weight_variable([CLASS_NUM])
+    y_conv = tf.matmul(h_fc2, W_fc3) + b_fc3
 
     cross_entropy = tf.reduce_mean(
         tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=y_conv))
@@ -118,10 +124,11 @@ def main():
     saver = tf.train.Saver()
 
     if tf.gfile.Exists(os.path.abspath(os.path.join(MODEL_CKPT_DIR, os.pardir))):
-        tf.gfile.DeleteRecursively(MODEL_CKPT_DIR)
+        tf.gfile.DeleteRecursively(os.path.abspath(os.path.join(MODEL_CKPT_DIR, os.pardir)))
     tf.gfile.MakeDirs(os.path.abspath(os.path.join(MODEL_CKPT_DIR, os.pardir)))
 
     with tf.Session() as sess:
+        writer = tf.summary.FileWriter('/tmp/model/graphs', sess.graph)
         tf.global_variables_initializer().run()
         tf.contrib.layers.xavier_initializer(uniform=True, seed=None, dtype=tf.float32)
         current_batch_num = 0
@@ -148,6 +155,7 @@ def main():
         print("test accuracy %g" % accuracy.eval(
             feed_dict={x: test_data.eval(), y_: test_label, keep_prob: 1.0}))
         sess.close()
+        writer.close()
 
 
 if __name__ == '__main__':

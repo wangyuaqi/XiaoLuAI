@@ -6,7 +6,7 @@ import scipy.io as sio
 import numpy as np
 
 CLASS_NUM = 10
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 TRAINING_DATA = '/home/lucasx/Documents/Dataset/ImageDataSet/SVHN/train_32x32.mat'
 TEST_DATA = '/home/lucasx/Documents/Dataset/ImageDataSet/SVHN/test_32x32.mat'
 MODEL_CKPT_DIR = '/tmp/model/svhn'

@@ -392,8 +392,8 @@ def face_detect_with_url(image_url):
 
 
 if __name__ == '__main__':
-    itchat.auto_login(True)
-    itchat.run()
+    # itchat.auto_login(True)
+    # itchat.run()
     # group_send('Hello~')
-    # crawl_sticker()
+    crawl_sticker()
     # crawl_girl()

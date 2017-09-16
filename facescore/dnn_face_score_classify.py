@@ -1,5 +1,5 @@
 """
-This demo is the face score detector powered by feed forward neural nets
+This demo is the face score detector powered by MLP
 Authorized by LucasX
 """
 import tensorflow as tf

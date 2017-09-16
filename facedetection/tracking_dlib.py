@@ -1,3 +1,6 @@
+"""
+visual tracking by dlib
+"""
 import os
 import glob
 

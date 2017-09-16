@@ -1,9 +1,8 @@
+"""
+face detector powered by OpenCV3.2
+"""
 import cv2
 import sys
-
-"""
-    This code is provided for face detection!
-"""
 
 imagePath = 'talor.jpg'
 cascPath = '../res/haarcascade_frontalface_default.xml'

@@ -1,3 +1,6 @@
+"""
+face landmarks detection powered by dlib
+"""
 import dlib
 from skimage import io
 

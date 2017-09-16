@@ -1,3 +1,6 @@
+"""
+face scoring with CNN
+"""
 import os, sys
 
 import numpy as np

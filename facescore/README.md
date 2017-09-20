@@ -1,7 +1,7 @@
 # Face Score
 
 ## Introduction
-This repo is used for face score recognition based on deep neural networks, the training and test data are collected throught web crawler in Java of [CVLH-BE](https://github.com/EclipseXuLu/CVLH-BE.git).
+This repo is used for face score recognition based on machine learning regression algorithm, the training and test dataset are collected throught web crawler in Java of [CVLH](https://github.com/EclipseXuLu/CVLH.git).
  
 ## Format
 We design this by referring to [CIFAR.](http://www.cs.toronto.edu/~kriz/cifar.html)

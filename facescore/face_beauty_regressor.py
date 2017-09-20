@@ -1,18 +1,24 @@
 import os
+import math
 
 import dlib
+import numpy as np
 import pandas as pd
+from PIL import Image
 import skimage.color
 from skimage import io
 from skimage.feature import hog
+from skimage.feature import local_binary_pattern
+from sklearn import decomposition
 from sklearn import linear_model
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn import svm
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.externals import joblib
 import cv2
 
 LABEL_EXCEL_PATH = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
 FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
-TRAIN_RATIO = 0.8
+TRAIN_RATIO = 0.9
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 
@@ -54,14 +60,42 @@ def HOG(img_path):
     return feature
 
 
+def LBP(img_path):
+    """
+    extract LBP features
+    :param img_path:
+    :return:
+    """
+    img = io.imread(img_path)
+    img = skimage.color.rgb2gray(img)
+    feature = local_binary_pattern(img, P=8, R=0.2)
+    # im = Image.fromarray(np.uint8(feature))
+    # im.show()
+
+    return feature.reshape(-1, 1)
+
+
 def hog_from_cv(img):
     """
     extract HOG feature from opencv image object
     :param img:
     :return:
+    :Version:1.0
     """
     img = skimage.color.rgb2gray(img)
     return hog(img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), block_norm='L2-Hys')
+
+
+def PCA(feature_matrix):
+    """
+    PCA algorithm
+    :param feature_matrix:
+    :return:
+    """
+    pca = decomposition.PCA(n_components=20)
+    pca.fit(feature_matrix)
+
+    return pca.transform(feature_matrix)
 
 
 def detect_face_and_cal_beauty(face_filepath):
@@ -97,7 +131,7 @@ def detect_face_and_cal_beauty(face_filepath):
         attractiveness = br.predict(hog.reshape(-1, hog.shape[0]))
 
         cv2.rectangle(image, (d.left(), d.top()), (d.right(), d.bottom()), (0, 255, 225), 2)
-        cv2.putText(image, str(attractiveness[0]), (d.left() + 5, d.top() - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+        cv2.putText(image, str(round(attractiveness[0], 2)), (d.left() + 5, d.top() - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                     (106, 106, 255), 0, cv2.LINE_AA)
 
         cv2.imshow('image', image)
@@ -110,16 +144,31 @@ def detect_face_and_cal_beauty(face_filepath):
 
 
 def train_model(train_set, test_set, train_label, test_label):
-    br = linear_model.BayesianRidge()
+    """
+    train ML model and serialize it into a binary pickle file
+    :param train_set:
+    :param test_set:
+    :param train_label:
+    :param test_label:
+    :return:
+    """
+    br = linear_model.ElasticNetCV(alphas=[_ * 0.1 for _ in range(1, 100, 1)])
+    # br = svm.SVR()
     br.fit(train_set, train_label)
-    mse_lr = mean_squared_error(test_label, br.predict(test_set))
-    r2_lr = r2_score(test_label, br.predict(test_set))
+    mae_lr = mean_absolute_error(test_label, br.predict(test_set))
+    rmse_lr = math.sqrt(mean_squared_error(test_label, br.predict(test_set)))
+    pc = np.corrcoef(test_label, br.predict(test_set))[0, 1]
     # roc_auc_lr = roc_auc_score(test_label, lr.predict(test_set))
-    print('===============The Mean Square Error of Linear Model is {0}===================='.format(mse_lr))
-    print('===============The R^2 Value of Linear Model is {0}===================='.format(r2_lr))
+    print('===============The Mean Absolute Error of Linear Model is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of Linear Model is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of Linear Model is {0}===================='.format(pc))
 
     joblib.dump(br, './bayes_ridge_regressor.pkl')
 
 
 if __name__ == '__main__':
-    detect_face_and_cal_beauty('/home/lucasx/faces.jpg')
+    train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
+    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
+    # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d
+    # print(lbp.shape)

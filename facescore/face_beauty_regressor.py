@@ -184,6 +184,7 @@ def train_model(train_set, test_set, train_label, test_label):
     :param train_label:
     :param test_label:
     :return:
+    :Version:1.0
     """
     reg = linear_model.RidgeCV(alphas=[_ * 0.1 for _ in range(1, 1000, 1)])
     # reg = linear_model.BayesianRidge()

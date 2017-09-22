@@ -15,9 +15,11 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.externals import joblib
 import cv2
 
+from facescore.vgg_face_beauty_regressor import extract_feature
+
 LABEL_EXCEL_PATH = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
 FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
-TRAIN_RATIO = 0.90
+TRAIN_RATIO = 0.8
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 
@@ -44,8 +46,8 @@ def prepare_data():
     # test_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with LBP features
-    train_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    test_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
+    # test_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with HARR features
     # train_set_vector = [HARRIS(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
@@ -54,6 +56,10 @@ def prepare_data():
     # extract with Pixel Value features
     # train_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
     # test_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+
+    # extract with VGG Face features
+    train_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
+    test_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
 

@@ -42,8 +42,8 @@ def prepare_data():
                     int(len(attractiveness_scores) * TRAIN_RATIO) + 1:int(len(attractiveness_scores))]
 
     # extract with HOG features
-    # train_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    # test_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    train_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
+    test_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with LBP features
     # train_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
@@ -58,8 +58,8 @@ def prepare_data():
     # test_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with VGG Face features
-    train_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    test_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
+    # test_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
 

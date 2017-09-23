@@ -26,10 +26,11 @@ def extract_feature(image_filepath, layer_name='fc7'):
         feature = out[layer_name]
         sess.close()
 
-    return feature.reshape(-1, 1)
+    return feature.ravel()
 
 
 if __name__ == '__main__':
-    feature = extract_feature(
-        '/media/lucasx/02C5-4B45/FaceBeautyPrediction/Tensorflow-VGG-face/Aamir_Khan_March_2015.jpg')
+    feature = extract_feature('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
+    print(feature)
+    print(feature.shape)
 

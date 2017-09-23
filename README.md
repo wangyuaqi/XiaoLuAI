@@ -20,3 +20,6 @@
    
    Change the directory parameters in source code, and everything will be OK.   
    This repo has been tested OK on Ubuntu16.04.
+   
+## LICENSE
+Under [GPL-3.0](http://www.gnu.org/licenses/gpl-3.0.html) LICENSE. 

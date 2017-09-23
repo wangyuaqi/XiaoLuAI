@@ -192,8 +192,8 @@ def train_model(train_set, test_set, train_label, test_label):
     :return:
     :Version:1.0
     """
-    reg = linear_model.RidgeCV(alphas=[_ * 0.1 for _ in range(1, 1000, 1)])
-    # reg = linear_model.BayesianRidge()
+    # reg = linear_model.RidgeCV(alphas=[_ * 0.1 for _ in range(1, 1000, 1)])
+    reg = linear_model.BayesianRidge()
     # reg = svm.SVR()
     reg.fit(train_set, train_label)
     mae_lr = round(mean_absolute_error(test_label, reg.predict(test_set)), 4)

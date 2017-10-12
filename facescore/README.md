@@ -1,11 +1,11 @@
 # Face Score
 
 ## Introduction
-This repo is used for face score recognition based on machine learning regression algorithm, the training and test dataset are collected throught web crawler in Java of [CVLH](https://github.com/EclipseXuLu/CVLH.git).
- 
-## Format
-We design this by referring to [CIFAR.](http://www.cs.toronto.edu/~kriz/cifar.html)
-The binary file generator is [image_util.py](../util/image_util.py)
+This repo is used for machine learning based facial beauty prediction. More details can be found at [my article at Zhihu](https://zhuanlan.zhihu.com/p/29399781).
+
+## Benchmark
+We use [SCUT-FBP](http://www.hcii-lab.net/data/scut-fbp/en/introduce.html) and [Female Facial Beauty Dataset (ECCV2010) v1.0](https://www.researchgate.net/publication/261595808_Female_Facial_Beauty_Dataset_ECCV2010_v10) dataset to validate our algorithm.
+
 
 ## Inference
 After train a model, you may want to make prediction by using this pre-trained model, while TensorFlow's official tutorial does not contain too much about it.

@@ -66,8 +66,8 @@ class FaceBeautyDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.face_images = [FACE_IMAGE_FILENAME.format(_) for _ in
-                            pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')['Image'].tolist()]
+        self.face_images = pd.DataFrame([FACE_IMAGE_FILENAME.format(_) for _ in
+                                         pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')['Image'].tolist()])
         self.beauty_labels = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')['Attractiveness label']
         self.transform = transform
 
@@ -126,7 +126,7 @@ def train():
         for i_batch, sample_batched in enumerate(dataloader):
             inputs, labels = sample_batched
             if torch.cuda.is_available():
-                input = Variable(input.cuda())
+                inputs = Variable(inputs.cuda())
                 labels = Variable(labels.cuda())
             else:
                 inputs, labels = Variable(inputs), Variable(labels)

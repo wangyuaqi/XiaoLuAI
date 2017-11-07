@@ -107,7 +107,8 @@ def split_data(test_ratio):
 
 def train():
     transform = transforms.Compose(
-        [transforms.ToTensor(),
+        [transforms.RandomCrop(IMAGE_SIZE),
+         transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     transformed_dataset = FaceBeautyDataset(transform=transform)
     dataloader = DataLoader(transformed_dataset, batch_size=BATCH_SIZE,

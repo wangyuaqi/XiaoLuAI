@@ -11,7 +11,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 EPOCH = 200
-BATCH = 16
+BATCH = 4
+IMAGE_SIZE = 128
 
 
 def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
@@ -22,7 +23,7 @@ def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornIma
     :return:
     """
     data_transform = transforms.Compose([
-        transforms.RandomSizedCrop(32),
+        transforms.RandomSizedCrop(IMAGE_SIZE),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -44,18 +45,20 @@ class PRNet(nn.Module):
         super(PRNet, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         # kernel
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv1 = nn.Conv2d(3, 32, 5, stride=3)
+        self.conv2 = nn.Conv2d(32, 128, 4)
+        self.conv3 = nn.Conv2d(128, 256, 2)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 3)
+        self.fc1 = nn.Linear(256 * 4 * 4, 2048)
+        self.fc2 = nn.Linear(2048, 512)
+        self.fc3 = nn.Linear(512, 3)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
         # If the size is a square you can only specify a single number
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = F.max_pool2d(F.relu(self.conv3(x)), 2)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -187,5 +190,4 @@ def inference(testloader):
 if __name__ == '__main__':
     trainloader = prepare_data(type='train')
     testloader = prepare_data(type='test')
-    # train_and_test(trainloader, testloader)
-    inference(testloader)
+    train_and_test(trainloader, testloader)

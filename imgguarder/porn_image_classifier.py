@@ -10,10 +10,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+EPOCH = 200
+BATCH = 16
+
 
 def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
     """
     build dataloader
+    :param type: train for trainset, test for testset
     :param root_dir:
     :return:
     """
@@ -27,7 +31,7 @@ def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornIma
     hymenoptera_dataset = datasets.ImageFolder(root=os.path.join(root_dir, type),
                                                transform=data_transform)
     dataset_loader = torch.utils.data.DataLoader(hymenoptera_dataset,
-                                                 batch_size=4, shuffle=True,
+                                                 batch_size=BATCH, shuffle=True,
                                                  num_workers=4)
 
     return dataset_loader
@@ -71,6 +75,8 @@ class PRNet(nn.Module):
 def train_and_test(trainloader, testloader, model_path_dir='../model/'):
     """
     train PRNet
+    :param model_path_dir:
+    :param testloader:
     :param dataloader:
     :return:
     """
@@ -82,7 +88,7 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
     optimizer = optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
     print('Start training CNN...')
-    for epoch in range(200):  # loop over the dataset multiple times
+    for epoch in range(EPOCH):  # loop over the dataset multiple times
 
         running_loss = 0.0
         for i_batch, sample_batched in enumerate(trainloader):
@@ -119,11 +125,33 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
     for data in testloader:
         images, labels = data
         if torch.cuda.is_available():
-            images = Variable(images.cuda())
-            labels = Variable(labels.cuda())
-        else:
-            images = Variable(images)
-            labels = Variable(labels)
+            images = images.cuda()
+            labels = labels.cuda()
+
+        outputs = net(Variable(images))
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum()
+
+    print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
+
+
+def inference(testloader):
+    """
+    inference
+    :param testloader:
+    :return:
+    """
+    net = PRNet()
+    net.load_state_dict(torch.load('../model/prnet.pth'))
+    correct = 0
+    total = 0
+    for data in testloader:
+        images, labels = data
+        if torch.cuda.is_available():
+            net = net.cuda()
+            images = images.cuda()
+            labels = labels.cuda()
 
         outputs = net(Variable(images))
         _, predicted = torch.max(outputs.data, 1)

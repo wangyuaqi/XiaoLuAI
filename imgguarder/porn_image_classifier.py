@@ -1,6 +1,8 @@
 """
 a PyTorch porn image recognition implementation powered by deep convolutional neural networks
 """
+import os
+
 import torch
 from torchvision import transforms, datasets
 from torch.autograd import Variable
@@ -9,7 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 
-def prepare_data(root_dir):
+def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
     """
     build dataloader
     :param root_dir:
@@ -22,7 +24,7 @@ def prepare_data(root_dir):
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
     ])
-    hymenoptera_dataset = datasets.ImageFolder(root=root_dir,
+    hymenoptera_dataset = datasets.ImageFolder(root=os.path.join(root_dir, type),
                                                transform=data_transform)
     dataset_loader = torch.utils.data.DataLoader(hymenoptera_dataset,
                                                  batch_size=4, shuffle=True,
@@ -66,7 +68,7 @@ class PRNet(nn.Module):
         return num_features
 
 
-def train(dataloader):
+def train_and_test(trainloader, testloader, model_path_dir='../model/'):
     """
     train PRNet
     :param dataloader:
@@ -79,10 +81,11 @@ def train(dataloader):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
 
+    print('Start training CNN...')
     for epoch in range(200):  # loop over the dataset multiple times
 
         running_loss = 0.0
-        for i_batch, sample_batched in enumerate(dataloader):
+        for i_batch, sample_batched in enumerate(trainloader):
             inputs, labels = sample_batched
             if torch.cuda.is_available():
                 inputs = Variable(inputs.cuda())
@@ -98,14 +101,40 @@ def train(dataloader):
 
             # print statistics
             running_loss += loss.data[0]
-            if i_batch % 2000 == 1999:
+            if i_batch % 100 == 0:
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i_batch + 1, running_loss / 2000))
                 running_loss = 0.0
 
-    print('Finished Training')
+                print("Save model to %s/prnet_vot-otb.pth" % model_path_dir)
+
+                if not os.path.isdir(model_path_dir) or not os.path.exists(model_path_dir):
+                    os.makedirs(model_path_dir)
+                torch.save(net.state_dict(), os.path.join(model_path_dir, 'prnet.pth'))
+
+    print('Finish Training CNN...')
+
+    correct = 0
+    total = 0
+    for data in testloader:
+        images, labels = data
+        if torch.cuda.is_available():
+            images = Variable(images.cuda())
+            labels = Variable(labels.cuda())
+        else:
+            images = Variable(images)
+            labels = Variable(labels)
+
+        outputs = net(Variable(images))
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum()
+
+    print('Accuracy of the network on the 10000 test images: %d %%' % (
+        100 * correct / total))
 
 
 if __name__ == '__main__':
-    dataloader = prepare_data('/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages/PornImages')
-    train(dataloader)
+    trainloader = prepare_data(type='train')
+    testloader = prepare_data(type='test')
+    train_and_test(trainloader, testloader)

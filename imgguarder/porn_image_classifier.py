@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-EPOCH = 200
+EPOCH = 100
 BATCH = 4
 IMAGE_SIZE = 128
 
@@ -88,7 +88,7 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
         net = net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=1e-4, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=1e-4, momentum=0.9, weight_decay=1e-3)
 
     print('Start training CNN...')
     for epoch in range(EPOCH):  # loop over the dataset multiple times
@@ -115,7 +115,7 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
                       (epoch + 1, i_batch + 1, running_loss / 2000))
                 running_loss = 0.0
 
-                print("Save model to %s/prnet_vot-otb.pth" % model_path_dir)
+                print("Save model to %s/prnet.pth" % model_path_dir)
 
                 if not os.path.isdir(model_path_dir) or not os.path.exists(model_path_dir):
                     os.makedirs(model_path_dir)
@@ -137,6 +137,29 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
         correct += (predicted == labels).sum()
 
     print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
+
+    classes = [0, 1, 2]
+    class_correct = list(0. for i in range(3))
+    class_total = list(0. for i in range(3))
+    for data in testloader:
+        images, labels = data
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+
+        outputs = net(Variable(images))
+        _, predicted = torch.max(outputs.data, 1)
+        c = (predicted == labels).squeeze()
+        for i in range(3):
+            label = labels[i]
+            class_correct[label] += c[i]
+            class_total[label] += 1
+
+    print('=' * 100)
+    for i in range(3):
+        print('Accuracy of type %5s : %2d %%' % (
+            classes[i], 100 * class_correct[i] / class_total[i]))
+    print('=' * 100)
 
 
 def inference(testloader):
@@ -190,4 +213,5 @@ def inference(testloader):
 if __name__ == '__main__':
     trainloader = prepare_data(type='train')
     testloader = prepare_data(type='test')
-    train_and_test(trainloader, testloader)
+    # train_and_test(trainloader, testloader)
+    inference(testloader)

@@ -12,7 +12,8 @@
    >[Python3](https://www.python.org/)  
    >[requests](http://www.python-requests.org/en/master/)     
    >[itchat](https://pypi.python.org/pypi/itchat/1.3.5)    
-   >[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.html)
+   >[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.html)  
+   >[PyTorch](http://pytorch.org/)
   
 ## How to use
        pip3 install -r requirements.txt
@@ -21,5 +22,10 @@
    Change the directory parameters in source code, and everything will be OK.   
    This repo has been tested OK on Ubuntu16.04.
    
+## Features
+   * [WeChat Bots](./bots) 
+   * [Facial Beauty Analysis](./facescore) 
+   
+
 ## LICENSE
 Under [GPL-3.0](http://www.gnu.org/licenses/gpl-3.0.html) LICENSE. 

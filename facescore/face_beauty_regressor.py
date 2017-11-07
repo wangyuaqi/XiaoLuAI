@@ -73,7 +73,7 @@ def HOG(img_path):
     """
     img = io.imread(img_path)
     img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) /np.std(img)
+    img = (img - np.mean(img)) / np.std(img)
     feature = hog(img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), block_norm='L2-Hys')
 
     return feature
@@ -87,7 +87,7 @@ def LBP(img_path):
     """
     img = io.imread(img_path)
     img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) /np.std(img)
+    img = (img - np.mean(img)) / np.std(img)
     feature = local_binary_pattern(img, P=8, R=0.2)
     # im = Image.fromarray(np.uint8(feature))
     # im.show()
@@ -104,7 +104,7 @@ def HARRIS(img_path):
     """
     img = io.imread(img_path)
     img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) /np.std(img)
+    img = (img - np.mean(img)) / np.std(img)
     feature = corner_harris(img, method='k', k=0.05, eps=1e-06, sigma=1)
 
     return feature.reshape(feature.shape[0] * feature.shape[1])
@@ -113,7 +113,7 @@ def HARRIS(img_path):
 def RAW(img_path):
     img = io.imread(img_path)
     img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) /np.std(img)
+    img = (img - np.mean(img)) / np.std(img)
 
     return img.reshape(img.shape[0] * img.shape[1])
 
@@ -126,7 +126,7 @@ def hog_from_cv(img):
     :Version:1.0
     """
     img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) /np.std(img)
+    img = (img - np.mean(img)) / np.std(img)
 
     return hog(img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), block_norm='L2-Hys')
 

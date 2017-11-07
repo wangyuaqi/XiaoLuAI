@@ -1,3 +1,6 @@
+"""
+face beauty prediction implemented by PyTorch
+"""
 import numpy as np
 import pandas as pd
 import torch

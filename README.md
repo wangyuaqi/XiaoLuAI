@@ -24,7 +24,9 @@
    
 ## Features
    * [WeChat Bots](./bots) 
+   * [Face Detection](./facedetection) 
    * [Facial Beauty Analysis](./facescore) 
+   * [NLP](./nlp) 
    
 
 ## LICENSE

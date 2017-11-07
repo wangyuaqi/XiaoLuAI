@@ -49,7 +49,7 @@ class PRNet(nn.Module):
         # an affine operation: y = Wx + b
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc3 = nn.Linear(84, 3)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -158,11 +158,34 @@ def inference(testloader):
         total += labels.size(0)
         correct += (predicted == labels).sum()
 
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-        100 * correct / total))
+    print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
+
+    classes = [0, 1, 2]
+    class_correct = list(0. for i in range(3))
+    class_total = list(0. for i in range(3))
+    for data in testloader:
+        images, labels = data
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+
+        outputs = net(Variable(images))
+        _, predicted = torch.max(outputs.data, 1)
+        c = (predicted == labels).squeeze()
+        for i in range(3):
+            label = labels[i]
+            class_correct[label] += c[i]
+            class_total[label] += 1
+
+    print('=' * 100)
+    for i in range(3):
+        print('Accuracy of type %5s : %2d %%' % (
+            classes[i], 100 * class_correct[i] / class_total[i]))
+    print('=' * 100)
 
 
 if __name__ == '__main__':
     trainloader = prepare_data(type='train')
     testloader = prepare_data(type='test')
-    train_and_test(trainloader, testloader)
+    # train_and_test(trainloader, testloader)
+    inference(testloader)

@@ -28,9 +28,3 @@ def extract_feature(image_filepath, layer_name='fc7'):
 
     return feature.ravel()
 
-
-if __name__ == '__main__':
-    feature = extract_feature('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
-    print(feature)
-    print(feature.shape)
-

@@ -14,9 +14,11 @@ from sklearn import linear_model
 from sklearn.externals import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+from facescore.vgg_face_beauty_regressor import extract_feature
+
 LABEL_EXCEL_PATH = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
-# FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
-FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Data_Collection/SCUT-FBP-{0}.jpg'
+FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
+# FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Data_Collection/SCUT-FBP-{0}.jpg'
 PREDICTOR_PATH = "/home/lucasx/Documents/PretrainedModels/shape_predictor_68_face_landmarks.dat"
 TEST_RATIO = 0.1
 IMAGE_WIDTH = 128
@@ -67,12 +69,16 @@ def prepare_data():
     # test_set_vector = [HARRIS(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with Pixel Value features
-    train_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    test_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
+    # test_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with VGG Face features
-    # train_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    # test_set_vector = [extract_feature(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    train_set_vector = [np.concatenate((extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv5_1'),
+                                        extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv4_1')), axis=0)
+                        for _ in trainset_filenames]
+    test_set_vector = [np.concatenate((extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv5_1'),
+                                       extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv4_1')), axis=0)
+                       for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
 
@@ -290,14 +296,14 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    pprint(det_landmarks('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg'))
+    # pprint(det_landmarks('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg'))
     # train_set, test_set = eccv_train_and_test_set(
     #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
     # train_and_eval_eccv(train_set, test_set)
 
     # detect_face_and_cal_beauty('/home/lucasx/ll.jpg')
-    # train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
-    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
+    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d
     # harr = HARRIS('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')

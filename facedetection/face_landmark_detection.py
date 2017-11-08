@@ -3,6 +3,7 @@ face landmarks detection powered by dlib
 """
 import dlib
 from skimage import io
+import cv2
 
 predictor_path = "/home/lucasx/Documents/PretrainedModels/shape_predictor_68_face_landmarks.dat"
 
@@ -33,8 +34,23 @@ def detect_face_landmarks(face_filepath):
         win.add_overlay(shape)
 
     win.add_overlay(dets)
-    # dlib.hit_enter_to_continue()
+    dlib.hit_enter_to_continue()
+
+
+def draw_landmark(image_path):
+    img = cv2.imread(image_path)
+    faces = detector(img, 1)
+    if len(faces) > 0:
+        for k, d in enumerate(faces):
+            cv2.rectangle(img, (d.left(), d.top()), (d.right(), d.bottom()), (255, 255, 255))
+            shape = predictor(img, d)
+            for i in range(68):
+                cv2.circle(img, (shape.part(i).x, shape.part(i).y), 2, (255, 191, 0), -1, 8)
+                # cv2.putText(img, str(i), (shape.part(i).x, shape.part(i).y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 2555, 255))
+    cv2.imshow('Frame', img)
+    cv2.waitKey(0)
 
 
 if __name__ == '__main__':
-    detect_face_landmarks("/home/lucasx/Documents/talor.jpg")
+    # detect_face_landmarks("/home/lucasx/Documents/talor.jpg")
+    draw_landmark("/media/lucasx/Document/DataSet/Face/SCUT-FBP/Data_Collection/Data_Collection/SCUT-FBP-2.jpg")

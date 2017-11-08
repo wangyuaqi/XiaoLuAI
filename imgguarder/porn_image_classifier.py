@@ -10,9 +10,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-EPOCH = 100
+EPOCH = 50
 BATCH = 4
 IMAGE_SIZE = 128
+LR_INIT = 1e-5
 
 
 def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
@@ -44,14 +45,12 @@ class PRNet(nn.Module):
     def __init__(self):
         super(PRNet, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
-        # kernel
         self.conv1 = nn.Conv2d(3, 32, 5, stride=3)
         self.conv2 = nn.Conv2d(32, 128, 4)
         self.conv3 = nn.Conv2d(128, 256, 2)
-        # an affine operation: y = Wx + b
         self.fc1 = nn.Linear(256 * 4 * 4, 2048)
         self.fc2 = nn.Linear(2048, 512)
-        self.fc3 = nn.Linear(512, 3)
+        self.fc4 = nn.Linear(512, 3)
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -62,7 +61,7 @@ class PRNet(nn.Module):
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.fc4(x)
 
         return x
 
@@ -88,7 +87,7 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
         net = net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=1e-4, momentum=0.9, weight_decay=1e-3)
+    optimizer = optim.SGD(net.parameters(), lr=LR_INIT, momentum=0.9, weight_decay=1e-2)
 
     print('Start training CNN...')
     for epoch in range(EPOCH):  # loop over the dataset multiple times
@@ -213,5 +212,5 @@ def inference(testloader):
 if __name__ == '__main__':
     trainloader = prepare_data(type='train')
     testloader = prepare_data(type='test')
-    # train_and_test(trainloader, testloader)
-    inference(testloader)
+    train_and_test(trainloader, testloader)
+    # inference(testloader)

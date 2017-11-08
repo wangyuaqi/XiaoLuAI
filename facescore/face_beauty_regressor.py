@@ -1,25 +1,24 @@
-import os
 import math
+import os
+from pprint import pprint
 
+import cv2
 import dlib
 import numpy as np
 import pandas as pd
-from PIL import Image
 import skimage.color
 from skimage import io
 from skimage.feature import hog, local_binary_pattern, corner_harris
 from sklearn import decomposition
 from sklearn import linear_model
-from sklearn import svm
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.externals import joblib
-import cv2
-
-from facescore.vgg_face_beauty_regressor import extract_feature
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 LABEL_EXCEL_PATH = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
-FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
-TRAIN_RATIO = 0.9
+# FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
+FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Data_Collection/SCUT-FBP-{0}.jpg'
+PREDICTOR_PATH = "/home/lucasx/Documents/PretrainedModels/shape_predictor_68_face_landmarks.dat"
+TEST_RATIO = 0.1
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 
@@ -31,15 +30,29 @@ def prepare_data():
     :version:1.0
     """
     df = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')
-    filename_indexs = df['Image'].tolist()
-    attractiveness_scores = df['Attractiveness label'].tolist()
+    filename_indexs = df['Image']
+    attractiveness_scores = df['Attractiveness label']
 
-    trainset_filenames = filename_indexs[0: int(len(filename_indexs) * TRAIN_RATIO)]
-    testset_filenames = filename_indexs[int(len(filename_indexs) * TRAIN_RATIO) + 1: len(filename_indexs)]
+    shuffled_indices = np.random.permutation(len(df))
+    test_set_size = int(len(df) * TEST_RATIO)
+    test_indices = shuffled_indices[:test_set_size]
+    train_indices = shuffled_indices[test_set_size:]
 
-    trainset_label = attractiveness_scores[0: int(len(attractiveness_scores) * TRAIN_RATIO)]
-    testset_label = attractiveness_scores[
-                    int(len(attractiveness_scores) * TRAIN_RATIO) + 1:int(len(attractiveness_scores))]
+    trainset_filenames = filename_indexs.iloc[train_indices]
+    trainset_label = attractiveness_scores.iloc[train_indices]
+    testset_filenames = filename_indexs.iloc[test_indices]
+    testset_label = attractiveness_scores.iloc[test_indices]
+
+    # df = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')
+    # filename_indexs = df['Image'].tolist()
+    # attractiveness_scores = df['Attractiveness label'].tolist()
+    #
+    # trainset_filenames = filename_indexs[0: int(len(filename_indexs) * TRAIN_RATIO)]
+    # testset_filenames = filename_indexs[int(len(filename_indexs) * TRAIN_RATIO) + 1: len(filename_indexs)]
+    #
+    # trainset_label = attractiveness_scores[0: int(len(attractiveness_scores) * TRAIN_RATIO)]
+    # testset_label = attractiveness_scores[
+    #                 int(len(attractiveness_scores) * TRAIN_RATIO) + 1:int(len(attractiveness_scores))]
 
     # extract with HOG features
     # train_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
@@ -131,6 +144,27 @@ def hog_from_cv(img):
     return hog(img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), block_norm='L2-Hys')
 
 
+def det_landmarks(image_path):
+    """
+    detect faces in one image, return face bbox and landmarks
+    :param image_path:
+    :return:
+    """
+    predictor = dlib.shape_predictor(PREDICTOR_PATH)
+    detector = dlib.get_frontal_face_detector()
+    img = cv2.imread(image_path)
+    faces = detector(img, 1)
+
+    result = {}
+    if len(faces) > 0:
+        for k, d in enumerate(faces):
+            shape = predictor(img, d)
+            result[k] = {"bbox": [d.left(), d.top(), d.right(), d.bottom()],
+                         "landmarks": [[shape.part(i).x, shape.part(i).y] for i in range(68)]}
+
+    return result
+
+
 def PCA(feature_matrix):
     """
     PCA algorithm
@@ -183,10 +217,6 @@ def detect_face_and_cal_beauty(face_filepath):
         cv2.imwrite('tmp.png', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-        # win.clear_overlay()
-        # win.set_image(img)
-        # win.add_overlay(dets)
 
 
 def train_model(train_set, test_set, train_label, test_label):
@@ -260,9 +290,10 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    train_set, test_set = eccv_train_and_test_set(
-        '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
-    train_and_eval_eccv(train_set, test_set)
+    pprint(det_landmarks('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg'))
+    # train_set, test_set = eccv_train_and_test_set(
+    #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
+    # train_and_eval_eccv(train_set, test_set)
 
     # detect_face_and_cal_beauty('/home/lucasx/ll.jpg')
     # train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()

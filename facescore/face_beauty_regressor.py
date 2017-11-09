@@ -15,13 +15,13 @@ from sklearn.externals import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from facescore import config
+from facescore.config import *
 from facescore.vgg_face_beauty_regressor import extract_feature
 
 
 def prepare_data():
     """
-    extract HOG features and split it into train and test dataset
+    extract facial features and split it into train and test set
     :return:
     :version:1.0
     """

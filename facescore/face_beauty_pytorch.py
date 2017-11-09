@@ -16,7 +16,7 @@ from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from facescore import config
+from facescore.config import *
 
 
 class FBNet(nn.Module):
@@ -66,7 +66,7 @@ class FaceBeautyDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.face_images = pd.DataFrame([config['face_image_filename'].format(_) for _ in
+        self.face_images = np.array([config['face_image_filename'].format(_) for _ in
                                          pd.read_excel(config['label_excel_path'], 'Sheet1')['Image'].tolist()])
         self.beauty_labels = pd.read_excel(config['label_excel_path'], 'Sheet1')['Attractiveness label']
         self.transform = transform

@@ -11,9 +11,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 EPOCH = 50
-BATCH = 4
+BATCH = 64
 IMAGE_SIZE = 128
-LR_INIT = 1e-5
+LR_INIT = 1e-6
+WEIGHT_DECAY = 1e-1
 
 
 def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
@@ -87,7 +88,7 @@ def train_and_test(trainloader, testloader, model_path_dir='../model/'):
         net = net.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=LR_INIT, momentum=0.9, weight_decay=1e-2)
+    optimizer = optim.SGD(net.parameters(), lr=LR_INIT, momentum=0.9, weight_decay=WEIGHT_DECAY)
 
     print('Start training CNN...')
     for epoch in range(EPOCH):  # loop over the dataset multiple times

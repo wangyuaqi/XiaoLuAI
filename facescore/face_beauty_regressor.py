@@ -1,6 +1,6 @@
 import math
 import os
-from pprint import pprint
+import sys
 
 import cv2
 import dlib
@@ -14,15 +14,9 @@ from sklearn import linear_model
 from sklearn.externals import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+from facescore import config
 from facescore.vgg_face_beauty_regressor import extract_feature
-
-LABEL_EXCEL_PATH = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
-FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
-# FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Data_Collection/SCUT-FBP-{0}.jpg'
-PREDICTOR_PATH = "/home/lucasx/Documents/PretrainedModels/shape_predictor_68_face_landmarks.dat"
-TEST_RATIO = 0.1
-IMAGE_WIDTH = 128
-IMAGE_HEIGHT = 128
 
 
 def prepare_data():
@@ -31,12 +25,12 @@ def prepare_data():
     :return:
     :version:1.0
     """
-    df = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')
+    df = pd.read_excel(config['label_excel_path'], 'Sheet1')
     filename_indexs = df['Image']
     attractiveness_scores = df['Attractiveness label']
 
     shuffled_indices = np.random.permutation(len(df))
-    test_set_size = int(len(df) * TEST_RATIO)
+    test_set_size = int(len(df) * config['test_ratio'])
     test_indices = shuffled_indices[:test_set_size]
     train_indices = shuffled_indices[test_set_size:]
 
@@ -73,12 +67,12 @@ def prepare_data():
     # test_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
 
     # extract with VGG Face features
-    train_set_vector = [np.concatenate((extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv5_1'),
-                                        extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv4_1')), axis=0)
-                        for _ in trainset_filenames]
-    test_set_vector = [np.concatenate((extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv5_1'),
-                                       extract_feature(FACE_IMAGE_FILENAME.format(_), layer_name='conv4_1')), axis=0)
-                       for _ in testset_filenames]
+    train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+                                        extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+                                       axis=0) for _ in trainset_filenames]
+    test_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+                                       extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+                                      axis=0) for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
 
@@ -156,7 +150,7 @@ def det_landmarks(image_path):
     :param image_path:
     :return:
     """
-    predictor = dlib.shape_predictor(PREDICTOR_PATH)
+    predictor = dlib.shape_predictor(config['predictor_path'])
     detector = dlib.get_frontal_face_detector()
     img = cv2.imread(image_path)
     faces = detector(img, 1)
@@ -209,10 +203,11 @@ def detect_face_and_cal_beauty(face_filepath):
     for i, d in enumerate(dets):
         print("Left: {} Top: {} Right: {} Bottom: {} score: {} face_type:{}".format(d.left(), d.top(), d.right(),
                                                                                     d.bottom(), scores[i], idx[i]))
-        roi = cv2.resize(image[d.top(): d.bottom(), d.left():d.right(), :], (IMAGE_WIDTH, IMAGE_HEIGHT),
+        roi = cv2.resize(image[d.top(): d.bottom(), d.left():d.right(), :],
+                         (config['image_size'], config['image_size']),
                          interpolation=cv2.INTER_CUBIC)
         # feature = hog_from_cv(roi)
-        feature = skimage.color.rgb2gray(roi).reshape(IMAGE_WIDTH * IMAGE_HEIGHT)
+        feature = skimage.color.rgb2gray(roi).reshape(config['image_size'] * config['image_size'])
         attractiveness = br.predict(feature.reshape(-1, feature.shape[0]))
 
         cv2.rectangle(image, (d.left(), d.top()), (d.right(), d.bottom()), (0, 255, 225), 2)

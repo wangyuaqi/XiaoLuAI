@@ -1,6 +1,9 @@
 """
 face beauty prediction implemented by PyTorch
 """
+import sys
+import os
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -12,11 +15,8 @@ import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 
-LABEL_EXCEL_PATH = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
-FACE_IMAGE_FILENAME = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
-TEST_RATIO = 0.1
-IMAGE_SIZE = 128
-BATCH_SIZE = 32
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+from facescore import config
 
 
 class FBNet(nn.Module):
@@ -66,9 +66,9 @@ class FaceBeautyDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.face_images = pd.DataFrame([FACE_IMAGE_FILENAME.format(_) for _ in
-                                         pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')['Image'].tolist()])
-        self.beauty_labels = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')['Attractiveness label']
+        self.face_images = pd.DataFrame([config['face_image_filename'].format(_) for _ in
+                                         pd.read_excel(config['label_excel_path'], 'Sheet1')['Image'].tolist()])
+        self.beauty_labels = pd.read_excel(config['label_excel_path'], 'Sheet1')['Attractiveness label']
         self.transform = transform
 
     def __len__(self):
@@ -92,7 +92,7 @@ def split_data(test_ratio):
     split dataset into train set and test set
     :return:
     """
-    df = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')
+    df = pd.read_excel(config['label_excel_path'], 'Sheet1')
     filename_indexs = df['Image']
     attractiveness_scores = df['Attractiveness label']
 
@@ -107,11 +107,11 @@ def split_data(test_ratio):
 
 def train():
     transform = transforms.Compose(
-        [transforms.RandomCrop(IMAGE_SIZE),
+        [transforms.RandomCrop(config['image_size']),
          transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     transformed_dataset = FaceBeautyDataset(transform=transform)
-    dataloader = DataLoader(transformed_dataset, batch_size=BATCH_SIZE,
+    dataloader = DataLoader(transformed_dataset, batch_size=config['batch_size'],
                             shuffle=True, num_workers=4)
 
     net = FBNet()

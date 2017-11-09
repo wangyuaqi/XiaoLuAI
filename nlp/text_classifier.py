@@ -1,23 +1,30 @@
 import os
 
+import jieba
+import jieba.analyse
 import numpy as np
-
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
 from sklearn import svm
 from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.neighbors.nearest_centroid import NearestCentroid
+from sklearn.neural_network import MLPClassifier
 
-CORPUS_DIR = 'E:/NLP/tc-corpus-answer/answer/'
+CORPUS_DIR = '/home/lucasx/Documents/Dataset/FudanNLPCorpus'
+USER_DICT = './user_dict.txt'
+STOP_WORDS = './stopwords.txt'
 FEATURE_NUM = 2000
+TEST_RATIO = 0.2
 
 
 def corpus_to_tfidf_vector(corpus_list):
+    """
+    convert segmented corpus in a list into TF-IDF array
+    :param corpus_list:
+    :return:
+    """
     vectorizer = CountVectorizer(min_df=1, max_features=FEATURE_NUM)
     transformer = TfidfTransformer(smooth_idf=False)
     X = vectorizer.fit_transform(corpus_list)
@@ -26,50 +33,45 @@ def corpus_to_tfidf_vector(corpus_list):
     return tfidf.toarray()
 
 
-def get_label_and_tfidf(corpus_dir):
-    corpus_list = []
-    for each_txt in os.listdir(corpus_dir):
-        with open(os.path.join(corpus_dir, each_txt), mode='r', encoding='latin1') as f:
-            corpus_list.append(''.join(f.readlines()))
-
-    return {int(each_txt.split('-')[0].replace('C', '')): corpus_to_tfidf_vector(corpus_list)}
-
-
-def prepare_train_and_test_corpus(tfidf_matrix_with_label_dict_list):
+def prepare_data():
     """
-    ERROR!!!
-    :param tfidf_matrix_with_label_dict_list:
+    vectorize the corpora and split them into train set and test set
     :return:
     """
-    # X_train = np.array([None, FEATURE_NUM])
-    # X_test = np.array([None, FEATURE_NUM])
-    # y_train = np.array([None])
-    # y_test = np.array([None])
+    jieba.load_userdict(USER_DICT)
+    jieba.analyse.set_stop_words(STOP_WORDS)
 
-    X_train = list()
-    X_test = list()
-    y_train = list()
-    y_test = list()
+    datasets = []
+    labels = []
 
-    train_sum = int(len(tfidf_matrix_with_label_dict_list) * 0.8)
-    test_sum = len(tfidf_matrix_with_label_dict_list) - train_sum
+    for each_type in os.listdir(CORPUS_DIR):
+        for each_txt in os.listdir(os.path.join(CORPUS_DIR, each_type)):
+            labels.append(int(each_txt.split('-')[0].replace('C', '')))
+            with open(os.path.join(CORPUS_DIR, each_type, each_txt), mode='r', encoding='latin1') as f:
+                content = ''.join(f.readlines())
+                datasets.append(' '.join(jieba.cut(content, cut_all=False)))
 
-    for tfidf_matrix_with_label_dict in tfidf_matrix_with_label_dict_list:
-        (label, tfidf_matrix), = tfidf_matrix_with_label_dict.items()
-        train_num = int(0.8 * len(tfidf_matrix))
-        test_num = len(tfidf_matrix) - train_num
-        for _ in tfidf_matrix[0: train_num]:
-            X_train.append(_)
-        for _ in tfidf_matrix[train_num: len(tfidf_matrix)]:
-            X_test.append(_)
+    datasets = pd.DataFrame(corpus_to_tfidf_vector(datasets))
+    labels = pd.DataFrame(labels)
 
-        y_train += [label for _ in range(train_num)]
-        y_test += [label for _ in range(test_num)]
+    shuffled_indices = np.random.permutation(len(labels))
+    test_set_size = int(len(labels) * TEST_RATIO)
+    test_indices = shuffled_indices[:test_set_size]
+    train_indices = shuffled_indices[test_set_size:]
 
-    return np.array(X_train), np.array(X_test), np.array(y_train), np.array(y_test)
+    return datasets.iloc[train_indices], datasets.iloc[test_indices], \
+           labels.iloc[train_indices], labels.iloc[test_indices]
 
 
 def text_classify(X_train, X_test, y_train, y_test):
+    """
+    machine learning classifier
+    :param X_train:
+    :param X_test:
+    :param y_train:
+    :param y_test:
+    :return:
+    """
     print('=' * 100)
     print('start launching MLP Classifier......')
     mlp = MLPClassifier(solver='lbfgs', alpha=1e-4, hidden_layer_sizes=(50, 30, 20, 20, 20, 30, 50), random_state=1)
@@ -103,10 +105,5 @@ def text_classify(X_train, X_test, y_train, y_test):
 
 
 if __name__ == '__main__':
-    label_and_tfidf_list = []
-    for _ in os.listdir(CORPUS_DIR):
-        corpus_list_and_label = get_label_and_tfidf(os.path.join(CORPUS_DIR, _))
-        label_and_tfidf_list.append(corpus_list_and_label)
-
-    X_train, X_test, y_train, y_test = prepare_train_and_test_corpus(label_and_tfidf_list)
+    X_train, X_test, y_train, y_test = prepare_data()
     text_classify(X_train, X_test, y_train, y_test)

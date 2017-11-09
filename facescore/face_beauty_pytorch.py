@@ -1,8 +1,8 @@
 """
 face beauty prediction implemented by PyTorch
 """
-import sys
 import os
+import sys
 
 import cv2
 import numpy as np
@@ -67,7 +67,7 @@ class FaceBeautyDataset(Dataset):
                 on a sample.
         """
         self.face_images = np.array([config['face_image_filename'].format(_) for _ in
-                                         pd.read_excel(config['label_excel_path'], 'Sheet1')['Image'].tolist()])
+                                     pd.read_excel(config['label_excel_path'], 'Sheet1')['Image'].tolist()])
         self.beauty_labels = pd.read_excel(config['label_excel_path'], 'Sheet1')['Attractiveness label']
         self.transform = transform
 
@@ -79,7 +79,7 @@ class FaceBeautyDataset(Dataset):
         image = cv2.imread(img_name)
         face_score = self.beauty_labels[idx]
 
-        sample = {'image': image, 'score': face_score}
+        sample = {'image': image - np.mean(image), 'score': face_score}
 
         if self.transform:
             sample = self.transform(sample)

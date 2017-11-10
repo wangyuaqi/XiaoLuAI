@@ -11,10 +11,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 EPOCH = 50
-BATCH = 64
+BATCH = 16
 IMAGE_SIZE = 128
 LR_INIT = 1e-6
-WEIGHT_DECAY = 1e-1
+WEIGHT_DECAY = 2
 
 
 def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
@@ -47,11 +47,11 @@ class PRNet(nn.Module):
         super(PRNet, self).__init__()
         # 1 input image channel, 6 output channels, 5x5 square convolution
         self.conv1 = nn.Conv2d(3, 32, 5, stride=3)
-        self.conv2 = nn.Conv2d(32, 128, 4)
-        self.conv3 = nn.Conv2d(128, 256, 2)
-        self.fc1 = nn.Linear(256 * 4 * 4, 2048)
-        self.fc2 = nn.Linear(2048, 512)
-        self.fc4 = nn.Linear(512, 3)
+        self.conv2 = nn.Conv2d(32, 64, 4)
+        self.conv3 = nn.Conv2d(64, 32, 2)
+        self.fc1 = nn.Linear(32 * 4 * 4, 256, nn.Dropout(0.5))
+        self.fc2 = nn.Linear(256, 3, nn.Dropout(0.5))
+        # self.fc3 = nn.Linear(512, 3, nn.Dropout(0.5))
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -61,8 +61,8 @@ class PRNet(nn.Module):
         x = F.max_pool2d(F.relu(self.conv3(x)), 2)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc4(x)
+        x = F.softmax(self.fc2(x))
+        # x = F.softmax(self.fc3(x))
 
         return x
 

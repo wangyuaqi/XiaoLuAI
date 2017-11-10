@@ -9,8 +9,9 @@ In order to make use of NLP module, you'd better download the corpora data first
 * [Fudan NLP Text Corpora](https://share.weiyun.com/67ac1ff60864c564a86181e5e84cd2e4)
 
 ## Performance
-This unoptimized code reaches accuracy **81.17347%** with [Random Forests](https://en.wikipedia.org/wiki/Random_forest) on [Fudan NLP Text Corpora BEnchmark](https://share.weiyun.com/67ac1ff60864c564a86181e5e84cd2e4) 
-which contains **20** classes. We believe it'll be much improved when precisely picked [user dict](./user_dict.txt) and [stopwords](./stopwords.txt) are given.
+This unoptimized code reaches accuracy **82.09184%** by [Decision Tree](https://en.wikipedia.org/wiki/Decision_tree) with the feature vector dimension of **2000** on 
+[Fudan NLP Text Corpora BEnchmark](https://share.weiyun.com/67ac1ff60864c564a86181e5e84cd2e4) which contains **20** classes. We believe it'll be much improved 
+when precisely picked [user dict](./user_dict.txt) and [stopwords](./stopwords.txt) are given.
 
 
 ## Note

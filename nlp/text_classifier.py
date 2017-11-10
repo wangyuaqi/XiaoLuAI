@@ -1,3 +1,6 @@
+"""
+text classificationon Fudan NLP Corpus with the accuracy of 82.09184%
+"""
 import os
 
 import jieba

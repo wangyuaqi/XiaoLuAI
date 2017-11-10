@@ -39,34 +39,23 @@ def prepare_data():
     testset_filenames = filename_indexs.iloc[test_indices]
     testset_label = attractiveness_scores.iloc[test_indices]
 
-    # df = pd.read_excel(LABEL_EXCEL_PATH, 'Sheet1')
-    # filename_indexs = df['Image'].tolist()
-    # attractiveness_scores = df['Attractiveness label'].tolist()
-    #
-    # trainset_filenames = filename_indexs[0: int(len(filename_indexs) * TRAIN_RATIO)]
-    # testset_filenames = filename_indexs[int(len(filename_indexs) * TRAIN_RATIO) + 1: len(filename_indexs)]
-    #
-    # trainset_label = attractiveness_scores[0: int(len(attractiveness_scores) * TRAIN_RATIO)]
-    # testset_label = attractiveness_scores[
-    #                 int(len(attractiveness_scores) * TRAIN_RATIO) + 1:int(len(attractiveness_scores))]
-
     # extract with HOG features
-    # train_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    # test_set_vector = [HOG(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [HOG(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    # test_set_vector = [HOG(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     # extract with LBP features
-    # train_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    # test_set_vector = [LBP(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [LBP(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    # test_set_vector = [LBP(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     # extract with HARR features
-    # train_set_vector = [HARRIS(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    # test_set_vector = [HARRIS(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [HARRIS(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    # test_set_vector = [HARRIS(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     # extract with Pixel Value features
-    # train_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in trainset_filenames]
-    # test_set_vector = [RAW(FACE_IMAGE_FILENAME.format(_)) for _ in testset_filenames]
+    # train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    # test_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
-    # extract with VGG Face features
+    # extract with Deep Features
     train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
                                         extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
                                        axis=0) for _ in trainset_filenames]
@@ -298,9 +287,11 @@ if __name__ == '__main__':
     #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
     # train_and_eval_eccv(train_set, test_set)
 
-    # detect_face_and_cal_beauty('/home/lucasx/ll.jpg')
+    # detect_face_and_cal_beauty('/home/lucasx/zlf.jpg')
+
     train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
     train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d
     # harr = HARRIS('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')

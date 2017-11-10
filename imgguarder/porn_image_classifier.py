@@ -75,7 +75,7 @@ class PRNet(nn.Module):
         return num_features
 
 
-def train_and_test(trainloader, testloader, model_path_dir='../model/'):
+def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     """
     train PRNet
     :param model_path_dir:
@@ -169,7 +169,7 @@ def inference(testloader):
     :return:
     """
     net = PRNet()
-    net.load_state_dict(torch.load('../model/prnet.pth'))
+    net.load_state_dict(torch.load('./model/prnet.pth'))
     correct = 0
     total = 0
     for data in testloader:

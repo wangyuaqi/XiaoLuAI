@@ -189,7 +189,7 @@ def detect_face_and_cal_beauty(face_filepath):
         train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    br = joblib.load('./bayes_ridge_regressor.pkl')
+    br = joblib.load('./dcnn_bayes_reg.pkl')
 
     image = cv2.imread(face_filepath)
     detector = dlib.get_frontal_face_detector()
@@ -234,6 +234,7 @@ def train_model(train_set, test_set, train_label, test_label):
     reg = linear_model.BayesianRidge()
     # reg = svm.SVR()
     reg.fit(train_set, train_label)
+
     mae_lr = round(mean_absolute_error(test_label, reg.predict(test_set)), 4)
     rmse_lr = round(math.sqrt(mean_squared_error(test_label, reg.predict(test_set))), 4)
     pc = round(np.corrcoef(test_label, reg.predict(test_set))[0, 1], 4)
@@ -242,7 +243,8 @@ def train_model(train_set, test_set, train_label, test_label):
     print('===============The Root Mean Square Error of Linear Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Linear Model is {0}===================='.format(pc))
 
-    joblib.dump(reg, './bayes_ridge_regressor.pkl')
+    joblib.dump(reg, './dcnn_bayes_reg.pkl')
+    print('The regression model has been persisted...')
 
 
 def eccv_train_and_test_set(split_csv_filepath):

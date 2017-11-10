@@ -124,10 +124,9 @@ def extract_features(directory):
     features = []
     for _ in os.listdir(directory):
         img = skimage.color.rgb2gray(io.imread(os.path.join(directory, _)))
-        out_size = (128, 128)  # height, width
+        out_size = (64, 64)  # height, width
         resized_img = transform.resize(img, out_size, order=1, mode='reflect')
-        # feature = hog(resized_img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1))
-        feature = LBP(os.path.join(directory, _))
+        feature = hog(resized_img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1))
         features.append(feature)
 
     return np.array(features)

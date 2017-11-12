@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 EPOCH = 50
-BATCH = 16
+BATCH = 64
 IMAGE_SIZE = 128
 LR_INIT = 1e-6
 WEIGHT_DECAY = 2
@@ -45,24 +45,23 @@ class PRNet(nn.Module):
 
     def __init__(self):
         super(PRNet, self).__init__()
-        # 1 input image channel, 6 output channels, 5x5 square convolution
-        self.conv1 = nn.Conv2d(3, 32, 5, stride=3)
-        self.conv2 = nn.Conv2d(32, 64, 4)
-        self.conv3 = nn.Conv2d(64, 32, 2)
-        self.fc1 = nn.Linear(32 * 4 * 4, 256, nn.Dropout(0.5))
+        self.conv1 = nn.Conv2d(3, 64, 5, stride=1)
+        self.conv2 = nn.Conv2d(64, 256, 3)
+        self.conv3 = nn.Conv2d(256, 512, 3)
+        self.conv4 = nn.Conv2d(512, 64, 1)
+        self.fc1 = nn.Linear(64 * 8 * 8, 256, nn.Dropout(0.5))
         self.fc2 = nn.Linear(256, 3, nn.Dropout(0.5))
-        # self.fc3 = nn.Linear(512, 3, nn.Dropout(0.5))
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
-        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv1(x)), 3)
         # If the size is a square you can only specify a single number
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = F.max_pool2d(F.relu(self.conv3(x)), 2)
+        x = self.conv4(x)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.softmax(self.fc2(x))
-        # x = F.softmax(self.fc3(x))
 
         return x
 

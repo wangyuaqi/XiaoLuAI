@@ -16,7 +16,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from facescore.config import *
-from facescore.vgg_face_beauty_regressor import extract_feature
+from facescore.vgg_face_beauty_regressor import extract_feature, extract_conv_feature
 
 
 def prepare_data():
@@ -178,7 +178,7 @@ def detect_face_and_cal_beauty(face_filepath):
         train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    br = joblib.load('./dcnn_bayes_reg.pkl')
+    br = joblib.load('./bayes_ridge_regressor.pkl')
 
     image = cv2.imread(face_filepath)
     detector = dlib.get_frontal_face_detector()
@@ -195,8 +195,9 @@ def detect_face_and_cal_beauty(face_filepath):
         roi = cv2.resize(image[d.top(): d.bottom(), d.left():d.right(), :],
                          (config['image_size'], config['image_size']),
                          interpolation=cv2.INTER_CUBIC)
-        # feature = hog_from_cv(roi)
-        feature = skimage.color.rgb2gray(roi).reshape(config['image_size'] * config['image_size'])
+
+        feature = np.concatenate(
+            (extract_conv_feature(roi, layer_name='conv5_1'), extract_conv_feature(roi, layer_name='conv4_1')), axis=0)
         attractiveness = br.predict(feature.reshape(-1, feature.shape[0]))
 
         cv2.rectangle(image, (d.left(), d.top()), (d.right(), d.bottom()), (0, 255, 225), 2)
@@ -287,10 +288,10 @@ if __name__ == '__main__':
     #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
     # train_and_eval_eccv(train_set, test_set)
 
-    # detect_face_and_cal_beauty('/home/lucasx/zlf.jpg')
+    detect_face_and_cal_beauty('./talor.jpg')
 
-    train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
-    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    # train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
+    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

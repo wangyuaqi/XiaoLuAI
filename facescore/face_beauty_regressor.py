@@ -52,7 +52,7 @@ def prepare_data():
     # test_set_vector = [HARRIS(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     # extract with Pixel Value features
-    # train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    # train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in traFpearinset_filenames]
     # test_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     # extract with Deep Features

@@ -8,4 +8,4 @@ config['vgg_face_model_mat_file'] = '/home/lucasx/ModelZoo/vgg-face.mat'
 config['test_ratio'] = 0.2
 config['image_size'] = 128
 config['batch_size'] = 64
-config['epoch'] = 50
+config['epoch'] = 30

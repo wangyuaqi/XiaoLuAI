@@ -4,15 +4,16 @@ a PyTorch porn image recognition implementation powered by deep convolutional ne
 import os
 
 import torch
-from torchvision import transforms, datasets
-from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.autograd import Variable
+from torchvision import transforms, datasets
 
+CLASS_NUM = 3
 EPOCH = 50
-BATCH = 32
-IMAGE_SIZE = 128
+BATCH = 8
+IMAGE_SIZE = 224
 LR_INIT = 1e-6
 WEIGHT_DECAY = 1e-2
 
@@ -74,6 +75,63 @@ class PRNet(nn.Module):
         return num_features
 
 
+class MobileNet(nn.Module):
+    def __init__(self):
+        super(MobileNet, self).__init__()
+
+        def conv_bn(inp, oup, stride):
+            return nn.Sequential(
+                nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                nn.BatchNorm2d(oup),
+                nn.ReLU(inplace=True)
+            )
+
+        def conv_dw(inp, oup, stride):
+            return nn.Sequential(
+                nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
+                nn.BatchNorm2d(inp),
+                nn.ReLU(inplace=True),
+
+                nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(oup),
+                nn.ReLU(inplace=True),
+            )
+
+        self.model = nn.Sequential(
+            conv_bn(3, 32, 2),
+            conv_dw(32, 64, 1),
+            conv_dw(64, 128, 2),
+            conv_dw(128, 128, 1),
+            conv_dw(128, 256, 2),
+            conv_dw(256, 256, 1),
+            conv_dw(256, 512, 2),
+            conv_dw(512, 512, 1),
+            conv_dw(512, 512, 1),
+            conv_dw(512, 512, 1),
+            conv_dw(512, 512, 1),
+            conv_dw(512, 512, 1),
+            conv_dw(512, 1024, 2),
+            conv_dw(1024, 1024, 1),
+            nn.AvgPool2d(7),
+        )
+        self.fc = nn.Linear(1024, CLASS_NUM)
+
+    def forward(self, x):
+        x = self.model(x)
+        x = x.view(-1, self.num_flat_features(x))
+        x = self.fc(x)
+
+        return x
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+
+        return num_features
+
+
 def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     """
     train PRNet
@@ -82,7 +140,8 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     :param dataloader:
     :return:
     """
-    net = PRNet()
+    # net = PRNet()
+    net = MobileNet()
     if torch.cuda.is_available():
         net = net.cuda()
 
@@ -167,7 +226,8 @@ def inference(testloader):
     :param testloader:
     :return:
     """
-    net = PRNet()
+    # net = PRNet()
+    net = MobileNet()
     net.load_state_dict(torch.load('./model/prnet.pth'))
     correct = 0
     total = 0

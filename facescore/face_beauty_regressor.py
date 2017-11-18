@@ -13,13 +13,14 @@ from sklearn import decomposition
 from sklearn import linear_model
 from sklearn.externals import joblib
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import cross_val_score
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from facescore.config import *
 from facescore.vgg_face_beauty_regressor import extract_feature, extract_conv_feature
 
 
-def prepare_data():
+def split_train_and_test_data():
     """
     extract facial features and split it into train and test set
     :return:
@@ -64,6 +65,26 @@ def prepare_data():
                                       axis=0) for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
+
+
+def prepare_data():
+    """
+    return the dataset and correspondent labels
+    :return:
+    """
+    df = pd.read_excel(config['label_excel_path'], 'Sheet1')
+    filename_indexs = df['Image']
+    attractiveness_scores = df['Attractiveness label']
+
+    # extract with Pixel Value features
+    dataset = [HOG(config['face_image_filename'].format(_)) for _ in filename_indexs]
+    """
+    dataset = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+                               extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+                              axis=0) for _ in filename_indexs]
+    """
+
+    return dataset, attractiveness_scores
 
 
 def HOG(img_path):
@@ -174,11 +195,11 @@ def detect_face_and_cal_beauty(face_filepath):
     :version:1.0
     """
     # if the pre-trained model did not exist, then we train it
-    if not os.path.exists('./bayes_ridge_regressor.pkl'):
+    if not os.path.exists(config['reg_model']):
         train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    br = joblib.load('./bayes_ridge_regressor.pkl')
+    br = joblib.load(config['reg_model'])
 
     image = cv2.imread(face_filepath)
     detector = dlib.get_frontal_face_detector()
@@ -229,11 +250,37 @@ def train_model(train_set, test_set, train_label, test_label):
     rmse_lr = round(math.sqrt(mean_squared_error(test_label, reg.predict(test_set))), 4)
     pc = round(np.corrcoef(test_label, reg.predict(test_set))[0, 1], 4)
     # roc_auc_lr = roc_auc_score(test_label, lr.predict(test_set))
-    print('===============The Mean Absolute Error of Linear Model is {0}===================='.format(mae_lr))
-    print('===============The Root Mean Square Error of Linear Model is {0}===================='.format(rmse_lr))
-    print('===============The Pearson Correlation of Linear Model is {0}===================='.format(pc))
+    print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
 
-    joblib.dump(reg, './dcnn_bayes_reg.pkl')
+    joblib.dump(reg, config['reg_model'])
+    print('The regression model has been persisted...')
+
+
+def cv_train(dataset, labels, cv=10):
+    """
+    train model with cross validation
+    :param model:
+    :param dataset:
+    :param labels:
+    :param cv:
+    :return:
+    """
+    reg = linear_model.BayesianRidge()
+    mae_list = -cross_val_score(reg, dataset, labels, cv=cv, n_jobs=-1, scoring='neg_mean_absolute_error')
+    rmse_list = np.sqrt(-cross_val_score(reg, dataset, labels, cv=cv, n_jobs=-1, scoring='neg_mean_squared_error'))
+    pc_list = cross_val_score(reg, dataset, labels, cv=cv, n_jobs=-1, scoring='r2')
+
+    print(mae_list)
+    print(rmse_list)
+    print(pc_list)
+
+    print('=========The Mean Absolute Error of Model is {0}========='.format(np.mean(mae_list)))
+    print('=========The Root Mean Square Error of Model is {0}========='.format(np.mean(rmse_list)))
+    print('=========The Pearson Correlation of Model is {0}========='.format(np.mean(pc_list)))
+
+    joblib.dump(reg, config['reg_model'])
     print('The regression model has been persisted...')
 
 
@@ -277,9 +324,9 @@ def train_and_eval_eccv(train, test):
     rmse_lr = round(math.sqrt(mean_squared_error(test_label, reg.predict(test_vec))), 4)
     pc = round(np.corrcoef(test_label, reg.predict(test_vec))[0, 1], 4)
 
-    print('===============The Mean Absolute Error of Linear Model is {0}===================='.format(mae_lr))
-    print('===============The Root Mean Square Error of Linear Model is {0}===================='.format(rmse_lr))
-    print('===============The Pearson Correlation of Linear Model is {0}===================='.format(pc))
+    print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
 
 
 if __name__ == '__main__':
@@ -288,7 +335,9 @@ if __name__ == '__main__':
     #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
     # train_and_eval_eccv(train_set, test_set)
 
-    detect_face_and_cal_beauty('./talor.jpg')
+    dataset, label = prepare_data()
+    cv_train(dataset, label)
+    # detect_face_and_cal_beauty('./talor.jpg')
 
     # train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)

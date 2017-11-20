@@ -194,6 +194,7 @@ def detect_face_and_cal_beauty(face_filepath):
     :return:
     :version:1.0
     """
+    print('start scoring your face...')
     # if the pre-trained model did not exist, then we train it
     if not os.path.exists(config['reg_model']):
         train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
@@ -253,6 +254,9 @@ def train_model(train_set, test_set, train_label, test_label):
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
+
+    if not os.path.exists('./model') or not os.path.isdir('./model'):
+        os.makedirs('./model')
 
     joblib.dump(reg, config['reg_model'])
     print('The regression model has been persisted...')
@@ -341,10 +345,10 @@ if __name__ == '__main__':
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
 
-    train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
-    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
+    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    # detect_face_and_cal_beauty('./talor.jpg')
+    detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

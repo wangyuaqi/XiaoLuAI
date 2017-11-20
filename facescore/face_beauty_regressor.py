@@ -280,6 +280,9 @@ def cv_train(dataset, labels, cv=10):
     print('=========The Root Mean Square Error of Model is {0}========='.format(np.mean(rmse_list)))
     print('=========The Pearson Correlation of Model is {0}========='.format(np.mean(pc_list)))
 
+    if not os.path.exists('./model') or not os.path.isdir('./model'):
+        os.makedirs('./model')
+
     joblib.dump(reg, config['reg_model'])
     print('The regression model has been persisted...')
 
@@ -335,12 +338,13 @@ if __name__ == '__main__':
     #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
     # train_and_eval_eccv(train_set, test_set)
 
-    dataset, label = prepare_data()
-    cv_train(dataset, label)
-    # detect_face_and_cal_beauty('./talor.jpg')
+    # dataset, label = prepare_data()
+    # cv_train(dataset, label)
 
-    # train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
-    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
+    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+
+    # detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

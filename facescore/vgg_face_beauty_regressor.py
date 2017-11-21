@@ -9,7 +9,7 @@ from facescore.vgg_face import vgg_face
 from facescore.config import config
 
 
-def extract_feature(image_filepath, layer_name='fc7'):
+def extract_feature(image_filepath, layer_name='conv5_1'):
     graph = tf.Graph()
     with graph.as_default():
         input_maps = tf.placeholder(tf.float32, [None, 224, 224, 3])

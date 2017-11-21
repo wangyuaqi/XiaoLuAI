@@ -326,11 +326,11 @@ def eccv_train_and_test_set(split_csv_filepath):
 
 def train_and_eval_eccv(train, test):
     for k, v in train.items():
-        train_vec = np.array([LBP(k)])
+        train_vec = np.array([extract_feature(k)])
         train_label = np.array([v])
 
     for k, v in test.items():
-        test_vec = np.array([LBP(k)])
+        test_vec = np.array([extract_feature(k)])
         test_label = np.array([v])
 
     reg = linear_model.BayesianRidge()
@@ -345,10 +345,8 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    # pprint(det_landmarks('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg'))
-    # train_set, test_set = eccv_train_and_test_set(
-    #     '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split1.csv')
-    # train_and_eval_eccv(train_set, test_set)
+    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    train_and_eval_eccv(train_set, test_set)
 
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
@@ -356,7 +354,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    detect_face_and_cal_beauty('./talor.jpg')
+    # detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

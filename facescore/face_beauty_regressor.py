@@ -187,7 +187,7 @@ def PCA(feature_matrix):
     return pca.transform(feature_matrix)
 
 
-def detect_face_and_cal_beauty(face_filepath):
+def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
     """
     face detection with dlib
     :param face_filepath:
@@ -201,6 +201,8 @@ def detect_face_and_cal_beauty(face_filepath):
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     br = joblib.load(config['reg_model'])
+
+    result = det_landmarks(face_filepath)
 
     image = cv2.imread(face_filepath)
     detector = dlib.get_frontal_face_detector()
@@ -222,9 +224,15 @@ def detect_face_and_cal_beauty(face_filepath):
             (extract_conv_feature(roi, layer_name='conv5_1'), extract_conv_feature(roi, layer_name='conv4_1')), axis=0)
         attractiveness = br.predict(feature.reshape(-1, feature.shape[0]))
 
-        cv2.rectangle(image, (d.left(), d.top()), (d.right(), d.bottom()), (0, 255, 225), 2)
-        cv2.putText(image, str(round(attractiveness[0], 2)), (d.left() + 5, d.top() - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                    (106, 106, 255), 0, cv2.LINE_AA)
+        for index, face in result.items():
+            # cv2.rectangle(image, (d.left(), d.top()), (d.right(), d.bottom()), (0, 255, 225), 2)
+            cv2.rectangle(image, (face['bbox'][0], face['bbox'][1]), (face['bbox'][2], face['bbox'][3]), (0, 255, 225),
+                          2)
+            cv2.putText(image, str(round(attractiveness[0] * 20, 2)), (d.left() + 5, d.top() - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (106, 106, 255), 0, cv2.LINE_AA)
+
+            for ldmk in face['landmarks']:
+                cv2.circle(image, (ldmk[0], ldmk[1]), 1, (255, 245, 0), -1)
 
         cv2.imshow('image', image)
         cv2.imwrite('tmp.png', image)

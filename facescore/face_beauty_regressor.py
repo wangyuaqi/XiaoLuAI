@@ -232,7 +232,7 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (106, 106, 255), 0, cv2.LINE_AA)
 
             for ldmk in face['landmarks']:
-                cv2.circle(image, (ldmk[0], ldmk[1]), 1, (255, 245, 0), -1)
+                cv2.circle(image, (ldmk[0], ldmk[1]), 2, (255, 245, 0), -1)
 
         cv2.imshow('image', image)
         cv2.imwrite('tmp.png', image)

@@ -345,8 +345,8 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    train_and_eval_eccv(train_set, test_set)
+    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    # train_and_eval_eccv(train_set, test_set)
 
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
@@ -354,7 +354,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    # detect_face_and_cal_beauty('./talor.jpg')
+    detect_face_and_cal_beauty('./talor.jpeg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

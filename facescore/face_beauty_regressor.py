@@ -320,11 +320,15 @@ def train_and_eval_eccv(train, test):
     test_label = list()
 
     for k, v in train.items():
-        train_vec.append(np.concatenate(extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1"), axis=0))
+        train_vec.append(
+            np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1")),
+                           axis=0))
         train_label.append(v)
 
     for k, v in test.items():
-        test_vec.append(np.concatenate(extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1"), axis=0))
+        test_vec.append(
+            np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1")),
+                           axis=0))
         test_label.append(v)
 
     reg = linear_model.BayesianRidge()

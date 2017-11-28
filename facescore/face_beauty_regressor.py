@@ -354,7 +354,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    detect_face_and_cal_beauty('./talor.jpeg')
+    detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

@@ -29,8 +29,6 @@ class FBNet(nn.Module):
 
     def __init__(self):
         super(FBNet, self).__init__()
-        # 1 input image channel, 6 output channels, 5x5 square convolution
-        # kernel
         self.conv1 = nn.Conv2d(3, 32, 5)
         self.conv2 = nn.Conv2d(32, 64, 5)
         self.conv3 = nn.Conv2d(64, 128, 3)
@@ -39,14 +37,12 @@ class FBNet(nn.Module):
         self.fc2 = nn.Linear(512, 1, nn.Dropout(0.5))
 
     def forward(self, x):
-        # Max pooling over a (2, 2) window
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        # If the size is a square you can only specify a single number
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = F.max_pool2d(F.relu(self.conv3(x)), 3)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.fc2(x)
 
         return x
 

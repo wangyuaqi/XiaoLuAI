@@ -5,6 +5,7 @@ import sys
 import cv2
 import dlib
 import numpy as np
+import scipy
 import pandas as pd
 import skimage.color
 from skimage import io
@@ -40,23 +41,7 @@ def split_train_and_test_data():
     testset_filenames = filename_indexs.iloc[test_indices]
     testset_label = attractiveness_scores.iloc[test_indices]
 
-    # extract with HOG features
-    # train_set_vector = [HOG(config['face_image_filename'].format(_)) for _ in trainset_filenames]
-    # test_set_vector = [HOG(config['face_image_filename'].format(_)) for _ in testset_filenames]
-
-    # extract with LBP features
-    # train_set_vector = [LBP(config['face_image_filename'].format(_)) for _ in trainset_filenames]
-    # test_set_vector = [LBP(config['face_image_filename'].format(_)) for _ in testset_filenames]
-
-    # extract with HARR features
-    # train_set_vector = [HARRIS(config['face_image_filename'].format(_)) for _ in trainset_filenames]
-    # test_set_vector = [HARRIS(config['face_image_filename'].format(_)) for _ in testset_filenames]
-
-    # extract with Pixel Value features
-    # train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in traFpearinset_filenames]
-    # test_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in testset_filenames]
-
-    # extract with Deep Features
+    # extract Deep Features
     train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
                                         extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
                                        axis=0) for _ in trainset_filenames]
@@ -250,15 +235,13 @@ def train_model(train_set, test_set, train_label, test_label):
     :return:
     :Version:1.0
     """
-    # reg = linear_model.RidgeCV(alphas=[_ * 0.1 for _ in range(1, 1000, 1)])
     reg = linear_model.BayesianRidge()
-    # reg = svm.SVR()
     reg.fit(train_set, train_label)
 
-    mae_lr = round(mean_absolute_error(test_label, reg.predict(test_set)), 4)
-    rmse_lr = round(math.sqrt(mean_squared_error(test_label, reg.predict(test_set))), 4)
-    pc = round(np.corrcoef(test_label, reg.predict(test_set))[0, 1], 4)
-    # roc_auc_lr = roc_auc_score(test_label, lr.predict(test_set))
+    predicted_label = reg.predict(test_set)
+    mae_lr = round(mean_absolute_error(test_label, predicted_label), 4)
+    rmse_lr = round(math.sqrt(mean_squared_error(test_label, predicted_label)), 4)
+    pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
@@ -307,7 +290,7 @@ def eccv_train_and_test_set(split_csv_filepath):
     :Version:1.0
     """
     df = pd.read_csv(split_csv_filepath)
-    filenames = [os.path.join(os.path.dirname(split_csv_filepath), 'hotornot_face', _.replace('.bmp', '.jpg')) for _ in
+    filenames = [os.path.join(os.path.dirname(split_csv_filepath), 'face', _.replace('.bmp', '.jpg')) for _ in
                  df.iloc[:, 0].tolist()]
     scores = df.iloc[:, 1].tolist()
     flags = df.iloc[:, 2].tolist()
@@ -325,19 +308,32 @@ def eccv_train_and_test_set(split_csv_filepath):
 
 
 def train_and_eval_eccv(train, test):
+    """
+    train and test eccv dataset
+    :param train:
+    :param test:
+    :return:
+    """
+    train_vec = list()
+    train_label = list()
+    test_vec = list()
+    test_label = list()
+
     for k, v in train.items():
-        train_vec = np.array([extract_feature(k)])
-        train_label = np.array([v])
+        train_vec.append(np.concatenate(extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1"), axis=0))
+        train_label.append(v)
 
     for k, v in test.items():
-        test_vec = np.array([extract_feature(k)])
-        test_label = np.array([v])
+        test_vec.append(np.concatenate(extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1"), axis=0))
+        test_label.append(v)
 
     reg = linear_model.BayesianRidge()
-    reg.fit(train_vec, train_label)
-    mae_lr = round(mean_absolute_error(test_label, reg.predict(test_vec)), 4)
-    rmse_lr = round(math.sqrt(mean_squared_error(test_label, reg.predict(test_vec))), 4)
-    pc = round(np.corrcoef(test_label, reg.predict(test_vec))[0, 1], 4)
+    reg.fit(np.array(train_vec), np.array(train_label))
+
+    predicted_label = reg.predict(np.array(test_vec))
+    mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)
+    rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), predicted_label)), 4)
+    pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)
 
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
@@ -345,8 +341,8 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    # train_and_eval_eccv(train_set, test_set)
+    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    train_and_eval_eccv(train_set, test_set)
 
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
@@ -354,7 +350,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    detect_face_and_cal_beauty('./talor.jpg')
+    # detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

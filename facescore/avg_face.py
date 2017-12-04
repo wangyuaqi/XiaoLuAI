@@ -29,7 +29,7 @@ if __name__ == '__main__':
     # avg_face = avg_face('plant')
     # im = Image.fromarray(np.uint8(avg_face))
     # im.show()
-    dir = 'E:\DataSet\Face\SCUT-FBP\Faces'
+    dir = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces'
     sum_face = np.zeros([128, 128, 3])
     for _ in os.listdir(dir):
         im = Image.open(os.path.join(dir, _))

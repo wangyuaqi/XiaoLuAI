@@ -61,13 +61,9 @@ def prepare_data():
     filename_indexs = df['Image']
     attractiveness_scores = df['Attractiveness label']
 
-    # extract with Pixel Value features
-    dataset = [HOG(config['face_image_filename'].format(_)) for _ in filename_indexs]
-    """
     dataset = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
                                extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
                               axis=0) for _ in filename_indexs]
-    """
 
     return dataset, attractiveness_scores
 
@@ -182,7 +178,7 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
     print('start scoring your face...')
     # if the pre-trained model did not exist, then we train it
     if not os.path.exists(config['reg_model']):
-        train_set_vector, test_set_vector, trainset_label, testset_label = prepare_data()
+        train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     br = joblib.load(config['reg_model'])
@@ -191,11 +187,8 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
 
     image = cv2.imread(face_filepath)
     detector = dlib.get_frontal_face_detector()
-    # win = dlib.image_window()
     img = io.imread(face_filepath)
-    # The 1 in the second argument indicates that we should upsample the image 1 time.
-    # This will make everything bigger and allow us to detect more faces.
-    # dets = detector(img, 1)
+
     dets, scores, idx = detector.run(img, 1)
     print("Number of faces detected: {}".format(len(dets)))
     for i, d in enumerate(dets):
@@ -345,8 +338,8 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    train_and_eval_eccv(train_set, test_set)
+    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    # train_and_eval_eccv(train_set, test_set)
 
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
@@ -354,7 +347,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    # detect_face_and_cal_beauty('./talor.jpg')
+    detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

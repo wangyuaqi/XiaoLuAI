@@ -104,6 +104,7 @@ if __name__ == '__main__':
     fail_face_list = []
     hotornot_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face/'
     BAK2_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/faceBAK2'
+    face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/face'
     for _ in os.listdir(hotornot_face_dir):
         face_path = os.path.join(hotornot_face_dir, _)
         try:
@@ -117,4 +118,4 @@ if __name__ == '__main__':
     print('*' * 100)
 
     for _ in fail_face_list:
-        tf.gfile.Copy(os.path.join(BAK2_face_dir, _), os.path.join(hotornot_face_dir, _), overwrite=True)
+        tf.gfile.Copy(os.path.join(BAK2_face_dir, _), os.path.join(face_dir, _), overwrite=True)

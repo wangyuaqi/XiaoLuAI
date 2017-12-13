@@ -156,13 +156,14 @@ def det_landmarks(image_path):
     return result
 
 
-def PCA(feature_matrix):
+def PCA(feature_matrix, num_of_components=20):
     """
     PCA algorithm
+    :param num_of_components:
     :param feature_matrix:
     :return:
     """
-    pca = decomposition.PCA(n_components=20)
+    pca = decomposition.PCA(n_components=num_of_components)
     pca.fit(feature_matrix)
 
     return pca.transform(feature_matrix)
@@ -313,21 +314,21 @@ def train_and_eval_eccv(train, test):
     test_label = list()
 
     for k, v in train.items():
-        train_vec.append(
-            np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1")),
-                           axis=0))
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
+        train_vec.append(feature)
         train_label.append(v)
 
     for k, v in test.items():
-        test_vec.append(
-            np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv4_1")),
-                           axis=0))
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
+        test_vec.append(feature)
         test_label.append(v)
 
     reg = linear_model.BayesianRidge()
-    reg.fit(np.array(train_vec), np.array(train_label))
+    reg.fit(PCA(np.array(train_vec), config['num_of_components']), np.array(train_label))
 
-    predicted_label = reg.predict(np.array(test_vec))
+    predicted_label = reg.predict(PCA(np.array(test_vec), config['num_of_components']))
     mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)
     rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), predicted_label)), 4)
     pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)
@@ -338,8 +339,8 @@ def train_and_eval_eccv(train, test):
 
 
 if __name__ == '__main__':
-    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    # train_and_eval_eccv(train_set, test_set)
+    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    train_and_eval_eccv(train_set, test_set)
 
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
@@ -347,7 +348,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    detect_face_and_cal_beauty('./talor.jpg')
+    # detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

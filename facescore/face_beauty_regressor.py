@@ -178,11 +178,11 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
     """
     print('start scoring your face...')
     # if the pre-trained model did not exist, then we train it
-    if not os.path.exists(config['reg_model']):
+    if not os.path.exists(config['scut_fbp_reg_model']):
         train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    br = joblib.load(config['reg_model'])
+    br = joblib.load(config['scut_fbp_reg_model'])
 
     result = det_landmarks(face_filepath)
 
@@ -243,7 +243,7 @@ def train_model(train_set, test_set, train_label, test_label):
     if not os.path.exists('./model') or not os.path.isdir('./model'):
         os.makedirs('./model')
 
-    joblib.dump(reg, config['reg_model'])
+    joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
 
 
@@ -272,7 +272,7 @@ def cv_train(dataset, labels, cv=10):
     if not os.path.exists('./model') or not os.path.isdir('./model'):
         os.makedirs('./model')
 
-    joblib.dump(reg, config['reg_model'])
+    joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
 
 
@@ -327,6 +327,7 @@ def train_and_eval_eccv(train, test):
 
     reg = linear_model.BayesianRidge()
     reg.fit(PCA(np.array(train_vec), config['num_of_components']), np.array(train_label))
+    joblib.dump(reg, config['eccv_fbp_reg_model'])
 
     predicted_label = reg.predict(PCA(np.array(test_vec), config['num_of_components']))
     mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)

@@ -240,9 +240,7 @@ def train_model(train_set, test_set, train_label, test_label):
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
 
-    if not os.path.exists('./model') or not os.path.isdir('./model'):
-        os.makedirs('./model')
-
+    mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
 
@@ -269,9 +267,7 @@ def cv_train(dataset, labels, cv=10):
     print('=========The Root Mean Square Error of Model is {0}========='.format(np.mean(rmse_list)))
     print('=========The Pearson Correlation of Model is {0}========='.format(np.mean(pc_list)))
 
-    if not os.path.exists('./model') or not os.path.isdir('./model'):
-        os.makedirs('./model')
-
+    mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
 
@@ -327,6 +323,7 @@ def train_and_eval_eccv(train, test):
 
     reg = linear_model.BayesianRidge()
     reg.fit(PCA(np.array(train_vec), config['num_of_components']), np.array(train_label))
+    mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['eccv_fbp_reg_model'])
 
     predicted_label = reg.predict(PCA(np.array(test_vec), config['num_of_components']))
@@ -337,6 +334,16 @@ def train_and_eval_eccv(train, test):
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
+
+
+def mkdirs_if_not_exist(dir_name):
+    """
+    make directory if not exist
+    :param dir_name:
+    :return:
+    """
+    if not os.path.isdir(dir_name) or not os.path.exists(dir_name):
+        os.makedirs(dir_name)
 
 
 if __name__ == '__main__':

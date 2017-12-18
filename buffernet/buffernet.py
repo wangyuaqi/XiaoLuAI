@@ -120,10 +120,10 @@ def main(dataset_name="SVHN"):
          transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     trainset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=2)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
 
     testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4, shuffle=False, num_workers=2)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=2)
 
     optimizer = optim.SGD(leNet.parameters(), lr=cfg['lr'], momentum=cfg['momentum'], weight_decay=cfg['wd'])
 

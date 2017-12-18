@@ -21,10 +21,10 @@
     {
       "name": "MNIST",
       "root": "/media/lucasx/Document/DataSet/CV/BufferNet/MNIST",
-      "batch_size": 16,
-      "lr": 0.001,
+      "batch_size": 64,
+      "lr": 0.01,
       "momentum": 0.9,
-      "epoch": 10,
+      "epoch": 50,
       "wd": 0.005
     }
   ]

@@ -334,7 +334,7 @@ def train_and_eval_eccv(train, test):
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
-
+ 
 
 def mkdirs_if_not_exist(dir_name):
     """

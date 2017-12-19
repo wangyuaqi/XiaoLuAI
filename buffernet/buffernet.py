@@ -99,6 +99,11 @@ class LeNet(nn.Module):
 
 
 def load_config(config_json_path='./bfnet_config.json'):
+    """
+    load configuration in json file
+    :param config_json_path:
+    :return:
+    """
     with open(config_json_path, mode='rt', encoding='UTF-8') as f:
         config = json.load(f)
 
@@ -111,7 +116,7 @@ def main(dataset_name="SVHN"):
             cfg = _
             break
 
-    print(cfg)
+    print('load config %s ...' % str(cfg))
     leNet = LeNet()
     criterion = nn.CrossEntropyLoss()
 
@@ -125,7 +130,7 @@ def main(dataset_name="SVHN"):
     testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=2)
 
-    optimizer = optim.SGD(leNet.parameters(), lr=cfg['lr'], momentum=cfg['momentum'], weight_decay=cfg['wd'])
+    optimizer = optim.SGD(leNet.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
 
     for epoch in range(cfg['epoch']):  # loop over the dataset multiple times
 
@@ -173,7 +178,7 @@ def main(dataset_name="SVHN"):
         total += labels.cpu().size(0)
         correct += (predicted == labels.cpu().data).sum()
 
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
+    print('Accuracy of the network on the 10000 test images: %f %%' % (
         100 * correct / total))
 
 

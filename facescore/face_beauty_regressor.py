@@ -291,7 +291,7 @@ def eccv_train_and_test_set(split_csv_filepath):
     for i in range(len(flags)):
         if flags[i] == 'train':
             train_set[filenames[i]] = scores[i]
-        else:
+        elif flags[i] == 'test':
             test_set[filenames[i]] = scores[i]
 
     return train_set, test_set
@@ -334,7 +334,7 @@ def train_and_eval_eccv(train, test):
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
- 
+
 
 def mkdirs_if_not_exist(dir_name):
     """
@@ -350,6 +350,7 @@ if __name__ == '__main__':
     train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
     train_and_eval_eccv(train_set, test_set)
 
+    # cross validation
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
 

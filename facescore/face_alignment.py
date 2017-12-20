@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-from facescore.face_beauty_regressor import det_landmarks
+from facescore.face_beauty_regressor import det_landmarks, det_mat_landmarks
 
 
 def face_align(face_image_path):
@@ -30,9 +30,6 @@ def face_align(face_image_path):
 
     face_bbox = face['bbox']
 
-    center_x = (face_bbox[0] + face_bbox[2]) / 2
-    center_y = (face_bbox[1] + face_bbox[3]) / 2
-
     rows, cols, chs = img.shape
     M = cv2.getRotationMatrix2D((cols / 2, rows / 2), theta, 1)
     dst = cv2.warpAffine(img, M, (cols, rows))
@@ -41,11 +38,35 @@ def face_align(face_image_path):
 
     roi = cv2.resize(roi, (128, 128))
 
-    cv2.imwrite('/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/face/%s' %
-                face_image_path.split('/')[-1], roi)
-    # cv2.imshow('image', roi)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
+    rst = det_mat_landmarks(roi)
+    f = rst.get(0)
+
+    l_eye_l_ldmk = f['landmarks'][36]
+    l_eye_r_ldmk = f['landmarks'][39]
+
+    r_eye_l_ldmk = f['landmarks'][42]
+    r_eye_r_ldmk = f['landmarks'][45]
+
+    l_eye_center = [(l_eye_l_ldmk[0] + l_eye_r_ldmk[0]) / 2,
+                    (l_eye_l_ldmk[1] + l_eye_r_ldmk[1]) / 2]
+
+    r_eye_center = [(r_eye_l_ldmk[0] + r_eye_r_ldmk[0]) / 2,
+                    (r_eye_l_ldmk[1] + r_eye_r_ldmk[1]) / 2]
+
+    center_x = (l_eye_center[0] + r_eye_center[0]) / 2
+    center_y = (l_eye_center[1] + r_eye_center[1]) / 2
+
+    k = 40.0 / l_eye_center[0]
+    print('The scale ratio k = %d ...' % k)
+    face_region = cv2.resize(roi, (int(k * 128), int(k * 128)))
+
+    # cv2.imwrite('/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/face/%s' %
+    #             face_image_path.split('/')[-1], face_region)
+
+    cv2.imshow('roi', roi)
+    cv2.imshow('face_region', face_region)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
 
 def det_lean_degree(face_image_path):
@@ -101,10 +122,16 @@ def split_lean_or_not_data(image_dir):
 
 
 if __name__ == '__main__':
+    face_align(
+        "/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face/female_18_A8HMBSR_face_1.jpg")
+
+"""
     fail_face_list = []
     hotornot_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face/'
     BAK2_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/faceBAK2'
+    BAK3_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/faceBAK3'
     face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/face'
+
     for _ in os.listdir(hotornot_face_dir):
         face_path = os.path.join(hotornot_face_dir, _)
         try:
@@ -114,8 +141,10 @@ if __name__ == '__main__':
 
     print('*' * 100)
     print('all process done!')
+    print('%d image files are failed to convert...'%len(fail_face_list))
     print(fail_face_list)
     print('*' * 100)
 
     for _ in fail_face_list:
-        tf.gfile.Copy(os.path.join(BAK2_face_dir, _), os.path.join(face_dir, _), overwrite=True)
+        tf.gfile.Copy(os.path.join(BAK3_face_dir, _), os.path.join(face_dir, _), overwrite=True)
+"""

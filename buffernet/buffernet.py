@@ -73,9 +73,9 @@ class LeNet(nn.Module):
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
         # an affine operation: y = Wx + b
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120, nn.Dropout(0.5))
+        self.fc2 = nn.Linear(120, 84, nn.Dropout(0.5))
+        self.fc3 = nn.Linear(84, 10, nn.Dropout(0.5))
 
     def forward(self, x):
         # Max pooling over a (2, 2) window
@@ -87,7 +87,7 @@ class LeNet(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
 
-        return x
+        return F.softmax(x)
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -133,7 +133,6 @@ def main(dataset_name="SVHN"):
     optimizer = optim.SGD(leNet.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
 
     for epoch in range(cfg['epoch']):  # loop over the dataset multiple times
-
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs
@@ -163,22 +162,22 @@ def main(dataset_name="SVHN"):
                 running_loss = 0.0
 
     print('Finished Training\n')
-    print('Start Testing\n')
+    print('Start Testing')
 
     correct = 0
     total = 0
     for data in testloader:
-        data, labels = data
+        data, label = data
         if torch.cuda.is_available():
             data = Variable(data).cuda()
-            labels = Variable(labels).cuda()
+            label = Variable(label).cuda()
 
-        outputs = leNet(data)
-        _, predicted = torch.max(outputs.cpu().data, 1)
-        total += labels.cpu().size(0)
-        correct += (predicted == labels.cpu().data).sum()
+        output = leNet(data)
+        _, predicted = torch.max(output.data, 1)
+        total += label.size(0)
+        correct += (predicted == label.data).sum()
 
-    print('Accuracy of the network on the 10000 test images: %f %%' % (
+    print('Accuracy of the network on the 10 MNIST dataset: %f %%' % (
         100 * correct / total))
 
 

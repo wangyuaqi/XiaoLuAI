@@ -3,6 +3,7 @@
     {
       "name": "CIFAR10",
       "root": "/media/lucasx/Document/DataSet/CV/BufferNet/CIFAR10",
+      "class_num": 10,
       "batch_size": 32,
       "lr": 0.001,
       "momentum": 0.9,
@@ -12,6 +13,7 @@
     {
       "name": "SVHN",
       "root": "/media/lucasx/Document/DataSet/CV/BufferNet/SVHN",
+      "class_num": 10,
       "batch_size": 16,
       "lr": 0.001,
       "momentum": 0.9,
@@ -21,10 +23,11 @@
     {
       "name": "MNIST",
       "root": "/media/lucasx/Document/DataSet/CV/BufferNet/MNIST",
+      "class_num": 10,
       "batch_size": 64,
       "lr": 0.01,
       "momentum": 0.9,
-      "epoch": 200,
+      "epoch": 100,
       "wd": 0.005
     }
   ]

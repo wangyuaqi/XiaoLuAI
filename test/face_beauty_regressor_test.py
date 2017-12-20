@@ -27,7 +27,9 @@ def test_model():
     path = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/face/female_18_AEASGUH_face_1.jpg'
 
     fm = np.concatenate((extract_feature(path, layer_name="conv5_2"), extract_feature(path, layer_name="conv5_3")),
-                       axis=0)
+                        axis=0)
+
+    print(fm.shape)
     feature = PCA(fm, config['num_of_components'])
 
     score = model.fit(feature)

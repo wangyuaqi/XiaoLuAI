@@ -156,6 +156,26 @@ def det_landmarks(image_path):
     return result
 
 
+def det_mat_landmarks(image):
+    """
+    detect faces image MAT, return face bbox and landmarks
+    :param image_path:
+    :return:
+    """
+    predictor = dlib.shape_predictor(config['predictor_path'])
+    detector = dlib.get_frontal_face_detector()
+    faces = detector(image, 1)
+
+    result = {}
+    if len(faces) > 0:
+        for k, d in enumerate(faces):
+            shape = predictor(image, d)
+            result[k] = {"bbox": [d.left(), d.top(), d.right(), d.bottom()],
+                         "landmarks": [[shape.part(i).x, shape.part(i).y] for i in range(68)]}
+
+    return result
+
+
 def PCA(feature_matrix, num_of_components=20):
     """
     PCA algorithm

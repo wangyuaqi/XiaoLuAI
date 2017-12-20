@@ -1,5 +1,5 @@
 """
-face beauty prediction implemented by PyTorch
+face beauty prediction implemented by PyTorch based on SCUT-FBP dataset
 """
 import os
 import sys

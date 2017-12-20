@@ -299,7 +299,7 @@ def eccv_train_and_test_set(split_csv_filepath):
     :return:
     :Version:1.0
     """
-    df = pd.read_csv(split_csv_filepath)
+    df = pd.read_csv(split_csv_filepath, header=None)
     filenames = [os.path.join(os.path.dirname(split_csv_filepath), 'face', _.replace('.bmp', '.jpg')) for _ in
                  df.iloc[:, 0].tolist()]
     scores = df.iloc[:, 1].tolist()
@@ -341,10 +341,20 @@ def train_and_eval_eccv(train, test):
         test_vec.append(feature)
         test_label.append(v)
 
+    print('shape of train vector before PCA: %s' % str(np.array(train_vec).shape))
+    print('shape of train vector after PCA: %s' % str(PCA(np.array(train_vec), config['num_of_components']).shape))
+    print('+' * 100)
+    print('shape of test vector before PCA: %s' % str(np.array(test_vec).shape))
+    print('shape of test vector after PCA: %s' % str(PCA(np.array(test_vec), config['num_of_components']).shape))
+
     reg = linear_model.BayesianRidge()
     reg.fit(PCA(np.array(train_vec), config['num_of_components']), np.array(train_label))
     mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['eccv_fbp_reg_model'])
+
+    """
+    reg = joblib.load(config['eccv_fbp_reg_model'])
+    """
 
     predicted_label = reg.predict(PCA(np.array(test_vec), config['num_of_components']))
     mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)

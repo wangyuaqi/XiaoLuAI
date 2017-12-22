@@ -330,25 +330,27 @@ def train_and_eval_eccv(train, test):
     test_label = list()
 
     for k, v in train.items():
-        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
-                                 axis=0)
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv5_2"),
+                                  extract_feature(k, layer_name="conv5_3")), axis=0)
         train_vec.append(feature)
         train_label.append(v)
 
     for k, v in test.items():
-        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
-                                 axis=0)
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv5_2"),
+                                  extract_feature(k, layer_name="conv5_3")), axis=0)
         test_vec.append(feature)
         test_label.append(v)
 
+    """
     print('shape of train vector before PCA: %s' % str(np.array(train_vec).shape))
     print('shape of train vector after PCA: %s' % str(PCA(np.array(train_vec), config['num_of_components']).shape))
     print('+' * 100)
     print('shape of test vector before PCA: %s' % str(np.array(test_vec).shape))
     print('shape of test vector after PCA: %s' % str(PCA(np.array(test_vec), config['num_of_components']).shape))
+    """
 
     reg = linear_model.BayesianRidge()
-    reg.fit(PCA(np.array(train_vec), config['num_of_components']), np.array(train_label))
+    reg.fit(np.array(train_vec), np.array(train_label))
     mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['eccv_fbp_reg_model'])
 
@@ -356,7 +358,7 @@ def train_and_eval_eccv(train, test):
     reg = joblib.load(config['eccv_fbp_reg_model'])
     """
 
-    predicted_label = reg.predict(PCA(np.array(test_vec), config['num_of_components']))
+    predicted_label = reg.predict(np.array(test_vec))
     mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)
     rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), predicted_label)), 4)
     pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)

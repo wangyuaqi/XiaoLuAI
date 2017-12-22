@@ -1,13 +1,11 @@
-import os
-import sys
 import json
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-import torch.optim as optim
 from torch.autograd import Variable
 
 
@@ -98,6 +96,21 @@ class LeNet(nn.Module):
         return num_features
 
 
+class MLP(nn.Module):
+    def __init__(self):
+        super(MLP, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.softmax(self.fc3(x))
+
+        return x
+
+
 def load_config(config_json_path='./bfnet_config.json'):
     """
     load configuration in json file
@@ -110,27 +123,38 @@ def load_config(config_json_path='./bfnet_config.json'):
     return config
 
 
-def main(dataset_name="SVHN"):
+def main(dataset_name="MNIST", net=LeNet()):
+    print(net)
     for _ in load_config()['dataset']:
         if _['name'] == dataset_name:
             cfg = _
             break
 
     print('load config %s ...' % str(cfg))
-    leNet = LeNet()
     criterion = nn.CrossEntropyLoss()
 
     transform = transforms.Compose(
-        [transforms.RandomSizedCrop(32),
-         transforms.ToTensor(),
-         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    trainset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
+        [
+            # transforms.RandomSizedCrop(32),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=2)
+    if cfg['name'] == "MNIST":
+        trainset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=True, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
 
-    optimizer = optim.SGD(leNet.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
+        testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=2)
+    elif cfg['name'] == "SVHN":
+        trainset = torchvision.datasets.SVHN(root=cfg['root'], split="train", download=False, transform=transforms)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
+
+        testset = torchvision.datasets.SVHN(root=cfg['root'], split="test", download=False, transform=transforms)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
+    else:
+        print('Invalid dataset !!')
+
+    optimizer = optim.SGD(net.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
 
     for epoch in range(cfg['epoch']):  # loop over the dataset multiple times
         running_loss = 0.0
@@ -143,13 +167,13 @@ def main(dataset_name="SVHN"):
             if torch.cuda.is_available():
                 inputs = inputs.cuda()
                 labels = labels.cuda()
-                leNet = leNet.cuda()
+                net = net.cuda()
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs = leNet(inputs)
+            outputs = net(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -172,14 +196,14 @@ def main(dataset_name="SVHN"):
             data = Variable(data).cuda()
             label = Variable(label).cuda()
 
-        output = leNet(data)
+        output = net(data)
         _, predicted = torch.max(output.data, 1)
         total += label.size(0)
         correct += (predicted == label.data).sum()
 
-    print('Accuracy of the network on the 10 MNIST dataset: %f %%' % (
+    print('Accuracy of the network on the MNIST dataset: %f %%' % (
         100 * correct / total))
 
 
 if __name__ == '__main__':
-    main("MNIST")
+    main("MNIST", net=LeNet())

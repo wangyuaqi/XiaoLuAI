@@ -1,5 +1,6 @@
 """
-text classificationon Fudan NLP Corpus with the accuracy of 82.09184%
+Intro: text classificationon with TF-IDF feature vector on Fudan NLP Corpus with the accuracy of 82.09184%
+Author: @LucasX
 """
 import os
 

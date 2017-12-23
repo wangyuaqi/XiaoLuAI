@@ -11,7 +11,7 @@ import numpy as np
 import dlib
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from facescore.face_beauty_regressor import det_mat_landmarks
+from facescore.face_beauty_regressor import det_mat_landmarks, detect_face_and_cal_beauty
 
 detector = dlib.get_frontal_face_detector()
 
@@ -25,10 +25,13 @@ def main(original_face, scored_face, face_score):
     :return:
     """
     h, w, c = scored_face.shape
-    if h > 300:
-        ratio = 300.0 / h
-        original_face = cv2.resize(original_face, (300, w * ratio))
-        scored_face = cv2.resize(scored_face, (300, w * ratio))
+    if w != 449:
+        ratio = float(449.0 / w)
+        print('The ratio is %f' % ratio)
+        original_face = cv2.resize(original_face, (449, int(ratio * h)))
+        scored_face = cv2.resize(scored_face, (449, int(ratio * h)))
+
+        h, w, c = scored_face.shape
 
     qrcode_size = 100
     text_area_height = 100
@@ -68,15 +71,16 @@ def main(original_face, scored_face, face_score):
     result[0: h, 0: w, :] = original_face
     result[0: h, w:2 * w, :] = scored_face
 
-    qrcode = cv2.resize(cv2.imread('./qrcode_Zhihu_LucasX.png'), (qrcode_size, qrcode_size))
+    qrcode = cv2.resize(cv2.imread('./qrcode_wechat.jpg'), (qrcode_size, qrcode_size))
     result[h: h + text_area_height, 2 * w - qrcode_size:2 * w, :] = qrcode
     text_area = result[h: h + text_area_height, 0:2 * w - qrcode_size, :]
     font = cv2.FONT_HERSHEY_SIMPLEX
 
-    cv2.putText(text_area, 'Your face beauty is {0}, surpassing {1}% people in your friends circle.'
-                .format(face_score, rank_percentage(face_score)), (40, 20), font, 0.6, (255, 144, 30), 0, cv2.LINE_AA)
+    cv2.putText(text_area, 'Your face beauty score is {0}, surpassing {1}% people in your friends circle.'
+                .format(face_score, rank_percentage(face_score)), (int((2 * w - qrcode_size - 760) / 2), 20), font, 0.6,
+                (255, 144, 30), 0, cv2.LINE_AA)
     cv2.putText(text_area, 'AI Technology Supported by @LucasX',
-                (250, 90), font, 0.5, (106, 106, 255), 0, cv2.LINE_AA)
+                (int((2 * w - qrcode_size - 300) / 2), 90), font, 0.5, (106, 106, 255), 0, cv2.LINE_AA)
     cv2.imshow('result', result)
     cv2.waitKey()
     cv2.destroyAllWindows()
@@ -111,6 +115,7 @@ def rank_percentage(face_score):
 
 
 if __name__ == '__main__':
-    original_face = cv2.imread('./talor.jpg')
-    scored_face = cv2.imread('./tmp.png')
-    main(original_face, scored_face, 51.33)
+    original_image_filepath = './lucasx.jpeg'
+    score, scored_face = detect_face_and_cal_beauty(original_image_filepath)
+    original_face = cv2.imread(original_image_filepath)
+    main(original_face, scored_face, score)

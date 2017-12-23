@@ -235,10 +235,12 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
             for ldmk in face['landmarks']:
                 cv2.circle(image, (ldmk[0], ldmk[1]), 2, (255, 245, 0), -1)
 
-        cv2.imshow('image', image)
-        cv2.imwrite('tmp.png', image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.imwrite('tmp.jpg', image)
+        # cv2.imshow('image', image)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+
+    return round(attractiveness[0] * 20, 2), image
 
 
 def train_model(train_set, test_set, train_label, test_label):
@@ -381,8 +383,8 @@ def mkdirs_if_not_exist(dir_name):
 
 
 if __name__ == '__main__':
-    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    train_and_eval_eccv(train_set, test_set)
+    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    # train_and_eval_eccv(train_set, test_set)
 
     # cross validation
     # dataset, label = prepare_data()
@@ -391,7 +393,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    # detect_face_and_cal_beauty('./talor.jpg')
+    detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

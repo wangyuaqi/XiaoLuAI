@@ -197,12 +197,14 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
     :version:1.0
     """
     print('start scoring your face...')
-    # if the pre-trained model did not exist, then we train it
+    # if the pre-trained model did not exist, then we train it from scratch
     if not os.path.exists(config['scut_fbp_reg_model']):
+        print('No pre-trained model exists, start training now...')
         train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
         train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     br = joblib.load(config['scut_fbp_reg_model'])
+    print('Finishing training...')
 
     result = det_landmarks(face_filepath)
 

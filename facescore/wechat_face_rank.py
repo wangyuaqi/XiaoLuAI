@@ -53,18 +53,6 @@ def main(original_face, scored_face, face_score):
             hat_location_in_org_img = original_face[
                                       result_json[index]['bbox'][1] - hat_size: result_json[index]['bbox'][1],
                                       result_json[index]['bbox'][2]: result_json[index]['bbox'][2] + hat_size, :]
-
-            img2gray = cv2.cvtColor(hat_location_in_org_img, cv2.COLOR_BGR2GRAY)
-            ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
-            mask_inv = cv2.bitwise_not(mask)
-            # Now black-out the area of logo in ROI
-            img1_bg = cv2.bitwise_and(hat, hat, mask=mask_inv)
-            # Take only region of logo from logo image.
-            img2_fg = cv2.bitwise_and(hat_location_in_org_img, hat_location_in_org_img, mask=mask)
-            # Put logo in ROI and modify the main image
-            dst = cv2.add(img1_bg, img2_fg)
-            original_face[result_json[index]['bbox'][1] - hat_size: result_json[index]['bbox'][1],
-            result_json[index]['bbox'][2]: result_json[index]['bbox'][2] + hat_size, :] = dst
     else:
         print('Sorry, no face detected! Try another one please~')
 
@@ -115,7 +103,7 @@ def rank_percentage(face_score):
 
 
 if __name__ == '__main__':
-    original_image_filepath = './lucasx.jpeg'
+    original_image_filepath = './xulu.jpg'
     score, scored_face = detect_face_and_cal_beauty(original_image_filepath)
     original_face = cv2.imread(original_image_filepath)
     main(original_face, scored_face, score)

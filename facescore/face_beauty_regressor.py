@@ -334,24 +334,16 @@ def train_and_eval_eccv(train, test):
     test_label = list()
 
     for k, v in train.items():
-        feature = np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv5_2"),
-                                  extract_feature(k, layer_name="conv5_3")), axis=0)
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
         train_vec.append(feature)
         train_label.append(v)
 
     for k, v in test.items():
-        feature = np.concatenate((extract_feature(k, layer_name="conv5_1"), extract_feature(k, layer_name="conv5_2"),
-                                  extract_feature(k, layer_name="conv5_3")), axis=0)
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
         test_vec.append(feature)
         test_label.append(v)
-
-    """
-    print('shape of train vector before PCA: %s' % str(np.array(train_vec).shape))
-    print('shape of train vector after PCA: %s' % str(PCA(np.array(train_vec), config['num_of_components']).shape))
-    print('+' * 100)
-    print('shape of test vector before PCA: %s' % str(np.array(test_vec).shape))
-    print('shape of test vector after PCA: %s' % str(PCA(np.array(test_vec), config['num_of_components']).shape))
-    """
 
     reg = linear_model.BayesianRidge()
     reg.fit(np.array(train_vec), np.array(train_label))
@@ -383,8 +375,8 @@ def mkdirs_if_not_exist(dir_name):
 
 
 if __name__ == '__main__':
-    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    # train_and_eval_eccv(train_set, test_set)
+    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    train_and_eval_eccv(train_set, test_set)
 
     # cross validation
     # dataset, label = prepare_data()
@@ -393,7 +385,7 @@ if __name__ == '__main__':
     # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
     # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
-    detect_face_and_cal_beauty('./talor.jpg')
+    # detect_face_and_cal_beauty('./talor.jpg')
 
     # lbp = LBP('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-48.jpg')
     # hog = HOG('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-39.jpg')  # 512-d

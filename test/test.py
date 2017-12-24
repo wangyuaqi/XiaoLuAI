@@ -14,7 +14,11 @@ if __name__ == '__main__':
     #
     # print(len(train_set.keys()))
 
-    a = np.random.rand(20000)
-    a = a.reshape([40, 500])
-    f = PCA(a, num_of_components=50)
-    print(f.shape)
+    size_list = []
+    eccv_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face'
+    for _ in os.listdir(eccv_face_dir):
+        img = cv2.imread(os.path.join(eccv_face_dir, _))
+        if img.shape not in size_list:
+            size_list.append(img.shape)
+
+    print(size_list)

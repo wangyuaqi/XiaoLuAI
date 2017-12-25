@@ -12,7 +12,7 @@ from torchvision import transforms, datasets
 
 CLASS_NUM = 3
 EPOCH = 50
-BATCH = 8
+BATCH = 16
 IMAGE_SIZE = 224
 LR_INIT = 1e-6
 WEIGHT_DECAY = 1e-2
@@ -62,7 +62,7 @@ class PRNet(nn.Module):
         x = self.conv4(x)
         x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
-        x = F.softmax(x)
+        x = F.log_softmax(x)
 
         return x
 
@@ -173,7 +173,7 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
                       (epoch + 1, i_batch + 1, running_loss / 2000))
                 running_loss = 0.0
 
-                print("Save model to %s/prnet.pth" % model_path_dir)
+                print("Save model to %sprnet.pth" % model_path_dir)
 
                 if not os.path.isdir(model_path_dir) or not os.path.exists(model_path_dir):
                     os.makedirs(model_path_dir)

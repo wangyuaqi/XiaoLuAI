@@ -15,10 +15,13 @@ If you seek for some help, [this tutorial](http://cv-tricks.com/tensorflow-tutor
 ## Result
 ![performance metric](https://pic2.zhimg.com/v2-78ca5af68b079f8036c8af62d66c4241_r.jpg)
 ![test pic](https://pic2.zhimg.com/50/v2-6acf96c4eb15df795965573b6c4ff8c5_hd.jpg)
-![liushishi](https://pic3.zhimg.com/50/v2-17b1ddb1eb21ea73d5cd8b3298e794f2_hd.jpg)  
-![fanbingbing](https://pic2.zhimg.com/50/v2-e3e77adf79d0a7a3ff4c39a7bb47199d_hd.jpg)
 
 For more details, please read my article at [Zhihu](https://zhuanlan.zhihu.com/p/29399781).
 
+## Features
+Your can run [this script](./wechat_face_rank.py) to wear a Christmas hat and rank your face beauty among your WeChat friends.
+More details can be found at my [Zhihu Answer](https://www.zhihu.com/question/264485365/answer/282126327).
+![wechar_share](./wechat_share.png) 
+
 ## Note
-The face data set can only be used for **research**, no other usage is permitted! 
+The face data can only be used for **research**, no other usage is permitted! 

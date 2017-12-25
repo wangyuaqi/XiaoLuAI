@@ -16,8 +16,9 @@
    >[PyTorch](http://pytorch.org/)
   
 ## How to use
-       pip3 install -r requirements.txt
-   Install __OpenCV3.3__ with the help of this [guidance](http://cyaninfinite.com/tutorials/installing-opencv-in-ubuntu-for-python-3/).
+       sudo pip3 install -r requirements.txt
+   Install __OpenCV>=3.3__ with the help of [official tutorial](https://docs.opencv.org/3.4.0/d2/de6/tutorial_py_setup_in_ubuntu.html) 
+   or this [guidance](http://cyaninfinite.com/tutorials/installing-opencv-in-ubuntu-for-python-3/).
    
    Change the directory parameters in source code, and everything will be OK.   
    This repo has been tested OK on Ubuntu16.04.

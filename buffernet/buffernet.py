@@ -104,11 +104,19 @@ class MLP(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc1(self.num_flat_features(x)))
         x = F.relu(self.fc2(x))
         x = F.softmax(self.fc3(x))
 
         return x
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+
+        return num_features
 
 
 def load_config(config_json_path='./bfnet_config.json'):
@@ -130,7 +138,7 @@ def main(dataset_name="MNIST", net=LeNet()):
             cfg = _
             break
 
-    print('load config %s ...' % str(cfg))
+    print('load config : %s ' % str(cfg))
     criterion = nn.CrossEntropyLoss()
 
     transform = transforms.Compose(
@@ -202,8 +210,8 @@ def main(dataset_name="MNIST", net=LeNet()):
         correct += (predicted == label.data).sum()
 
     print('Accuracy of the network on the MNIST dataset: %f %%' % (
-        100 * correct / total))
+            100 * correct / total))
 
 
 if __name__ == '__main__':
-    main("MNIST", net=LeNet())
+    main("MNIST", net=MLP())

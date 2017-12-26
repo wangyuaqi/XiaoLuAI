@@ -267,6 +267,24 @@ def train_model(train_set, test_set, train_label, test_label):
     mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
+    out_result(test_set, predicted_label, test_label)
+    print('The result csv file has been generated...')
+
+
+def out_result(test_set_filenames, predicted_list, gt_lst):
+    """
+    output a Excel file containing testset filenames, predicted scores and groundtruth scores
+    :param test_set_filenames:
+    :param predicted_list:
+    :param gt_lst:
+    :return:
+    """
+    col = ['filename', 'predicted', 'groundtruth']
+    arr = np.array([test_set_filenames, predicted_list, gt_lst])
+    df = pd.DataFrame(arr.T, columns=col)
+    mkdirs_if_not_exist('./result/')
+    path = "./result/SCUT-FBP-TestSet.csv"
+    df.to_csv(path, index=False, encoding='UTF-8')
 
 
 def cv_train(dataset, labels, cv=10):
@@ -375,15 +393,15 @@ def mkdirs_if_not_exist(dir_name):
 
 
 if __name__ == '__main__':
-    train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
-    train_and_eval_eccv(train_set, test_set)
+    # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
+    # train_and_eval_eccv(train_set, test_set)
 
     # cross validation
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
 
-    # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
-    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
+    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     # detect_face_and_cal_beauty('./talor.jpg')
 

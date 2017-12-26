@@ -87,6 +87,10 @@ class LeNet(nn.Module):
 
 
 class MLP(nn.Module):
+    """
+    simple MLP for MNIST recognition
+    """
+
     def __init__(self):
         super(MLP, self).__init__()
         self.fc1 = nn.Linear(28 * 28, 120)
@@ -94,7 +98,8 @@ class MLP(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = F.relu(self.fc1(self.num_flat_features(x)))
+        x = self.num_flat_features(x)
+        x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.softmax(self.fc3(x))
 
@@ -110,6 +115,10 @@ class MLP(nn.Module):
 
 
 class Net(nn.Module):
+    """
+    simple CNN for MNIST recognition
+    """
+
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(1, 10, kernel_size=5)

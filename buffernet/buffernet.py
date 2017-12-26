@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 
@@ -10,22 +9,10 @@ from torch.autograd import Variable
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from buffernet.models import *
+from buffernet.utilize import mkdirs_if_not_exist, load_config
 
 
-def load_config(config_json_path='./bfnet_config.json'):
-    """
-    load configuration in json file
-    :param config_json_path:
-    :return:
-    """
-    with open(config_json_path, mode='rt', encoding='UTF-8') as f:
-        config = json.load(f)
-
-    return config
-
-
-def main(dataset_name="MNIST", net=LeNet()):
-    model_path_dir = './model/'
+def main(dataset_name="MNIST", net=LeNet(), model_path_dir='./model/'):
     print(net)
     for _ in load_config()['dataset']:
         if _['name'] == dataset_name:
@@ -37,8 +24,8 @@ def main(dataset_name="MNIST", net=LeNet()):
 
     transform = transforms.Compose(
         [
-            transforms.RandomSizedCrop(32),
-            transforms.RandomHorizontalFlip(),
+            # transforms.RandomSizedCrop(32),
+            # transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
@@ -107,10 +94,9 @@ def main(dataset_name="MNIST", net=LeNet()):
     print('Accuracy of the network on the MNIST dataset: %f %%' % (
             100 * correct / total))
 
-    if not os.path.isdir(model_path_dir) or not os.path.exists(model_path_dir):
-        os.makedirs(model_path_dir)
+    mkdirs_if_not_exist(model_path_dir)
     torch.save(net.state_dict(), os.path.join(model_path_dir, 'prnet.pth'))
 
 
 if __name__ == '__main__':
-    main("MNIST", net=LeNet())
+    main("MNIST", net=MLP())

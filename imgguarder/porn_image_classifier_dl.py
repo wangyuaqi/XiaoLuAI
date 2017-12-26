@@ -11,10 +11,11 @@ from torch.autograd import Variable
 from torchvision import transforms, datasets
 
 CLASS_NUM = 3
-EPOCH = 50
+EPOCH = 30
 BATCH = 16
-IMAGE_SIZE = 224
-LR_INIT = 1e-6
+# IMAGE_SIZE = 224
+IMAGE_SIZE = 128
+LR_INIT = 1e-5
 WEIGHT_DECAY = 1e-2
 
 
@@ -29,8 +30,8 @@ def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornIma
         transforms.RandomSizedCrop(IMAGE_SIZE),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                             std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                             std=[0.5, 0.5, 0.5])
     ])
     hymenoptera_dataset = datasets.ImageFolder(root=os.path.join(root_dir, type),
                                                transform=data_transform)
@@ -121,7 +122,7 @@ class MobileNet(nn.Module):
         x = x.view(-1, self.num_flat_features(x))
         x = self.fc(x)
 
-        return x
+        return F.log_softmax(x)
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -140,8 +141,8 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     :param dataloader:
     :return:
     """
-    # net = PRNet()
-    net = MobileNet()
+    net = PRNet()
+    # net = MobileNet()
     if torch.cuda.is_available():
         net = net.cuda()
 

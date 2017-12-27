@@ -322,7 +322,7 @@ def eccv_train_and_test_set(split_csv_filepath):
     :Version:1.0
     """
     df = pd.read_csv(split_csv_filepath, header=None)
-    filenames = [os.path.join(os.path.dirname(split_csv_filepath), 'face', _.replace('.bmp', '.jpg')) for _ in
+    filenames = [os.path.join(os.path.dirname(split_csv_filepath), 'hotornot_face', _.replace('.bmp', '.jpg')) for _ in
                  df.iloc[:, 0].tolist()]
     scores = df.iloc[:, 1].tolist()
     flags = df.iloc[:, 2].tolist()

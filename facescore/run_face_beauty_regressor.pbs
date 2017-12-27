@@ -1,0 +1,13 @@
+#!/bin/sh
+#PBS -N face_beauty_regressor_pbs
+#PBS -l nodes=2;ppn=3
+#PBS -l walltime=120:00:00
+#PBS -W x=GRES:gpu@1
+#PBS -q gpu01
+#PBS -V
+#PBS -S /bin/bash
+
+WORK_DIR='/home/jimxiang/XuLu/Projects/XiaoLuAI/facescore'
+cd $WORK_DIR
+source activate tensorflow
+nohup python3 face_beauty_regressor.py ./

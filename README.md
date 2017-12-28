@@ -16,7 +16,8 @@
    >[PyTorch](http://pytorch.org/)
   
 ## How to use
-       sudo pip3 install -r requirements.txt
+    sudo pip3 install -r requirements.txt
+   
    Install __OpenCV>=3.3__ with the help of [official tutorial](https://docs.opencv.org/3.4.0/d2/de6/tutorial_py_setup_in_ubuntu.html) 
    or this [guidance](http://cyaninfinite.com/tutorials/installing-opencv-in-ubuntu-for-python-3/).
    
@@ -29,7 +30,6 @@
    * [Facial Beauty Analysis](./facescore) 
    * [NLP](./nlp) 
    * [Image Guarder](./imgguarder) 
-   * [Fine-grained Flower Recognition](./flower) 
    
 
 ## LICENSE

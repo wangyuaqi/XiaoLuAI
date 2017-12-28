@@ -5,11 +5,8 @@ import sys
 import cv2
 import dlib
 import numpy as np
-import scipy
 import pandas as pd
-import skimage.color
 from skimage import io
-from skimage.feature import hog, local_binary_pattern, corner_harris
 from sklearn import decomposition
 from sklearn import linear_model
 from sklearn.externals import joblib
@@ -66,73 +63,6 @@ def prepare_data():
                               axis=0) for _ in filename_indexs]
 
     return dataset, attractiveness_scores
-
-
-def HOG(img_path):
-    """
-    extract HOG feature
-    :param img_path:
-    :return:
-    :version: 1.0
-    """
-    img = io.imread(img_path)
-    img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) / np.std(img)
-    feature = hog(img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), block_norm='L2-Hys')
-
-    return feature
-
-
-def LBP(img_path):
-    """
-    extract LBP features
-    :param img_path:
-    :return:
-    """
-    img = io.imread(img_path)
-    img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) / np.std(img)
-    feature = local_binary_pattern(img, P=8, R=0.2)
-    # im = Image.fromarray(np.uint8(feature))
-    # im.show()
-
-    return feature.reshape(feature.shape[0] * feature.shape[1])
-
-
-def HARRIS(img_path):
-    """
-    extract HARR features
-    :param img_path:
-    :return:
-    :Version:1.0
-    """
-    img = io.imread(img_path)
-    img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) / np.std(img)
-    feature = corner_harris(img, method='k', k=0.05, eps=1e-06, sigma=1)
-
-    return feature.reshape(feature.shape[0] * feature.shape[1])
-
-
-def RAW(img_path):
-    img = io.imread(img_path)
-    img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) / np.std(img)
-
-    return img.reshape(img.shape[0] * img.shape[1])
-
-
-def hog_from_cv(img):
-    """
-    extract HOG feature from opencv image object
-    :param img:
-    :return:
-    :Version:1.0
-    """
-    img = skimage.color.rgb2gray(img)
-    img = (img - np.mean(img)) / np.std(img)
-
-    return hog(img, orientations=8, pixels_per_cell=(16, 16), cells_per_block=(1, 1), block_norm='L2-Hys')
 
 
 def det_landmarks(image_path):
@@ -339,6 +269,42 @@ def eccv_train_and_test_set(split_csv_filepath):
     return train_set, test_set
 
 
+def eccv_train_and_test_set_with_align_or_lean(split_csv_filepath):
+    """
+    split train and test eccv dataset with judging alignment and lean
+    :param split_csv_filepath:
+    :return:
+    :Version:1.0
+    """
+    df = pd.read_csv(split_csv_filepath, header=None)
+    filenames = [os.path.join(os.path.dirname(split_csv_filepath), 'hotornot_face', _.replace('.bmp', '.jpg')) for _ in
+                 df.iloc[:, 0].tolist()]
+    scores = df.iloc[:, 1].tolist()
+    flags = df.iloc[:, 2].tolist()
+
+    from facescore.eccv_face_attribute_preprocess import load_eccv_attribute
+    eccv_attribute = load_eccv_attribute('./eccv_face_attribute.csv')
+
+    aligned_train_set = dict()
+    aligned_test_set = dict()
+    lean_train_set = dict()
+    lean_test_set = dict()
+
+    for i in range(len(flags)):
+        if flags[i] == 'train':
+            if eccv_attribute[filenames[i].split('/')[-1]] == 'aligned':
+                aligned_train_set[filenames[i]] = scores[i]
+            elif eccv_attribute[filenames[i].split('/')[-1]] == 'lean':
+                lean_train_set[filenames[i]] = scores[i]
+        elif flags[i] == 'test':
+            if eccv_attribute[filenames[i].split('/')[-1]] == 'aligned':
+                aligned_test_set[filenames[i]] = scores[i]
+            elif eccv_attribute[filenames[i].split('/')[-1]] == 'lean':
+                lean_train_set[filenames[i]] = scores[i]
+
+    return aligned_train_set, aligned_test_set, lean_train_set, lean_test_set
+
+
 def train_and_eval_eccv(train, test):
     """
     train and test eccv dataset
@@ -382,6 +348,65 @@ def train_and_eval_eccv(train, test):
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
 
 
+def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_train, lean_test):
+    aligned_train_vec = list()
+    aligned_train_label = list()
+    aligned_test_vec = list()
+    aligned_test_label = list()
+
+    lean_train_vec = list()
+    lean_train_label = list()
+    lean_test_vec = list()
+    lean_test_label = list()
+
+    for k, v in aligned_train.items():
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
+        aligned_train_vec.append(feature)
+        aligned_train_label.append(v)
+
+    for k, v in aligned_test.items():
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
+        aligned_test_vec.append(feature)
+        aligned_test_label.append(v)
+
+    for k, v in lean_train.items():
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
+        lean_train_vec.append(feature)
+        lean_train_label.append(v)
+
+    for k, v in lean_test.items():
+        feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
+                                 axis=0)
+        lean_test_vec.append(feature)
+        lean_test_label.append(v)
+
+    aligned_reg = linear_model.BayesianRidge()
+    lean_reg = linear_model.BayesianRidge()
+
+    aligned_reg.fit(np.array(aligned_train_vec), np.array(aligned_train_label))
+    lean_reg.fit(np.array(lean_train_vec), np.array(lean_train_label))
+    mkdirs_if_not_exist('./model')
+    joblib.dump(aligned_reg, './model/eccv_fbp_dcnn_bayes_reg_aligned.pkl')
+    joblib.dump(lean_reg, './model/eccv_fbp_dcnn_bayes_reg_lean.pkl')
+
+    aligned_predicted_label = aligned_reg.predict(np.array(aligned_test_vec))
+    lean_predicted_label = lean_reg.predict(np.array(lean_test_vec))
+
+    predicted_label = aligned_predicted_label + lean_predicted_label
+    test_label = aligned_test_label + lean_test_label
+
+    mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)
+    rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), predicted_label)), 4)
+    pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)
+
+    print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
+
+
 def mkdirs_if_not_exist(dir_name):
     """
     make directory if not exist
@@ -395,6 +420,10 @@ def mkdirs_if_not_exist(dir_name):
 if __name__ == '__main__':
     # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
     # train_and_eval_eccv(train_set, test_set)
+
+    # aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(
+    #     config['eccv_dataset_split_csv_file'])
+    # train_and_eval_eccv_with_align_or_lean(aligned_train_set, aligned_test_set, lean_train_set, lean_test_set)
 
     # cross validation
     # dataset, label = prepare_data()

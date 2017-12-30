@@ -300,7 +300,7 @@ def eccv_train_and_test_set_with_align_or_lean(split_csv_filepath):
             if eccv_attribute[filenames[i].split('/')[-1]] == 'aligned':
                 aligned_test_set[filenames[i]] = scores[i]
             elif eccv_attribute[filenames[i].split('/')[-1]] == 'lean':
-                lean_train_set[filenames[i]] = scores[i]
+                lean_test_set[filenames[i]] = scores[i]
 
     return aligned_train_set, aligned_test_set, lean_train_set, lean_test_set
 
@@ -423,14 +423,18 @@ if __name__ == '__main__':
 
     # aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(
     #     config['eccv_dataset_split_csv_file'])
-    # train_and_eval_eccv_with_align_or_lean(aligned_train_set, aligned_test_set, lean_train_set, lean_test_set)
+    split_csvs = [
+        '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split%d.csv' % _
+        for _ in range(1, 6, 1)]
+    aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean('')
+    train_and_eval_eccv_with_align_or_lean(aligned_train_set, aligned_test_set, lean_train_set, lean_test_set)
 
     # cross validation
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
 
-    train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
-    train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
+    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     # detect_face_and_cal_beauty('./talor.jpg')
 

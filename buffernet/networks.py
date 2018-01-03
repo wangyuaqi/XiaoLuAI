@@ -93,17 +93,19 @@ class MLP(nn.Module):
 
     def __init__(self):
         super(MLP, self).__init__()
-        self.fc1 = nn.Linear(28 * 28, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc1 = nn.Linear(28 * 28, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, 10)
 
     def forward(self, x):
-        x = self.num_flat_features(x)
-        x = F.relu(self.fc1(x))
+        num_features = self.num_flat_features(x)
+        x = F.relu(self.fc1(x.view(-1, num_features)))
         x = F.relu(self.fc2(x))
-        x = F.softmax(self.fc3(x))
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
 
-        return x
+        return F.softmax(x)
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension

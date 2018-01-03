@@ -395,11 +395,11 @@ def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_tra
     aligned_predicted_label = aligned_reg.predict(np.array(aligned_test_vec))
     lean_predicted_label = lean_reg.predict(np.array(lean_test_vec))
 
-    predicted_label = aligned_predicted_label + lean_predicted_label
+    predicted_label = aligned_predicted_label.tolist() + lean_predicted_label.tolist()
     test_label = aligned_test_label + lean_test_label
 
-    mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)
-    rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), predicted_label)), 4)
+    mae_lr = round(mean_absolute_error(np.array(test_label), np.array(predicted_label)), 4)
+    rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), np.array(predicted_label))), 4)
     pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)
 
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))

@@ -6,7 +6,7 @@ matplotlib==1.5.1
 six==1.11.0
 tensorflow_gpu==1.4.1
 pandas==0.19.1
-torchvision==0.1.8
+torchvision==0.2.0
 lxml==3.7.1
 dlib==19.4.0
 torch==0.3.0.post4

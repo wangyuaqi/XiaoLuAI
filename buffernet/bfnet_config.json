@@ -1,34 +1,9 @@
 {
-  "dataset": [
+  "buffernet": [
     {
-      "name": "CIFAR10",
-      "root": "/media/lucasx/Document/DataSet/CV/BufferNet/CIFAR10",
-      "class_num": 10,
-      "batch_size": 32,
-      "lr": 0.001,
-      "momentum": 0.9,
-      "epoch": 2000,
-      "wd": 0.005
-    },
-    {
-      "name": "SVHN",
-      "root": "/media/lucasx/Document/DataSet/CV/BufferNet/SVHN",
-      "class_num": 10,
-      "batch_size": 16,
-      "lr": 0.001,
-      "momentum": 0.9,
-      "epoch": 2000,
-      "wd": 0.005
-    },
-    {
-      "name": "MNIST",
-      "root": "/media/lucasx/Document/DataSet/CV/BufferNet/MNIST",
-      "class_num": 10,
-      "batch_size": 64,
-      "lr": 0.001,
-      "momentum": 0.9,
-      "epoch": 100,
-      "wd": 0.005
+      "benchmark": "SVHN",
+      "from": "MNIST",
+      "solid_layers": ["fc1", "fc2", "fc3"]
     }
   ]
 }

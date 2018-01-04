@@ -5,7 +5,7 @@
           "pretrained": "MNIST",
           "root": "/media/lucasx/Document/DataSet/CV/BufferNet/SVHN",
           "class_num": 10,
-          "batch_size": 64,
+          "batch_size": 16,
           "lr_init": 0.001,
           "momentum": 0.9,
           "epoch": 50,

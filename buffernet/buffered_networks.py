@@ -37,7 +37,9 @@ class BufferMLP(nn.Module):
         x = F.relu(self.bf1(x))
         x = F.relu(self.sl1(x))
         x = F.relu(self.sl2(x))
+        x = F.dropout(x, 0.5)
         x = F.relu(self.sl3(x))
+        x = F.dropout(x, 0.5)
         x = self.sl4(x)
 
         return F.log_softmax(x)

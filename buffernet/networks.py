@@ -105,7 +105,7 @@ class MLP(nn.Module):
         x = F.relu(self.fc3(x))
         x = self.fc4(x)
 
-        return F.softmax(x)
+        return F.log_softmax(x)
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension

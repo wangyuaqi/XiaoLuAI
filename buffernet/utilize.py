@@ -4,6 +4,8 @@ import json
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
 
 
 def mkdirs_if_not_exist(dir_name):
@@ -38,6 +40,51 @@ def load_bf_config(config_json_path='./bfnet_config.json'):
         config = json.load(f)
 
     return config
+
+
+def load_config_by_dataset_name(dataset_name='MNIST'):
+    """
+    load config by dataset name
+    :param dataset_name:
+    :param config_json_path:
+    :return:
+    """
+    for _ in load_benchmark_config()['dataset']:
+        if _['name'] == dataset_name:
+            cfg = _
+            break
+
+    return cfg
+
+
+def prepare_data(cfg, transform=transforms.Compose(
+    [
+        transforms.ColorJitter(),
+        transforms.Resize(28),
+        transforms.ToTensor(),
+        transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])):
+    """
+    prepare train and test dataset
+    :param cfg:
+    :param transform:
+    :return:
+    """
+    if cfg['name'] == "MNIST":
+        trainset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=True, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+
+        testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+    elif cfg['name'] == "SVHN":
+        trainset = torchvision.datasets.SVHN(root=cfg['root'], split="train", download=False, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+
+        testset = torchvision.datasets.SVHN(root=cfg['root'], split="test", download=False, transform=transform)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    else:
+        print('Invalid dataset !!')
+
+    return trainloader, testloader
 
 
 def set_optimizer(model, lr_init, lr_mult, momentum, wd):

@@ -3,48 +3,28 @@ import sys
 
 import torch
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from buffernet.networks import *
-from buffernet.utilize import mkdirs_if_not_exist, load_benchmark_config, init_weights
+from buffernet.utilize import mkdirs_if_not_exist, load_config_by_dataset_name, prepare_data
 
 
-def main(dataset_name="MNIST", net=LeNet(), model_path_dir='./model/'):
+def train_dnn(trainloader, net=LeNet(), model_path_dir='./model/'):
+    """
+    train deep neural networks
+    :param dataset_name:
+    :param net:
+    :param model_path_dir:
+    :return:
+    """
     # net.apply(init_weights)
     print(net)
-    for _ in load_benchmark_config()['dataset']:
-        if _['name'] == dataset_name:
-            cfg = _
-            break
+    cfg = load_config_by_dataset_name()
 
     print('load config : %s ' % str(cfg))
     criterion = nn.CrossEntropyLoss()
-
-    transform = transforms.Compose(
-        [
-            transforms.ColorJitter(),
-            transforms.Resize(28),
-            transforms.ToTensor(),
-            transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
-
-    if cfg['name'] == "MNIST":
-        trainset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=True, transform=transform)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-
-        testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
-    elif cfg['name'] == "SVHN":
-        trainset = torchvision.datasets.SVHN(root=cfg['root'], split="train", download=False, transform=transforms)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-
-        testset = torchvision.datasets.SVHN(root=cfg['root'], split="test", download=False, transform=transforms)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-    else:
-        print('Invalid dataset !!')
 
     optimizer = optim.SGD(net.parameters(), lr=cfg['lr_init'], momentum=cfg['momentum'])
     learning_rate_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
@@ -81,6 +61,19 @@ def main(dataset_name="MNIST", net=LeNet(), model_path_dir='./model/'):
                 running_loss = 0.0
 
     print('Finished Training\n')
+    mkdirs_if_not_exist(model_path_dir)
+    torch.save(net.state_dict(), os.path.join(model_path_dir, 'mlp-mnist.pth'))
+
+
+def test_dnn(testloader, net=MLP(), model_path='./model/mlp-mnist.pth'):
+    """
+    test deep neural networks
+    :param testloader:
+    :param net:
+    :param model_path:
+    :return:
+    """
+    net.load_state_dict(torch.load(model_path))
     print('Start Testing')
     net.train(False)
 
@@ -89,6 +82,7 @@ def main(dataset_name="MNIST", net=LeNet(), model_path_dir='./model/'):
     for data in testloader:
         data, label = data
         if torch.cuda.is_available():
+            net.cuda()
             data = Variable(data).cuda()
             label = Variable(label).cuda()
 
@@ -97,12 +91,12 @@ def main(dataset_name="MNIST", net=LeNet(), model_path_dir='./model/'):
         total += label.size(0)
         correct += (predicted == label.data).sum()
 
-    print('Accuracy of the network on the ' + dataset_name + ' dataset: %f %%' % (
+    print('Accuracy of the network on this dataset: %f %%' % (
             100 * correct / total))
-
-    mkdirs_if_not_exist(model_path_dir)
-    torch.save(net.state_dict(), os.path.join(model_path_dir, 'buffernet.pth'))
 
 
 if __name__ == '__main__':
-    main("MNIST", net=MLP())
+    cfg = load_config_by_dataset_name("MNIST")
+    trainloader, testloader = prepare_data(cfg)
+    train_dnn(trainloader, net=MLP())
+    test_dnn(testloader, net=MLP())

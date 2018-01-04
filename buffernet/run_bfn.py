@@ -5,52 +5,38 @@ import os
 import sys
 
 import torch
+import torch.nn as nn
 import torch.optim as optim
-import torchvision
-import torchvision.transforms as transforms
 from torch.autograd import Variable
+from torch.optim import lr_scheduler
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from buffernet.networks import *
-from buffernet.utilize import mkdirs_if_not_exist, load_benchmark_config
+from buffernet.buffered_networks import BufferMLP
+from buffernet.utilize import load_config_by_dataset_name, prepare_data, mkdirs_if_not_exist
 
 
-def main(dataset_name="MNIST", net=BufferMLP(), model_path_dir='./model/'):
+def train_bfn(trainloader, net=BufferMLP(), model_path_dir='./model/'):
+    """
+    train buffered neural networks
+    :param dataset_name:
+    :param net:
+    :param model_path_dir:
+    :return:
+    """
+    # net.apply(init_weights)
     print(net)
-    for _ in load_benchmark_config()['dataset']:
-        if _['name'] == dataset_name:
-            cfg = _
-            break
+    cfg = load_config_by_dataset_name()
 
     print('load config : %s ' % str(cfg))
     criterion = nn.CrossEntropyLoss()
 
-    transform = transforms.Compose(
-        [
-            # transforms.RandomSizedCrop(32),
-            # transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-    if cfg['name'] == "MNIST":
-        trainset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=True, transform=transform)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
-
-        testset = torchvision.datasets.MNIST(root=cfg['root'], download=False, train=False, transform=transform)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=False, num_workers=2)
-    elif cfg['name'] == "SVHN":
-        trainset = torchvision.datasets.SVHN(root=cfg['root'], split="train", download=False, transform=transforms)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
-
-        testset = torchvision.datasets.SVHN(root=cfg['root'], split="test", download=False, transform=transforms)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=cfg['batch_size'], shuffle=True, num_workers=2)
-    else:
-        print('Invalid dataset !!')
-
-    optimizer = optim.SGD(net.parameters(), lr=cfg['lr_init'])
+    optimizer = optim.SGD(net.parameters(), lr=cfg['lr_init'], momentum=cfg['momentum'])
+    learning_rate_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     for epoch in range(cfg['epoch']):  # loop over the dataset multiple times
         running_loss = 0.0
+        learning_rate_scheduler.step()
+        net.train(True)
         for i, data in enumerate(trainloader, 0):
             # get the inputs
             inputs, labels = data
@@ -58,9 +44,9 @@ def main(dataset_name="MNIST", net=BufferMLP(), model_path_dir='./model/'):
             # wrap them in Variable
             inputs, labels = Variable(inputs), Variable(labels)
             if torch.cuda.is_available():
+                net = net.cuda()
                 inputs = inputs.cuda()
                 labels = labels.cuda()
-                net = net.cuda()
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -79,13 +65,28 @@ def main(dataset_name="MNIST", net=BufferMLP(), model_path_dir='./model/'):
                 running_loss = 0.0
 
     print('Finished Training\n')
+    mkdirs_if_not_exist(model_path_dir)
+    torch.save(net.state_dict(), os.path.join(model_path_dir, 'mlp-mnist.pth'))
+
+
+def test_bfn(testloader, net=BufferMLP(), model_path='./model/mlp-mnist.pth'):
+    """
+    test buffered neural networks
+    :param testloader:
+    :param net:
+    :param model_path:
+    :return:
+    """
+    net.load_state_dict(torch.load(model_path))
     print('Start Testing')
+    net.train(False)
 
     correct = 0
     total = 0
     for data in testloader:
         data, label = data
         if torch.cuda.is_available():
+            net.cuda()
             data = Variable(data).cuda()
             label = Variable(label).cuda()
 
@@ -94,12 +95,12 @@ def main(dataset_name="MNIST", net=BufferMLP(), model_path_dir='./model/'):
         total += label.size(0)
         correct += (predicted == label.data).sum()
 
-    print('Accuracy of the network on the ' + dataset_name + ' dataset: %f %%' % (
+    print('Accuracy of the network on this dataset: %f %%' % (
             100 * correct / total))
-
-    mkdirs_if_not_exist(model_path_dir)
-    torch.save(net.state_dict(), os.path.join(model_path_dir, 'buffernet.pth'))
 
 
 if __name__ == '__main__':
-    main("MNIST", net=MLP())
+    cfg = load_config_by_dataset_name("MNIST")
+    trainloader, testloader = prepare_data(cfg)
+    train_bfn(trainloader, net=BufferMLP())
+    test_bfn(testloader, net=BufferMLP())

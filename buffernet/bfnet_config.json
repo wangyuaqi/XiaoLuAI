@@ -1,9 +1,15 @@
 {
   "buffernet": [
     {
-      "benchmark": "SVHN",
       "from": "MNIST",
-      "solid_layers": ["fc1", "fc2", "fc3"]
+      "to": "SVHN",
+      "hyper_params": {
+          "batch_size": 16,
+          "lr_init": 0.001,
+          "momentum": 0.9,
+          "epoch": 2000,
+          "wd": 0.005
+      }
     }
   ]
 }

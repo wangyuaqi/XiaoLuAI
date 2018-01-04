@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -10,15 +12,27 @@ class BufferMLP(nn.Module):
 
     def __init__(self):
         super(BufferMLP, self).__init__()
-        self.fc1 = nn.Linear(28 * 28, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.layers = nn.Sequential(OrderedDict([
+            # 1st buffered layer
+            ('bf1', nn.Sequential(nn.Linear(32 * 32 * 3, 28 * 28),
+                                  nn.ReLU())),
+            # 1st solid layer
+            ('sl1/fc1', nn.Sequential(nn.Linear(28 * 28, 128),
+                                      nn.ReLU())),
+            # 2nd solid layer
+            ('sl2/fc2', nn.Sequential(nn.Linear(128, 64),
+                                      nn.ReLU())),
+            ('sl3/fc3', nn.Sequential(nn.Linear(64, 32),
+                                      nn.ReLU())),
+            ('sl4/fc4', nn.Sequential(nn.Linear(32, 10)))
+        ]))
 
     def forward(self, x):
         num_features = self.num_flat_features(x)
-        x = F.relu(self.fc1(x.view(-1, num_features)))
+        x = x.view(-1, num_features)
+        x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.softmax(self.fc3(x))
+        x = F.relu(self.fc2(x))
 
         return x
 
@@ -43,8 +57,3 @@ class BufferMLP(nn.Module):
                 params[k] = p
 
         return params
-
-    def load_model(self, model_path):
-        states = torch.load(model_path)
-        shared_layers = states['solid_layers']
-        self.layers.load_state_dict(shared_layers)

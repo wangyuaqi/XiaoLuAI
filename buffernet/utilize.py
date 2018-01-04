@@ -65,7 +65,7 @@ def load_bf_config_by_dataset_name(from_dataset, to_dataset):
     :return:
     """
     for _ in load_bf_config()['buffernet']:
-        if _['from'] == from_dataset and _['to'] == to_dataset:
+        if _['pretrained'] == from_dataset and _['name'] == to_dataset:
             bf_cfg = _
             break
 

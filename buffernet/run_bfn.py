@@ -13,8 +13,7 @@ from torch.optim import lr_scheduler
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from buffernet.buffered_networks import BufferMLP
-from buffernet.utilize import prepare_data, mkdirs_if_not_exist, \
-    load_bf_config_by_dataset_name, load_dnn_config_by_dataset_name
+from buffernet.utilize import prepare_data, mkdirs_if_not_exist, load_bf_config_by_dataset_name
 
 
 def train_bfn(trainloader, net=BufferMLP(), model_path_dir='./model/'):
@@ -27,7 +26,7 @@ def train_bfn(trainloader, net=BufferMLP(), model_path_dir='./model/'):
     """
     # net.apply(init_weights)
     print(net)
-    bf_cfg = load_dnn_config_by_dataset_name()
+    bf_cfg = load_bf_config_by_dataset_name("MNIST", "SVHN")
 
     print('load config : %s ' % str(bf_cfg))
     criterion = nn.CrossEntropyLoss()
@@ -108,6 +107,6 @@ if __name__ == '__main__':
             transforms.ColorJitter(),
             transforms.ToTensor(),
             transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
-    trainloader, testloader = prepare_data(bf_cfg)
+    trainloader, testloader = prepare_data(bf_cfg, transform=transform)
     train_bfn(trainloader, net=BufferMLP())
     test_bfn(testloader, net=BufferMLP())

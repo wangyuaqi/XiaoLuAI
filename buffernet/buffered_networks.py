@@ -7,7 +7,7 @@ import torch
 
 class BufferMLP(nn.Module):
     """
-    BufferNet with MLP
+    BufferNet with MLP for SHVN
     """
 
     def __init__(self):

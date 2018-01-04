@@ -7,12 +7,14 @@ import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from buffernet.buffered_networks import BufferMLP
-from buffernet.utilize import load_config_by_dataset_name, prepare_data, mkdirs_if_not_exist
+from buffernet.utilize import prepare_data, mkdirs_if_not_exist, \
+    load_bf_config_by_dataset_name, load_dnn_config_by_dataset_name
 
 
 def train_bfn(trainloader, net=BufferMLP(), model_path_dir='./model/'):
@@ -25,15 +27,15 @@ def train_bfn(trainloader, net=BufferMLP(), model_path_dir='./model/'):
     """
     # net.apply(init_weights)
     print(net)
-    cfg = load_config_by_dataset_name()
+    bf_cfg = load_dnn_config_by_dataset_name()
 
-    print('load config : %s ' % str(cfg))
+    print('load config : %s ' % str(bf_cfg))
     criterion = nn.CrossEntropyLoss()
 
-    optimizer = optim.SGD(net.parameters(), lr=cfg['lr_init'], momentum=cfg['momentum'])
+    optimizer = optim.SGD(net.parameters(), lr=bf_cfg['lr_init'], momentum=bf_cfg['momentum'])
     learning_rate_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
-    for epoch in range(cfg['epoch']):  # loop over the dataset multiple times
+    for epoch in range(bf_cfg['epoch']):  # loop over the dataset multiple times
         running_loss = 0.0
         learning_rate_scheduler.step()
         net.train(True)
@@ -66,10 +68,10 @@ def train_bfn(trainloader, net=BufferMLP(), model_path_dir='./model/'):
 
     print('Finished Training\n')
     mkdirs_if_not_exist(model_path_dir)
-    torch.save(net.state_dict(), os.path.join(model_path_dir, 'mlp-mnist.pth'))
+    torch.save(net.state_dict(), os.path.join(model_path_dir, 'bf-mlp-svhn.pth'))
 
 
-def test_bfn(testloader, net=BufferMLP(), model_path='./model/mlp-mnist.pth'):
+def test_bfn(testloader, net=BufferMLP(), model_path='./model/bf-mlp-svhn.pth'):
     """
     test buffered neural networks
     :param testloader:
@@ -100,7 +102,12 @@ def test_bfn(testloader, net=BufferMLP(), model_path='./model/mlp-mnist.pth'):
 
 
 if __name__ == '__main__':
-    cfg = load_config_by_dataset_name("MNIST")
-    trainloader, testloader = prepare_data(cfg)
+    bf_cfg = load_bf_config_by_dataset_name("MNIST", "SVHN")
+    transform = transforms.Compose(
+        [
+            transforms.ColorJitter(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))])
+    trainloader, testloader = prepare_data(bf_cfg)
     train_bfn(trainloader, net=BufferMLP())
     test_bfn(testloader, net=BufferMLP())

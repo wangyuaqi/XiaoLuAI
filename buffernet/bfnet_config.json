@@ -1,15 +1,15 @@
 {
-  "buffernet": [
-    {
-      "from": "MNIST",
-      "to": "SVHN",
-      "hyper_params": {
+    "buffernet": [
+        {
+          "name": "SVHN",
+          "pretrained": "MNIST",
+          "root": "/media/lucasx/Document/DataSet/CV/BufferNet/SVHN",
+          "class_num": 10,
           "batch_size": 16,
           "lr_init": 0.001,
           "momentum": 0.9,
           "epoch": 2000,
           "wd": 0.005
-      }
-    }
-  ]
+        }
+    ]
 }

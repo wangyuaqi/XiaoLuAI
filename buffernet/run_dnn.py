@@ -8,7 +8,7 @@ from torch.optim import lr_scheduler
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from buffernet.networks import *
-from buffernet.utilize import mkdirs_if_not_exist, load_config_by_dataset_name, prepare_data
+from buffernet.utilize import mkdirs_if_not_exist, prepare_data, load_dnn_config_by_dataset_name
 
 
 def train_dnn(trainloader, net=LeNet(), model_path_dir='./model/'):
@@ -21,7 +21,7 @@ def train_dnn(trainloader, net=LeNet(), model_path_dir='./model/'):
     """
     # net.apply(init_weights)
     print(net)
-    cfg = load_config_by_dataset_name()
+    cfg = load_dnn_config_by_dataset_name()
 
     print('load config : %s ' % str(cfg))
     criterion = nn.CrossEntropyLoss()

@@ -18,7 +18,7 @@ def mkdirs_if_not_exist(dir_name):
         os.makedirs(dir_name)
 
 
-def load_benchmark_config(config_json_path='./benchmark_config.json'):
+def load_dnn_config(config_json_path='./dnnet_config.json'):
     """
     load benchmark configuration in json file
     :param config_json_path:
@@ -42,19 +42,34 @@ def load_bf_config(config_json_path='./bfnet_config.json'):
     return config
 
 
-def load_config_by_dataset_name(dataset_name='MNIST'):
+def load_dnn_config_by_dataset_name(dataset_name='MNIST'):
     """
     load config by dataset name
     :param dataset_name:
     :param config_json_path:
     :return:
     """
-    for _ in load_benchmark_config()['dataset']:
+    for _ in load_dnn_config()['dataset']:
         if _['name'] == dataset_name:
             cfg = _
             break
 
     return cfg
+
+
+def load_bf_config_by_dataset_name(from_dataset, to_dataset):
+    """
+    load BufferNet config by data set name
+    :param from_dataset:
+    :param to_dataset:
+    :return:
+    """
+    for _ in load_bf_config()['buffernet']:
+        if _['from'] == from_dataset and _['to'] == to_dataset:
+            bf_cfg = _
+            break
+
+    return bf_cfg
 
 
 def prepare_data(cfg, transform=transforms.Compose(

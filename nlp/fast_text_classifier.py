@@ -41,13 +41,20 @@ def preprocessing(base_dir, train_ratio=0.3):
         ftest.close()
 
 
-def classify():
+def train():
     classifier = fasttext.supervised('train.txt', 'model', label_prefix='__label__')
     result = classifier.test('test.txt')
     print('Precision:', result.precision)
     print('Recall:', result.recall)
 
 
+def predict(text):
+    model = fasttext.load_model('./model.bin')
+    classifier = fasttext.load_model('./model.bin', label_prefix='__label__')
+    labels = classifier.predict_proba(text)
+    print(labels)
+
+
 if __name__ == '__main__':
     preprocessing(BASE_DIR, 0.7)
-    classify()
+    train()

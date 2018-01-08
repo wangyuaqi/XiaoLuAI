@@ -427,8 +427,10 @@ if __name__ == '__main__':
         '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split%d.csv' % _
         for _ in range(1, 6, 1)]
     for each_split in split_csvs:
-        aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(each_split)
+        aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(
+            each_split)
         train_and_eval_eccv_with_align_or_lean(aligned_train_set, aligned_test_set, lean_train_set, lean_test_set)
+        print('*' * 100)
 
     # cross validation
     # dataset, label = prepare_data()

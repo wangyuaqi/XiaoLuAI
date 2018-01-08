@@ -1,6 +1,7 @@
 import math
 import os
 import sys
+import time
 
 import cv2
 import dlib
@@ -406,6 +407,9 @@ def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_tra
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
 
+    df = pd.DataFrame([mae_lr, rmse_lr, pc])
+    df.to_csv('./%f.csv' % time.time(), index=False)
+
 
 def mkdirs_if_not_exist(dir_name):
     """
@@ -430,6 +434,8 @@ if __name__ == '__main__':
         aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(
             each_split)
         train_and_eval_eccv_with_align_or_lean(aligned_train_set, aligned_test_set, lean_train_set, lean_test_set)
+        sys.stdout.flush()
+        time.sleep(3)
         print('*' * 100)
 
     # cross validation

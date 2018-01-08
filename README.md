@@ -30,6 +30,7 @@
    * [Facial Beauty Analysis](./facescore) 
    * [NLP](./nlp) 
    * [Image Guarder](./imgguarder) 
+   * [Fine-grained Flower Recognition](./flowers) 
    
 
 ## LICENSE

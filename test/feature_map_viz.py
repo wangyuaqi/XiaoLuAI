@@ -51,10 +51,20 @@ def extract_conv_feature(img, layer_name='conv5_1'):
     return feature
 
 
+def vis_feature_map(fm):
+    """
+    feature map visualization
+    :param data:
+    :return:
+    """
+    fm = (fm - fm.min()) / (fm.max() - fm.min())
+    fm = fm[:, :, 0:3]
+    fm = cv2.resize(fm, (256, 256), interpolation=cv2.INTER_CUBIC)
+    cv2.imshow('fm', fm)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+
 if __name__ == '__main__':
     fm = extract_feature('/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-40.jpg')
-    avg_fm = np.mean(fm, axis=0)
-    print(avg_fm)
-    # cv2.imshow('avg_fm', avg_fm)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
+    vis_feature_map(fm)

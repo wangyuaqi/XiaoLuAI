@@ -4,7 +4,6 @@ import sys
 import time
 
 import cv2
-import dlib
 import numpy as np
 import pandas as pd
 from skimage import io
@@ -72,6 +71,7 @@ def det_landmarks(image_path):
     :param image_path:
     :return:
     """
+    import dlib
     predictor = dlib.shape_predictor(config['predictor_path'])
     detector = dlib.get_frontal_face_detector()
     img = cv2.imread(image_path)
@@ -93,6 +93,7 @@ def det_mat_landmarks(image):
     :param image_path:
     :return:
     """
+    import dlib
     predictor = dlib.shape_predictor(config['predictor_path'])
     detector = dlib.get_frontal_face_detector()
     faces = detector(image, 1)
@@ -127,6 +128,8 @@ def detect_face_and_cal_beauty(face_filepath='./talor.jpg'):
     :return:
     :version:1.0
     """
+    import dlib
+
     print('start scoring your face...')
     # if the pre-trained model did not exist, then we train it from scratch
     if not os.path.exists(config['scut_fbp_reg_model']):
@@ -456,8 +459,6 @@ if __name__ == '__main__':
     # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
     # train_and_eval_eccv(train_set, test_set)
 
-    # aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(
-    #     config['eccv_dataset_split_csv_file'])
     split_csvs = [
         '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split%d.csv' % _
         for _ in range(1, 6, 1)]

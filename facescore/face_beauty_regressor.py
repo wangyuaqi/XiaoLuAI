@@ -198,23 +198,23 @@ def train_model(train_set, test_set, train_label, test_label):
     mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
-    out_result(test_set, predicted_label, test_label)
+    out_result(test_set, predicted_label, test_label, None)
     print('The result csv file has been generated...')
 
 
-def out_result(test_set_filenames, predicted_list, gt_lst):
+def out_result(test_set_filenames, predicted_list, gt_lst, attribute_list, path="./result/SCUT-FBP-TestSet.csv"):
     """
     output a Excel file containing testset filenames, predicted scores and groundtruth scores
+    :param path:
     :param test_set_filenames:
     :param predicted_list:
     :param gt_lst:
     :return:
     """
-    col = ['filename', 'predicted', 'groundtruth']
-    arr = np.array([test_set_filenames, predicted_list, gt_lst])
+    col = ['filename', 'predicted', 'groundtruth', 'attribute']
+    arr = np.array([test_set_filenames, predicted_list, gt_lst, attribute_list])
     df = pd.DataFrame(arr.T, columns=col)
     mkdirs_if_not_exist('./result/')
-    path = "./result/SCUT-FBP-TestSet.csv"
     df.to_csv(path, index=False, encoding='UTF-8')
 
 
@@ -360,6 +360,9 @@ def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_tra
     lean_test_vec = list()
     lean_test_label = list()
 
+    test_filenames = list()
+    attribute_list = list()
+
     for k, v in aligned_train.items():
         feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
                                  axis=0)
@@ -367,6 +370,9 @@ def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_tra
         aligned_train_label.append(v)
 
     for k, v in aligned_test.items():
+        test_filenames.append(k)
+        attribute_list.append('aligned')
+
         feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
                                  axis=0)
         aligned_test_vec.append(feature)
@@ -379,6 +385,9 @@ def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_tra
         lean_train_label.append(v)
 
     for k, v in lean_test.items():
+        test_filenames.append(k)
+        attribute_list.append('lean')
+
         feature = np.concatenate((extract_feature(k, layer_name="conv5_2"), extract_feature(k, layer_name="conv5_3")),
                                  axis=0)
         lean_test_vec.append(feature)
@@ -403,12 +412,34 @@ def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_tra
     rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), np.array(predicted_label))), 4)
     pc = round(np.corrcoef(test_label, predicted_label)[0, 1], 4)
 
+    aligned_mae_lr = round(
+        mean_absolute_error(np.array(aligned_test_label), np.array(aligned_predicted_label.tolist())), 4)
+    aligned_rmse_lr = round(
+        math.sqrt(mean_squared_error(np.array(aligned_test_label), np.array(aligned_predicted_label.tolist()))), 4)
+    aligned_pc = round(np.corrcoef(aligned_test_label, aligned_predicted_label.tolist())[0, 1], 4)
+
+    lean_mae_lr = round(mean_absolute_error(np.array(lean_test_label), np.array(lean_predicted_label)), 4)
+    lean_rmse_lr = round(math.sqrt(mean_squared_error(np.array(lean_test_label), np.array(lean_predicted_label))), 4)
+    lean_pc = round(np.corrcoef(lean_test_label, lean_predicted_label)[0, 1], 4)
+
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
 
+    mkdirs_if_not_exist('./result')
+
+    csv_file_tag = time.time()
+
     df = pd.DataFrame([mae_lr, rmse_lr, pc])
-    df.to_csv('./%f.csv' % time.time(), index=False)
+    df.to_csv('./result/%f_all.csv' % csv_file_tag, index=False)
+
+    aligned_df = pd.DataFrame([aligned_mae_lr, aligned_rmse_lr, aligned_pc])
+    aligned_df.to_csv('./result/%f_aligned.csv' % csv_file_tag, index=False)
+
+    lean_df = pd.DataFrame([lean_mae_lr, lean_rmse_lr, lean_pc])
+    lean_df.to_csv('./result/%f_lean.csv' % csv_file_tag, index=False)
+
+    out_result(test_filenames, predicted_label, test_label, attribute_list, './result/%f_detail.csv' % csv_file_tag)
 
 
 def mkdirs_if_not_exist(dir_name):

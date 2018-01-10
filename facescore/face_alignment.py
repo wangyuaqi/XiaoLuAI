@@ -122,29 +122,19 @@ def split_lean_or_not_data(image_dir):
 
 
 if __name__ == '__main__':
-    face_align(
-        "/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face/female_18_A8HMBSR_face_1.jpg")
+    # face_align(
+    #     "/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face/female_18_A8HMBSR_face_1.jpg")
 
-"""
-    fail_face_list = []
     hotornot_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/hotornot_face/'
-    BAK2_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/faceBAK2'
-    BAK3_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/faceBAK3'
-    face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/face'
+    aligned_hotornot_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/aligned_hotornot_face/'
+    lean_hotornot_face_dir = '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/lean_hotornot_face/'
 
-    for _ in os.listdir(hotornot_face_dir):
-        face_path = os.path.join(hotornot_face_dir, _)
-        try:
-            face_align(face_path)
-        except:
-            fail_face_list.append(_)
+    all_face_list = os.listdir(hotornot_face_dir)
+    aligned_face_list = os.listdir(aligned_hotornot_face_dir)
 
-    print('*' * 100)
-    print('all process done!')
-    print('%d image files are failed to convert...'%len(fail_face_list))
-    print(fail_face_list)
-    print('*' * 100)
+    print(aligned_face_list)
+    print(aligned_hotornot_face_dir)
 
-    for _ in fail_face_list:
-        tf.gfile.Copy(os.path.join(BAK3_face_dir, _), os.path.join(face_dir, _), overwrite=True)
-"""
+    for _ in all_face_list:
+        if _ not in aligned_face_list:
+            tf.gfile.Copy(os.path.join(hotornot_face_dir, _), os.path.join(lean_hotornot_face_dir, _), overwrite=True)

@@ -1,6 +1,7 @@
 import math
 import os
 
+import numpy as np
 import pandas as pd
 
 from facescore.face_alignment import det_lean_degree
@@ -46,8 +47,8 @@ def load_eccv_attribute(eccv_attribute_csv):
 
 
 if __name__ == '__main__':
-    load_eccv_attribute('./eccv_face_attribute.csv')
-    """
+    # load_eccv_attribute('./eccv_face_attribute.csv')
+
     lean_list = [_ for _ in os.listdir(lean_eccv_face_dir)]
     aligned_list = [_ for _ in os.listdir(aligned_eccv_face_dir)]
 
@@ -56,4 +57,3 @@ if __name__ == '__main__':
     col = ['filename', 'attribute']
     df = pd.DataFrame(np.array([aligned_list + lean_list, attr_list]).T, columns=col)
     df.to_csv('./eccv_face_attribute.csv', index=False)
-    """

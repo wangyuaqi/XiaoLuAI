@@ -214,8 +214,12 @@ def out_result(test_set_filenames, predicted_list, gt_lst, attribute_list, path=
     :param gt_lst:
     :return:
     """
-    col = ['filename', 'predicted', 'groundtruth', 'attribute']
-    arr = np.array([test_set_filenames, predicted_list, gt_lst, attribute_list])
+    if attribute_list is not None:
+        col = ['filename', 'predicted', 'groundtruth', 'attribute']
+        arr = np.array([test_set_filenames, predicted_list, gt_lst, attribute_list])
+    elif attribute_list is None:
+        col = ['filename', 'predicted', 'groundtruth']
+        arr = np.array([test_set_filenames, predicted_list, gt_lst])
     df = pd.DataFrame(arr.T, columns=col)
     mkdirs_if_not_exist('./result/')
     df.to_csv(path, index=False, encoding='UTF-8')
@@ -338,10 +342,6 @@ def train_and_eval_eccv(train, test):
     mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['eccv_fbp_reg_model'])
 
-    """
-    reg = joblib.load(config['eccv_fbp_reg_model'])
-    """
-
     predicted_label = reg.predict(np.array(test_vec))
     mae_lr = round(mean_absolute_error(np.array(test_label), predicted_label), 4)
     rmse_lr = round(math.sqrt(mean_squared_error(np.array(test_label), predicted_label)), 4)
@@ -350,6 +350,15 @@ def train_and_eval_eccv(train, test):
     print('===============The Mean Absolute Error of Model is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of Model is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Model is {0}===================='.format(pc))
+
+    csv_tag = time.time()
+
+    mkdirs_if_not_exist('./result')
+    df = pd.DataFrame([mae_lr, rmse_lr, pc])
+    df.to_csv('./result/performance_%s.csv' % csv_tag, index=False)
+
+    out_result(list(test.keys()), predicted_label.flatten().tolist(), test_label, None,
+               path='./result/detail_%s.csv' % csv_tag)
 
 
 def train_and_eval_eccv_with_align_or_lean(aligned_train, aligned_test, lean_train, lean_test):
@@ -461,11 +470,10 @@ if __name__ == '__main__':
 
     split_csvs = [
         '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split%d.csv' % _
-        for _ in range(1, 6, 1)]
+        for _ in range(4, 6, 1)]
     for each_split in split_csvs:
-        aligned_train_set, aligned_test_set, lean_train_set, lean_test_set = eccv_train_and_test_set_with_align_or_lean(
-            each_split)
-        train_and_eval_eccv_with_align_or_lean(aligned_train_set, aligned_test_set, lean_train_set, lean_test_set)
+        train_set, test_set = eccv_train_and_test_set(each_split)
+        train_and_eval_eccv(train_set, test_set)
         sys.stdout.flush()
         time.sleep(3)
         print('*' * 100)

@@ -39,16 +39,16 @@ def split_train_and_test_data():
     testset_label = attractiveness_scores.iloc[test_indices]
 
     # extract Deep Features
-    # train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
-    #                                     extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
-    #                                    axis=0) for _ in trainset_filenames]
-    # test_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
-    #                                    extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
-    #                                   axis=0) for _ in testset_filenames]
+    train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+                                        extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+                                       axis=0) for _ in trainset_filenames]
+    test_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+                                       extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+                                      axis=0) for _ in testset_filenames]
 
-    from facescore.features import RAW
-    train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in trainset_filenames]
-    test_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in testset_filenames]
+    # from facescore.features import RAW
+    # train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    # test_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
 

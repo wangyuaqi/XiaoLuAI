@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 config = OrderedDict()
 config['label_excel_path'] = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx'
-config['face_image_filename'] = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces/SCUT-FBP-{0}.jpg'
+config['face_image_filename'] = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Processed/SCUT-FBP-{0}.jpg'
 config['predictor_path'] = "/media/lucasx/Document/ModelZoo/shape_predictor_68_face_landmarks.dat"
 config['vgg_face_model_mat_file'] = '/home/lucasx/ModelZoo/vgg-face.mat'
 config['scut_fbp_reg_model'] = './model/scut_fbp_dcnn_bayes_reg.pkl'

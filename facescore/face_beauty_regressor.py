@@ -39,12 +39,16 @@ def split_train_and_test_data():
     testset_label = attractiveness_scores.iloc[test_indices]
 
     # extract Deep Features
-    train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
-                                        extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
-                                       axis=0) for _ in trainset_filenames]
-    test_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
-                                       extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
-                                      axis=0) for _ in testset_filenames]
+    # train_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+    #                                     extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+    #                                    axis=0) for _ in trainset_filenames]
+    # test_set_vector = [np.concatenate((extract_feature(config['face_image_filename'].format(_), layer_name='conv5_1'),
+    #                                    extract_feature(config['face_image_filename'].format(_), layer_name='conv4_1')),
+    #                                   axis=0) for _ in testset_filenames]
+
+    from facescore.features import RAW
+    train_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in trainset_filenames]
+    test_set_vector = [RAW(config['face_image_filename'].format(_)) for _ in testset_filenames]
 
     return train_set_vector, test_set_vector, trainset_label, testset_label
 
@@ -201,7 +205,10 @@ def train_model(train_set, test_set, train_label, test_label):
     mkdirs_if_not_exist('./model')
     joblib.dump(reg, config['scut_fbp_reg_model'])
     print('The regression model has been persisted...')
-    out_result(test_set, predicted_label, test_label, None)
+    csv_tag = time.time()
+    df = pd.DataFrame([mae_lr, rmse_lr, pc])
+    out_result(test_set, predicted_label, test_label, None, path='./result/%f.csv' % csv_tag)
+    df.to_csv('./result/performance_%s.csv' % csv_tag, index=False)
     print('The result csv file has been generated...')
 
 
@@ -468,6 +475,7 @@ if __name__ == '__main__':
     # train_set, test_set = eccv_train_and_test_set(config['eccv_dataset_split_csv_file'])
     # train_and_eval_eccv(train_set, test_set)
 
+    """
     split_csvs = [
         '/media/lucasx/Document/DataSet/Face/eccv2010_beauty_data_v1.0/eccv2010_beauty_data/eccv2010_split%d.csv' % _
         for _ in range(4, 6, 1)]
@@ -477,13 +485,15 @@ if __name__ == '__main__':
         sys.stdout.flush()
         time.sleep(3)
         print('*' * 100)
+    """
 
     # cross validation
     # dataset, label = prepare_data()
     # cv_train(dataset, label)
 
-    # train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
-    # train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
+    for idx in range(5):
+        train_set_vector, test_set_vector, trainset_label, testset_label = split_train_and_test_data()
+        train_model(train_set_vector, test_set_vector, trainset_label, testset_label)
 
     # detect_face_and_cal_beauty('./talor.jpg')
 

@@ -29,17 +29,20 @@ def text_reply(msg):
 if __name__ == '__main__':
     itchat.auto_login(hotReload=True)
     # itchat.run()
+
     friends_list = []
     friends = itchat.get_friends(update=True)[0:]
     for _ in friends:
+        print(_)
         friend = {}
+        friend['NickName'] = _['NickName']
+        friend['ContactFlag'] = _['ContactFlag']
         friend['Sex'] = _['Sex']
         friend['City'] = _['City']
         friend['Province'] = _['Province']
-        friend['NickName'] = _['NickName']
         friend['Signature'] = _['Signature']
         friend['RemarkName'] = _['RemarkName']
         friends_list.append(friend)
 
     df = pd.DataFrame(friends_list)
-    df.to_excel(excel_writer='./wechat.xlsx', sheet_name='WeChatFriends')
+    df.to_excel(excel_writer='./wechat.xlsx', sheet_name='WeChatFriends', index=False)

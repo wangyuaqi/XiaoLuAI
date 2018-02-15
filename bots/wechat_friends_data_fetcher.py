@@ -26,7 +26,12 @@ def text_reply(msg):
         itchat.send(u'@%s\u2005I received: %s' % (msg['ActualNickName'], msg['Content']), msg['FromUserName'])
 
 
-if __name__ == '__main__':
+def get_and_output_friends_info():
+    """
+    get friends information and output them as Excel file
+    :return:
+    """
+
     itchat.auto_login(hotReload=True)
     # itchat.run()
 
@@ -46,3 +51,7 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(friends_list)
     df.to_excel(excel_writer='./wechat.xlsx', sheet_name='WeChatFriends', index=False)
+
+
+if __name__ == '__main__':
+    get_and_output_friends_info()

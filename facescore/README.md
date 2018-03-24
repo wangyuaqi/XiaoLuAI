@@ -29,11 +29,10 @@ The face data can only be used for **research**, no other usage is permitted!
 If you find the code useful in your research, please consider citing our paper!
 
 ```
-@misc{1803.07253,
-  author = {Lu Xu and Jinhai Xiang and Xiaohui Yuan},
-  title = {{T}ransferring {R}ich {D}eep {F}eatures for {F}acial {B}eauty {P}rediction},
-  year = {2018},
-  eprint = {1803.07253},
-  note = {arXiv:1803.07253v1}
+@article{xu2018transferring,
+  title={Transferring Rich Deep Features for Facial Beauty Prediction},
+  author={Xu, Lu and Xiang, Jinhai and Yuan, Xiaohui},
+  journal={arXiv preprint arXiv:1803.07253},
+  year={2018}
 }
 ```

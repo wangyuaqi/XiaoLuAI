@@ -1,7 +1,7 @@
-# Face Score
+# Facial Beauty Prediction
 
 ## Introduction
-This repo is used for machine learning based facial beauty prediction. More details can be found at [my article at Zhihu](https://zhuanlan.zhihu.com/p/29399781).
+This repo is used for machine learning based facial beauty prediction. More details can be found at [this paper](https://arxiv.org/abs/1803.07253).
 
 ## Benchmark
 We use [SCUT-FBP](http://www.hcii-lab.net/data/scut-fbp/en/introduce.html) and [Female Facial Beauty Dataset (ECCV2010) v1.0](https://www.researchgate.net/publication/261595808_Female_Facial_Beauty_Dataset_ECCV2010_v10) dataset to validate our algorithm.

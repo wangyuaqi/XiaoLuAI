@@ -6,6 +6,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 
+from mtcnet import data_loader
 from mtcnet.cfg import cfg
 
 
@@ -108,7 +109,7 @@ class GNet(nn.Module):
         return num_features
 
 
-def train_hmtnet():
+def train_gnet():
     data_transform = transforms.Compose([
         transforms.RandomSizedCrop(224),
         transforms.RandomHorizontalFlip(),
@@ -118,8 +119,12 @@ def train_hmtnet():
     ])
     gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
                                           transform=data_transform)
-    dataset_loader = torch.utils.data.DataLoader(gender_dataset,
-                                                 batch_size=4, shuffle=True,
-                                                 num_workers=4)
+
+    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(gender_dataset, cfg['batch_size'],
+                                                                                  0.2, 4, True)
+
+    print()
 
 
+if __name__ == '__main__':
+    train_gnet()

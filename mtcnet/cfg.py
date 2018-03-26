@@ -15,3 +15,4 @@ cfg['cv_split_base_dir'] = '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/tra
                            '5_folders_cross_validations_files'
 cfg['4_6_split_dir'] = '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/train_test_files/' \
                        'split_of_60%training and 40%testing'
+cfg['batch_size'] = 4

@@ -1,3 +1,7 @@
+"""
+script for data preprocessing
+"""
+
 import os
 
 import pandas as pd

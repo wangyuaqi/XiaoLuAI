@@ -2,17 +2,13 @@ import copy
 import time
 
 import torch
-import torchvision
-import torchvision.transforms as transforms
-from torchvision import transforms, datasets
-from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim import lr_scheduler
+from torch.autograd import Variable
+from torchvision import transforms
 
-from mtcnet import data_loader
-from mtcnet.cfg import cfg
+from hmtnet import data_loader
 
 
 class HMTNet(nn.Module):

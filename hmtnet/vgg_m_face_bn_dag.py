@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from mtcnet.cfg import cfg
+from hmtnet.cfg import cfg
 
 
 class VggMFaceBn(nn.Module):

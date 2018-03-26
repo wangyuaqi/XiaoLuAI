@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import shutil
 
-from mtcnet.cfg import cfg
+from hmtnet.cfg import cfg
 
 
 def split_by_attribute(attr_name='gender'):

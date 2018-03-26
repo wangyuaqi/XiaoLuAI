@@ -1,9 +1,14 @@
+import sys
+
 import numpy as np
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 
+sys.path.append('../')
+from hmtnet.cfg import cfg
 
-def split_train_and_test_with_py_datasets(data_set, batch_size, test_size=0.2, num_works=4,
+
+def split_train_and_test_with_py_datasets(data_set, batch_size=cfg['batch_size'], test_size=0.2, num_works=4,
                                           pin_memory=True):
     num_dataset = len(data_set)
     indices = list(range(num_dataset))

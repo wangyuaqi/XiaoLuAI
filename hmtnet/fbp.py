@@ -2,17 +2,17 @@ import copy
 import time
 import sys
 
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-from torchvision import transforms
 from torchvision import transforms, datasets
 
 sys.path.append('../')
 from hmtnet.cfg import cfg
-from hmtnet import data_loader
+from hmtnet import data_loader, file_utils
 
 
 class HMTNet(nn.Module):
@@ -96,13 +96,13 @@ class GNet(nn.Module):
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
         self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv5 = nn.Conv2d(128, 2, kernel_size=3, stride=1, padding=1)
+        self.conv5 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
 
-        # self.gfc1 = nn.Linear(56 * 56 * 256, 4096)
-        # self.gfc2 = nn.Linear(4096, 2)
+        self.gfc1 = nn.Linear(56 * 56 * 256, 4096)
+        self.gfc2 = nn.Linear(4096, 2)
 
-        self.gfc1 = nn.Linear(56 * 56 * 2, 32)
-        self.gfc2 = nn.Linear(32, 2)
+        # self.gfc1 = nn.Linear(56 * 56 * 2, 32)
+        # self.gfc2 = nn.Linear(32, 2)
 
     def forward(self, x):
         x = F.relu(self.bn1(self.conv1(x)))
@@ -227,6 +227,11 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
                 running_loss = 0.0
 
     print('Finished Training')
+    print('Save trained model...')
+
+    model_path_dir = './model'
+    file_utils.mkdirs_if_not_exist(model_path_dir)
+    torch.save(gnet.state_dict(), os.path.join(model_path_dir, 'gnet.pth'))
 
     correct = 0
     total = 0
@@ -234,6 +239,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
         images, labels = data
         if torch.cuda.is_available():
             model.cuda()
+            labels = labels.cuda()
             outputs = model.forward(Variable(images.cuda()))
         else:
             outputs = model.forward(Variable(images))

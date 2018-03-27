@@ -231,7 +231,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
 
     model_path_dir = './model'
     file_utils.mkdirs_if_not_exist(model_path_dir)
-    torch.save(gnet.state_dict(), os.path.join(model_path_dir, 'gnet.pth'))
+    torch.save(model.state_dict(), os.path.join(model_path_dir, 'gnet.pth'))
 
     correct = 0
     total = 0

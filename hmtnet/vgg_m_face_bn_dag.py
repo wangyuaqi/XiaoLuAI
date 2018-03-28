@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 
-from hmtnet.cfg import cfg
 
-
-class VggMFaceBn(nn.Module):
+class VggMFaceBnDag(nn.Module):
 
     def __init__(self):
         super().__init__()
@@ -30,7 +28,7 @@ class VggMFaceBn(nn.Module):
         self.relu5 = nn.ReLU()
         self.pool5 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2), dilation=(1, 1), ceil_mode=False)
         self.fc6 = nn.Conv2d(512, 4096, kernel_size=[6, 6], stride=(1, 1))
-        self.bn54 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=True)
+        # self.bn54 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=True)
         self.relu6 = nn.ReLU()
         self.fc7 = nn.Conv2d(4096, 4096, kernel_size=[1, 1], stride=(1, 1))
         self.bn55 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=True)
@@ -57,24 +55,32 @@ class VggMFaceBn(nn.Module):
         x17 = self.relu5(x16)
         x18 = self.pool5(x17)
         x19 = self.fc6(x18)
-        x20 = self.bn54(x19)
-        x21 = self.relu6(x20)
+        # x20 = self.bn54(x19)
+        x21 = self.relu6(x19)
         x22 = self.fc7(x21)
-        x23 = self.bn55(x22)
-        x24 = self.relu7(x23)
+        # x23 = self.bn55(x22)
+        x24 = self.relu7(x22)
         x25 = self.fc8(x24)
 
         return x25
 
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
 
-def load_vgg_m_face_with_bn(weights_path=cfg['pretrained_vgg_face'], **kwargs):
+        return num_features
+
+
+def load_vgg_m_face_bn_dag(weights_path=None, **kwargs):
     """
     load imported model instance
 
     Args:
         weights_path (str): If set, loads model weights from the given path
     """
-    model = VggMFaceBn()
+    model = VggMFaceBnDag()
     if weights_path:
         state_dict = torch.load(weights_path)
         model.load_state_dict(state_dict)

@@ -252,7 +252,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
     for data in test_loader:
         images, labels = data
         if torch.cuda.is_available():
-            model_ft.cuda()
+            model_ft = model_ft.cuda()
             labels = labels.cuda()
             outputs = model_ft.forward(Variable(images.cuda()))
         else:
@@ -262,8 +262,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
         total += labels.size(0)
         correct += (predicted == labels).sum()
 
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-            100 * correct / total))
+    print('Accuracy of the network on the test images: %d %' % (correct / total))
 
 
 if __name__ == '__main__':
@@ -273,6 +272,7 @@ if __name__ == '__main__':
     data_transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
+        transforms.ColorJitter(),
         transforms.Normalize(mean=[131.45376586914062, 103.98748016357422, 91.46234893798828],
                              std=[1, 1, 1])
     ])
@@ -288,4 +288,4 @@ if __name__ == '__main__':
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
 
     print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 10)
+    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 50)

@@ -10,6 +10,15 @@ from hmtnet.cfg import cfg
 
 def split_train_and_test_with_py_datasets(data_set, batch_size=cfg['batch_size'], test_size=0.2, num_works=4,
                                           pin_memory=True):
+    """
+    split datasets into train and test loader
+    :param data_set:
+    :param batch_size:
+    :param test_size:
+    :param num_works:
+    :param pin_memory:
+    :return:
+    """
     num_dataset = len(data_set)
     indices = list(range(num_dataset))
     split = int(np.floor(test_size * num_dataset))

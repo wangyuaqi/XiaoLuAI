@@ -202,7 +202,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=10, gamma=0.1)
 
     for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -234,7 +234,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
 
             # print statistics
             running_loss += loss.data[0]
-            if i % 100 == 99:  # print every 200 mini-batches
+            if i % 100 == 99:  # print every 100 mini-batches
                 print('[%d, %5d] loss: %.5f' %
                       (epoch + 1, i + 1, running_loss / 100))
                 running_loss = 0.0
@@ -249,6 +249,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
     model_ft.train(False)
     correct = 0
     total = 0
+
     for data in test_loader:
         images, labels = data
         if torch.cuda.is_available():

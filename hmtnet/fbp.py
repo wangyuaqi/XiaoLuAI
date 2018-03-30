@@ -193,7 +193,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
             100 * correct / total))
 
 
-def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimizer, num_epochs=25):
+def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimizer, num_epochs=25, inference=False):
     num_ftrs = model_ft.fc8.out_channels
     model_ft.fc = nn.Linear(num_ftrs, 2)
 
@@ -204,47 +204,52 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=10, gamma=0.1)
 
-    for epoch in range(num_epochs):  # loop over the dataset multiple times
+    if not inference:
+        for epoch in range(num_epochs):  # loop over the dataset multiple times
 
-        exp_lr_scheduler.step()
-        model_ft.train(True)
+            exp_lr_scheduler.step()
+            model_ft.train(True)
 
-        running_loss = 0.0
-        for i, data in enumerate(train_loader, 0):
-            # get the inputs
-            inputs, labels = data
+            running_loss = 0.0
+            for i, data in enumerate(train_loader, 0):
+                # get the inputs
+                inputs, labels = data
 
-            # wrap them in Variable
-            if torch.cuda.is_available():
-                model_ft = model_ft.cuda()
-                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-            else:
-                inputs, labels = Variable(inputs), Variable(labels)
+                # wrap them in Variable
+                if torch.cuda.is_available():
+                    model_ft = model_ft.cuda()
+                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+                else:
+                    inputs, labels = Variable(inputs), Variable(labels)
 
-            # zero the parameter gradients
-            optimizer.zero_grad()
+                # zero the parameter gradients
+                optimizer.zero_grad()
 
-            # forward + backward + optimize
-            outputs = model_ft.forward(inputs)
-            outputs = outputs.view(-1, model_ft.num_flat_features(outputs))
+                # forward + backward + optimize
+                outputs = model_ft.forward(inputs)
+                outputs = outputs.view(-1, model_ft.num_flat_features(outputs))
 
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            # print statistics
-            running_loss += loss.data[0]
-            if i % 100 == 99:  # print every 100 mini-batches
-                print('[%d, %5d] loss: %.5f' %
-                      (epoch + 1, i + 1, running_loss / 100))
-                running_loss = 0.0
+                # print statistics
+                running_loss += loss.data[0]
+                if i % 100 == 99:  # print every 100 mini-batches
+                    print('[%d, %5d] loss: %.5f' %
+                          (epoch + 1, i + 1, running_loss / 100))
+                    running_loss = 0.0
 
-    print('Finished Training')
-    print('Save trained model...')
+        print('Finished Training')
+        print('Save trained model...')
 
-    model_path_dir = './model'
-    file_utils.mkdirs_if_not_exist(model_path_dir)
-    torch.save(model_ft.state_dict(), os.path.join(model_path_dir, 'ft_vgg_m.pth'))
+        model_path_dir = './model'
+        file_utils.mkdirs_if_not_exist(model_path_dir)
+        torch.save(model_ft.state_dict(), os.path.join(model_path_dir, 'ft_vgg_m.pth'))
+
+    else:
+        print('Loading pre-trained model...')
+        model_ft.load_state_dict(torch.load(os.path.join('./model/ft_vgg_m.pth')))
 
     model_ft.train(False)
     correct = 0
@@ -263,7 +268,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
         total += labels.size(0)
         correct += (predicted == labels).sum()
 
-    print('Accuracy of the network on the test images: %d %' % (correct / total))
+    print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
 
 
 if __name__ == '__main__':
@@ -289,4 +294,4 @@ if __name__ == '__main__':
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
 
     print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 50)
+    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 50, False)

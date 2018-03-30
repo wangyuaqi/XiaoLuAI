@@ -202,7 +202,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=10, gamma=0.1)
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=100, gamma=0.1)
 
     if not inference:
         for epoch in range(num_epochs):  # loop over the dataset multiple times
@@ -268,6 +268,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
         total += labels.size(0)
         correct += (predicted == labels).sum()
 
+    print('correct = %d ...' % correct)
+    print('total = %d ...' % total)
     print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
 
 
@@ -294,4 +296,4 @@ if __name__ == '__main__':
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
 
     print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 50, False)
+    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 1000, False)

@@ -14,3 +14,7 @@ bots/wechat.xlsx
 voc/__pycache__/
 test/Stanford/
 flower/__pycache__/
+buffernet/__pycache__/
+hmtnet/__pycache__/file_utils.cpython-35.pyc
+hmtnet/__pycache__/vgg_m_face_bn_dag.cpython-35.pyc
+hmtnet/model/

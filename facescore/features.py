@@ -38,6 +38,21 @@ def LBP(img_path):
     return feature.reshape(feature.shape[0] * feature.shape[1])
 
 
+def LBP_from_cv(img):
+    """
+    extract LBP features from opencv region
+    :param img:
+    :return:
+    """
+    img = skimage.color.rgb2gray(img)
+    img = (img - np.mean(img)) / np.std(img)
+    feature = local_binary_pattern(img, P=8, R=0.2)
+    # im = Image.fromarray(np.uint8(feature))
+    # im.show()
+
+    return feature.reshape(feature.shape[0] * feature.shape[1])
+
+
 def HARRIS(img_path):
     """
     extract HARR features

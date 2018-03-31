@@ -56,8 +56,53 @@ def detect_face(face_img_file):
         # detect with dlib
         from facescore import face_beauty_regressor
         result = face_beauty_regressor.det_landmarks(face_img_file)
-        geo_dis = cal_geo_dis(result[0]['landmarks'], result[1]['landmarks'])
+        geo_dis = cal_geo_dis(get_geo_feature(result[0]['landmarks']), get_geo_feature(result[1]['landmarks']))
         print('Geo distance = %f' % geo_dis)
+
+
+def get_geo_feature(face_ldmk):
+    """
+    get geometry feature vector from 68 facial landmarks
+    :param face_ldmk:
+    :return:
+    """
+    # dis between left outmost eye and right outmost eye
+    d1 = np.linalg.norm(np.array(face_ldmk[37]) - np.array(face_ldmk[26]))
+
+    # width of mouth
+    d2 = np.linalg.norm(np.array(face_ldmk[49]) - np.array(face_ldmk[65]))
+
+    # height of mouth
+    d3 = np.linalg.norm(np.array(face_ldmk[52]) - np.array(face_ldmk[58]))
+
+    # width of left eye
+    d4 = np.linalg.norm(np.array(face_ldmk[43]) - np.array(face_ldmk[46]))
+
+    # height of left eye
+    d5 = np.linalg.norm(np.array(face_ldmk[48]) - np.array(face_ldmk[44]))
+
+    # width of right eye
+    d6 = np.linalg.norm(np.array(face_ldmk[40]) - np.array(face_ldmk[37]))
+
+    # height of right eye
+    d7 = np.linalg.norm(np.array(face_ldmk[42]) - np.array(face_ldmk[38]))
+
+    # dis between eyes' center and nose
+    d8 = np.linalg.norm(np.array(face_ldmk[34]) - np.array(face_ldmk[28]))
+
+    # face width
+    d9 = np.linalg.norm(np.array(face_ldmk[2]) - np.array(face_ldmk[16]))
+
+    # face height
+    d10 = np.linalg.norm(np.array(face_ldmk[9]) - (np.array(face_ldmk[22]) + np.array(face_ldmk[23])) / 2)
+
+    # width of left eyebrow
+    d11 = np.linalg.norm(np.array(face_ldmk[18]) - np.array(face_ldmk[22]))
+
+    # width of right eyebrow
+    d12 = np.linalg.norm(np.array(face_ldmk[43]) - np.array(face_ldmk[46]))
+
+    return np.array([d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12])
 
 
 def cal_cos_sim(feature1, feature2):

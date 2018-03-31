@@ -260,7 +260,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, scheduler
         total += labels.size(0)
         correct += (predicted == labels).sum()
 
-    print('Accuracy of the network on test images: %f' % correct / total)
+    print('Accuracy of the network on test images: %f' % (correct / total))
 
 
 def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
@@ -272,7 +272,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=100, gamma=0.1)
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=50, gamma=0.1)
 
     if not inference:
         for epoch in range(num_epochs):  # loop over the dataset multiple times
@@ -364,10 +364,11 @@ if __name__ == '__main__':
                                                                                   batch_size=cfg['batch_size'])
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, weight_decay=1e-4)
 
     # print('***************************start training GNet***************************')
+    # optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, weight_decay=1e-4)
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
+    # print('***************************finish training GNet***************************')
 
     print('***************************start fine-tuning VGGMFace***************************')
     finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)

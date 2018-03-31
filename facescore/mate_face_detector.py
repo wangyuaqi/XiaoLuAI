@@ -59,6 +59,10 @@ def detect_face(face_img_file):
         geo_dis = cal_geo_dis(get_geo_feature(result[0]['landmarks']), get_geo_feature(result[1]['landmarks']))
         print('Geo distance = %f' % geo_dis)
 
+        similarity = 0.6 * cos_sim + 0.4 * geo_dis
+
+        print('Mate Index is %f ' % similarity)
+
 
 def get_geo_feature(face_ldmk):
     """

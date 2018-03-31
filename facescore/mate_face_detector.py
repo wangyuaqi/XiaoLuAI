@@ -1,3 +1,6 @@
+"""
+mate face compare
+"""
 import math
 import os
 import sys
@@ -19,7 +22,8 @@ def detect_face(face_img_file):
     result = detector.detect_faces(img)
 
     if len(result) != 2:
-        print('Only a couple of two faces in one image is allowed!')
+        print('Only a couple with two faces in one image is allowed!')
+        sys.exit(0)
     else:
 
         for _ in result:
@@ -59,7 +63,7 @@ def detect_face(face_img_file):
         geo_dis = cal_geo_dis(get_geo_feature(result[0]['landmarks']), get_geo_feature(result[1]['landmarks']))
         print('Geo distance = %f' % geo_dis)
 
-        similarity = 0.6 * cos_sim + 0.4 * geo_dis
+        similarity = 0.8 * cos_sim + (1 - 0.8) * geo_dis
 
         print('Mate Index is %f ' % similarity)
 
@@ -120,6 +124,13 @@ def cal_cos_sim(feature1, feature2):
 
 
 def cal_geo_dis(face_ldmk_list1, face_ldmk_list2):
+    """
+    calculate euclidean distance
+    :param face_ldmk_list1:
+    :param face_ldmk_list2:
+    :return:
+    """
+
     eu_dis = np.linalg.norm(np.array(face_ldmk_list1) - np.array(face_ldmk_list2))
 
     return 1 / (1 + math.exp(-eu_dis))

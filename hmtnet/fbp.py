@@ -59,13 +59,17 @@ class RNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.pool2 = nn.MaxPool2d(2, 2)
+        self.conv3 = nn.Conv2d(16, 6, 5, stride=2, padding=1)
+        self.pool3 = nn.MaxPool2d(2)
+        self.fc1 = nn.Linear(6 * 13 * 13, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 2)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.relu(self.conv3(x)))
         x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
@@ -189,11 +193,77 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
         total += labels.size(0)
         correct += (predicted == labels).sum()
 
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-            100 * correct / total))
+    print('Accuracy of the network on test images: %f' % (correct / total))
 
 
-def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimizer, num_epochs=25, inference=False):
+def train_rnet(model, train_loader, test_loader, criterion, optimizer, scheduler, num_epochs=25):
+    """
+    train RNet
+    :param model:
+    :param train_loader:
+    :param test_loader:
+    :param criterion:
+    :param optimizer:
+    :param scheduler:
+    :param num_epochs:
+    :return:
+    """
+    for epoch in range(num_epochs):  # loop over the dataset multiple times
+
+        running_loss = 0.0
+        for i, data in enumerate(train_loader, 0):
+            # get the inputs
+            inputs, labels = data
+
+            # wrap them in Variable
+            if torch.cuda.is_available():
+                model = model.cuda()
+                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+            else:
+                inputs, labels = Variable(inputs), Variable(labels)
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = model.forward(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # print statistics
+            running_loss += loss.data[0]
+            if i % 100 == 99:  # print every 200 mini-batches
+                print('[%d, %5d] loss: %.5f' %
+                      (epoch + 1, i + 1, running_loss / 100))
+                running_loss = 0.0
+
+    print('Finished Training')
+    print('Save trained model...')
+
+    model_path_dir = './model'
+    file_utils.mkdirs_if_not_exist(model_path_dir)
+    torch.save(model.state_dict(), os.path.join(model_path_dir, 'rnet.pth'))
+
+    correct = 0
+    total = 0
+    for data in test_loader:
+        images, labels = data
+        if torch.cuda.is_available():
+            model.cuda()
+            labels = labels.cuda()
+            outputs = model.forward(Variable(images.cuda()))
+        else:
+            outputs = model.forward(Variable(images))
+
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum()
+
+    print('Accuracy of the network on test images: %f' % correct / total)
+
+
+def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
     num_ftrs = model_ft.fc8.out_channels
     model_ft.fc = nn.Linear(num_ftrs, 2)
 
@@ -223,7 +293,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
                     inputs, labels = Variable(inputs), Variable(labels)
 
                 # zero the parameter gradients
-                optimizer.zero_grad()
+                optimizer_ft.zero_grad()
 
                 # forward + backward + optimize
                 outputs = model_ft.forward(inputs)
@@ -231,7 +301,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
 
                 loss = criterion(outputs, labels)
                 loss.backward()
-                optimizer.step()
+                optimizer_ft.step()
 
                 # print statistics
                 running_loss += loss.data[0]
@@ -270,11 +340,12 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, optimiz
 
     print('correct = %d ...' % correct)
     print('total = %d ...' % total)
-    print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
+    print('Accuracy of the network on the test images: %f' % (correct / total))
 
 
 if __name__ == '__main__':
     # gnet = GNet()
+    # rnet = RNet()
 
     vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag()
     data_transform = transforms.Compose([
@@ -286,7 +357,10 @@ if __name__ == '__main__':
     ])
     gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
                                           transform=data_transform)
-    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
+    race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
+                                        transform=data_transform)
+
+    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
                                                                                   batch_size=cfg['batch_size'])
 
     criterion = nn.CrossEntropyLoss()
@@ -296,4 +370,4 @@ if __name__ == '__main__':
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
 
     print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, optimizer, 1000, False)
+    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)

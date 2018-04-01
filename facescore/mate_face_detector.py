@@ -71,9 +71,8 @@ def detect_face(face_img_file):
         img_new = 255 * np.ones([img.shape[0] + text_height, img.shape[1], 3], dtype=np.uint8)
         img_new[0:img.shape[0], 0:img.shape[1], :] = img
 
-        img_new[img.shape[0]:img.shape[0] + text_height, :, :] = np.zeros([text_height, img.shape[1], 3])
-        cv2.putText(img, "The Mate Face Index is {0}".format(similarity),
-                    (img.shape[0] + text_height, img.shape[1]), 0, 0.4, (255, 255, 255), 0, cv2.LINE_AA)
+        cv2.putText(img_new, "The Mate Face Index is {0}".format(similarity),
+                    (5, img.shape[0] + 10), 6, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
 
         cv2.imshow('img_new', img_new)
         cv2.waitKey()

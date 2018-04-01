@@ -275,8 +275,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     :param inference:
     :return:
     """
-    num_ftrs = model_ft.fc8.out_channels
-    model_ft.fc = nn.Linear(num_ftrs, 2)
+    num_ftrs = model_ft.fc8.in_channels
+    model_ft.fc8 = nn.Conv2d(num_ftrs, 2, 1)
 
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
@@ -289,7 +289,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             exp_lr_scheduler.step()
-            # model_ft.train(True)
+            model_ft.train(True)
 
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
@@ -308,9 +308,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
                 # forward + backward + optimize
                 outputs = model_ft.forward(inputs)
-                # outputs = outputs.view(-1, model_ft.num_flat_features(outputs))
 
-                loss = criterion(outputs, labels)
+                loss = criterion(outputs.view(-1, 2), labels)
                 loss.backward()
                 optimizer_ft.step()
 
@@ -332,7 +331,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         print('Loading pre-trained model...')
         model_ft.load_state_dict(torch.load(os.path.join('./model/ft_vgg_m.pth')))
 
-    # model_ft.train(False)
+    model_ft.train(False)
     correct = 0
     total = 0
 

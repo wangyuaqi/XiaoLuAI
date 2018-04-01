@@ -96,7 +96,7 @@ def test_dnn(testloader, net=MLP(), model_path='./model/mlp-mnist.pth'):
 
 
 if __name__ == '__main__':
-    cfg = load_config_by_dataset_name("MNIST")
+    cfg = load_dnn_config_by_dataset_name("MNIST")
     trainloader, testloader = prepare_data(cfg)
     train_dnn(trainloader, net=MLP())
     test_dnn(testloader, net=MLP())

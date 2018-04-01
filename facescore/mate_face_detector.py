@@ -34,8 +34,8 @@ def detect_face(face_img_file):
             cv2.circle(img, (_['keypoints']['nose'][0], _['keypoints']['nose'][1]), 2, (255, 245, 0), -1)
             cv2.circle(img, (_['keypoints']['mouth_left'][0], _['keypoints']['mouth_left'][1]), 2, (255, 245, 0), -1)
             cv2.circle(img, (_['keypoints']['mouth_right'][0], _['keypoints']['mouth_right'][1]), 2, (255, 245, 0), -1)
-            cv2.putText(img, str(round(_['confidence'], 2)), (_['box'][0], _['box'][1] - 3),
-                        0, 0.4, (0, 0, 255), 0, cv2.LINE_AA)
+            # cv2.putText(img, str(round(_['confidence'], 2)), (_['box'][0], _['box'][1] - 3),
+            #             0, 0.4, (0, 0, 255), 0, cv2.LINE_AA)
 
         cv2.imshow('res', img)
         cv2.waitKey(0)
@@ -66,6 +66,18 @@ def detect_face(face_img_file):
         similarity = 0.8 * cos_sim + (1 - 0.8) * geo_dis
 
         print('Mate Index is %f ' % similarity)
+
+        text_height = 50
+        img_new = 255 * np.ones([img.shape[0] + text_height, img.shape[1], 3], dtype=np.uint8)
+        img_new[0:img.shape[0], 0:img.shape[1], :] = img
+
+        img_new[img.shape[0]:img.shape[0] + text_height, :, :] = np.zeros([text_height, img.shape[1], 3])
+        cv2.putText(img, "The Mate Face Index is {0}".format(similarity),
+                    (img.shape[0] + text_height, img.shape[1]), 0, 0.4, (255, 255, 255), 0, cv2.LINE_AA)
+
+        cv2.imshow('img_new', img_new)
+        cv2.waitKey()
+        cv2.destroyAllWindows()
 
 
 def get_geo_feature(face_ldmk):

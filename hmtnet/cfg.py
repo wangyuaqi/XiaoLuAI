@@ -8,7 +8,7 @@ cfg['hmt_model'] = './model/hmtnet.pth'
 cfg['gnet_model'] = './model/gnet.pth'
 cfg['rnet_model'] = './model/rnet.pth'
 
-cfg['images_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Images')
+cfg['scutfbp5500_images_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Images')
 cfg['gender_base_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Gender')
 cfg['race_base_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Race')
 

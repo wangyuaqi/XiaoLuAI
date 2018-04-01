@@ -22,9 +22,9 @@ def split_by_attribute(attr_name='gender'):
         m_filenames = []
         for i, gender in enumerate(genders):
             if gender == 'f':
-                f_filenames.append(os.path.join(cfg['images_dir'], files[i]))
+                f_filenames.append(os.path.join(cfg['scutfbp5500_images_dir'], files[i]))
             elif gender == 'm':
-                m_filenames.append(os.path.join(cfg['images_dir'], files[i]))
+                m_filenames.append(os.path.join(cfg['scutfbp5500_images_dir'], files[i]))
 
         return m_filenames, f_filenames
 
@@ -33,9 +33,9 @@ def split_by_attribute(attr_name='gender'):
         y_filenames = []
         for i, race in enumerate(races):
             if race == 'w':
-                w_filenames.append(os.path.join(cfg['images_dir'], files[i]))
+                w_filenames.append(os.path.join(cfg['scutfbp5500_images_dir'], files[i]))
             elif race == 'y':
-                y_filenames.append(os.path.join(cfg['images_dir'], files[i]))
+                y_filenames.append(os.path.join(cfg['scutfbp5500_images_dir'], files[i]))
 
         return w_filenames, y_filenames
 

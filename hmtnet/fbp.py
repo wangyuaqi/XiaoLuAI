@@ -1,8 +1,9 @@
 import copy
 import time
 import sys
-
 import os
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -264,6 +265,16 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, scheduler
 
 
 def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
+    """
+    fine-tune VGG M Face Model
+    :param model_ft:
+    :param train_loader:
+    :param test_loader:
+    :param criterion:
+    :param num_epochs:
+    :param inference:
+    :return:
+    """
     num_ftrs = model_ft.fc8.out_channels
     model_ft.fc = nn.Linear(num_ftrs, 2)
 
@@ -278,7 +289,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             exp_lr_scheduler.step()
-            model_ft.train(True)
+            # model_ft.train(True)
 
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
@@ -321,7 +332,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         print('Loading pre-trained model...')
         model_ft.load_state_dict(torch.load(os.path.join('./model/ft_vgg_m.pth')))
 
-    model_ft.train(False)
+    # model_ft.train(False)
     correct = 0
     total = 0
 
@@ -343,6 +354,91 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     print('Accuracy of the network on the test images: %f' % (correct / total))
 
 
+def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
+    num_ftrs = model_ft.fc8.out_channels
+    model_ft.fc = nn.Linear(num_ftrs, 1)
+
+    if torch.cuda.is_available():
+        model_ft = model_ft.cuda()
+
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=50, gamma=0.1)
+
+    if not inference:
+        for epoch in range(num_epochs):  # loop over the dataset multiple times
+
+            exp_lr_scheduler.step()
+            model_ft.train(True)
+
+            running_loss = 0.0
+            for i, data in enumerate(train_loader, 0):
+                # get the inputs
+                inputs, labels = data['image'], data['score']
+
+                # wrap them in Variable
+                if torch.cuda.is_available():
+                    model_ft = model_ft.cuda()
+                    inputs, labels = Variable(inputs.cuda()), Variable(labels.float().cuda())
+                else:
+                    inputs, labels = Variable(inputs), Variable(labels.float())
+
+                # zero the parameter gradients
+                optimizer_ft.zero_grad()
+
+                # forward + backward + optimize
+                outputs = model_ft(inputs)
+                outputs = outputs.view(-1, model_ft.num_flat_features(outputs))
+
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer_ft.step()
+
+                # print statistics
+                running_loss += loss.data[0]
+                if i % 100 == 99:  # print every 100 mini-batches
+                    print('[%d, %5d] loss: %.5f' %
+                          (epoch + 1, i + 1, running_loss / 100))
+                    running_loss = 0.0
+
+        print('Finished Training')
+        print('Save trained model...')
+
+        model_path_dir = './model'
+        file_utils.mkdirs_if_not_exist(model_path_dir)
+        torch.save(model_ft.state_dict(), os.path.join(model_path_dir, 'anet.pth'))
+
+    else:
+        print('Loading pre-trained model...')
+        model_ft.load_state_dict(torch.load(os.path.join('./model/anet.pth')))
+
+    model_ft.train(False)
+    predicted_labels = []
+    gt_labels = []
+
+    for data in test_loader:
+        images, labels = data
+        if torch.cuda.is_available():
+            model_ft = model_ft.cuda()
+            labels = labels.cuda()
+            outputs = model_ft.forward(Variable(images.cuda()))
+        else:
+            outputs = model_ft.forward(Variable(images))
+
+        predicted_labels += outputs.cpu().data.numpy().tolist()
+        gt_labels += labels.numpy().tolist()
+
+    from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+    mae_lr = round(mean_absolute_error(np.array(gt_labels), np.array(predicted_labels)), 4)
+    rmse_lr = round(np.math.sqrt(mean_squared_error(np.array(gt_labels), np.array(predicted_labels))), 4)
+    pc = round(np.corrcoef(np.array(gt_labels), np.array(predicted_labels))[0, 1], 4)
+
+    print('===============The Mean Absolute Error of ANet is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of ANet is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of ANet is {0}===================='.format(pc))
+
+
 if __name__ == '__main__':
     # gnet = GNet()
     # rnet = RNet()
@@ -355,20 +451,27 @@ if __name__ == '__main__':
         transforms.Normalize(mean=[131.45376586914062, 103.98748016357422, 91.46234893798828],
                              std=[1, 1, 1])
     ])
-    gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
-                                          transform=data_transform)
-    race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
-                                        transform=data_transform)
 
-    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
-                                                                                  batch_size=cfg['batch_size'])
+    train_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(True, transform=data_transform),
+                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(False, transform=data_transform),
+                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
 
-    criterion = nn.CrossEntropyLoss()
+    # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
+    #                                       transform=data_transform)
+    # race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
+    #                                     transform=data_transform)
+    # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
+    #                                                                               batch_size=cfg['batch_size'])
 
     # print('***************************start training GNet***************************')
+    # criterion = nn.CrossEntropyLoss()
     # optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, weight_decay=1e-4)
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
     # print('***************************finish training GNet***************************')
 
-    print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)
+    # print('***************************start fine-tuning VGGMFace***************************')
+    # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)
+
+    print('***************************start fine-tuning ANet***************************')
+    finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 1, False)

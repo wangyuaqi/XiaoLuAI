@@ -3,7 +3,8 @@ import os
 
 import numpy as np
 import pandas as pd
-from skimage import io, transform
+from skimage import io
+from PIL import Image
 import torch
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import Dataset, DataLoader
@@ -77,8 +78,8 @@ class FaceGenderDataset(Dataset):
 
         self.training_set = pd.concat(
             [self.img_index.iloc[male_train_indices], self.img_index.iloc[female_train_indices]])
-        self.training_labels = pd.concat(
-            [self.img_label.iloc[male_train_indices], self.img_label.iloc[female_train_indices]])
+        # self.training_labels = pd.concat(
+        #     [self.img_label.iloc[male_train_indices], self.img_label.iloc[female_train_indices]])
 
         male_test_indices = male_shuffled_indices[male_train_set_size:]
         female_test_indices = female_shuffled_indices[female_train_set_size:]
@@ -87,11 +88,17 @@ class FaceGenderDataset(Dataset):
             [pd.DataFrame(m_fileindex_list).iloc[male_test_indices],
              pd.DataFrame(f_fileindex_list).iloc[female_test_indices]])
 
-        m_label = [get_fileindex_and_label()[_] for _ in m_fileindex_list]
-        f_label = [get_fileindex_and_label()[_] for _ in f_fileindex_list]
+        tmp = get_fileindex_and_label()
+        m_label = [tmp[_][0] for _ in m_fileindex_list]
+        f_label = [tmp[_][0] for _ in f_fileindex_list]
+
+        self.train_labels = pd.concat(
+            [pd.DataFrame(pd.DataFrame(m_label).iloc[male_train_indices].values.ravel().tolist()),
+             pd.DataFrame(pd.DataFrame(f_label).iloc[female_train_indices].values.ravel().tolist())])
 
         self.test_labels = pd.concat(
-            [pd.DataFrame(m_label).iloc[male_test_indices], pd.DataFrame(f_label).iloc[female_test_indices]])
+            [pd.DataFrame(pd.DataFrame(m_label).iloc[male_test_indices].values.ravel().tolist()),
+             pd.DataFrame(pd.DataFrame(f_label).iloc[female_test_indices].values.ravel().tolist())])
 
         self.transform = transform
 
@@ -99,13 +106,14 @@ class FaceGenderDataset(Dataset):
         return len(self.img_index)
 
     def __getitem__(self, idx):
-        label = self.img_label.values.tolist()[idx]
+        label = self.img_label.values.ravel().tolist()[idx]
+        print(label)
         img_name = os.path.join(self.root_dir, 'M' if label == 1 else 'F', self.img_index.values.tolist()[idx])
         image = io.imread(img_name)
         sample = {'image': image, 'label': label}
 
         if self.transform:
-            sample = self.transform(sample)
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
 
         return sample
 
@@ -138,7 +146,6 @@ class FBPDataset(Dataset):
         sample = {'image': image, 'score': score}
 
         if self.transform:
-            from PIL import Image
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
 
         return sample

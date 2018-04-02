@@ -296,7 +296,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
                 # inputs, labels = data
-                inputs, labels = data['image'], data['score']
+                inputs, labels = data['image'], data['label']
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
@@ -340,7 +340,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
     for data in test_loader:
         # images, labels = data
-        images, labels = data['image'], data['score']
+        images, labels = data['image'], data['label']
         if torch.cuda.is_available():
             model_ft = model_ft.cuda()
             labels = labels.cuda()
@@ -466,9 +466,9 @@ if __name__ == '__main__':
     ])
 
     # hand-crafted train and test loader
-    train_loader = torch.utils.data.DataLoader(FaceGenderDataset(), batch_size=cfg['batch_size'],
-                                               shuffle=True, num_workers=4)
-    test_loader = torch.utils.data.DataLoader(FaceGenderDataset(), batch_size=cfg['batch_size'],
+    train_loader = torch.utils.data.DataLoader(FaceGenderDataset(transform=data_transform),
+                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(FaceGenderDataset(transform=data_transform), batch_size=cfg['batch_size'],
                                               shuffle=False, num_workers=4)
 
     # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],

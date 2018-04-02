@@ -25,21 +25,15 @@ def detect_face(face_img_file):
         print('Only a couple with two faces in one image is allowed!')
         sys.exit(0)
     else:
-
-        for _ in result:
-            cv2.rectangle(img, (_['box'][0], _['box'][1]), (_['box'][0] + _['box'][2], _['box'][1] + _['box'][3]),
-                          (0, 0, 255), 2)
-            cv2.circle(img, (_['keypoints']['left_eye'][0], _['keypoints']['left_eye'][1]), 2, (255, 245, 0), -1)
-            cv2.circle(img, (_['keypoints']['right_eye'][0], _['keypoints']['right_eye'][1]), 2, (255, 245, 0), -1)
-            cv2.circle(img, (_['keypoints']['nose'][0], _['keypoints']['nose'][1]), 2, (255, 245, 0), -1)
-            cv2.circle(img, (_['keypoints']['mouth_left'][0], _['keypoints']['mouth_left'][1]), 2, (255, 245, 0), -1)
-            cv2.circle(img, (_['keypoints']['mouth_right'][0], _['keypoints']['mouth_right'][1]), 2, (255, 245, 0), -1)
-            # cv2.putText(img, str(round(_['confidence'], 2)), (_['box'][0], _['box'][1] - 3),
-            #             0, 0.4, (0, 0, 255), 0, cv2.LINE_AA)
-
-        cv2.imshow('res', img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        #
+        # for _ in result:
+        #     cv2.rectangle(img, (_['box'][0], _['box'][1]), (_['box'][0] + _['box'][2], _['box'][1] + _['box'][3]),
+        #                   (0, 0, 255), 2)
+        #     cv2.circle(img, (_['keypoints']['left_eye'][0], _['keypoints']['left_eye'][1]), 2, (255, 245, 0), -1)
+        #     cv2.circle(img, (_['keypoints']['right_eye'][0], _['keypoints']['right_eye'][1]), 2, (255, 245, 0), -1)
+        #     cv2.circle(img, (_['keypoints']['nose'][0], _['keypoints']['nose'][1]), 2, (255, 245, 0), -1)
+        #     cv2.circle(img, (_['keypoints']['mouth_left'][0], _['keypoints']['mouth_left'][1]), 2, (255, 245, 0), -1)
+        #     cv2.circle(img, (_['keypoints']['mouth_right'][0], _['keypoints']['mouth_right'][1]), 2, (255, 245, 0), -1)
 
         face1 = img[result[0]['box'][0]:result[0]['box'][0] + result[0]['box'][2],
                 result[0]['box'][1]:result[0]['box'][1] + result[0]['box'][3]]
@@ -59,8 +53,8 @@ def detect_face(face_img_file):
 
         # detect with dlib
         from facescore import face_beauty_regressor
-        result = face_beauty_regressor.det_landmarks(face_img_file)
-        geo_dis = cal_geo_dis(get_geo_feature(result[0]['landmarks']), get_geo_feature(result[1]['landmarks']))
+        ldmk = face_beauty_regressor.det_landmarks(face_img_file)
+        geo_dis = cal_geo_dis(get_geo_feature(ldmk[0]['landmarks']), get_geo_feature(ldmk[1]['landmarks']))
         print('Geo distance = %f' % geo_dis)
 
         similarity = 0.8 * cos_sim + (1 - 0.8) * geo_dis
@@ -71,12 +65,20 @@ def detect_face(face_img_file):
         img_new = 255 * np.ones([img.shape[0] + text_height, img.shape[1], 3], dtype=np.uint8)
         img_new[0:img.shape[0], 0:img.shape[1], :] = img
 
-        cv2.putText(img_new, "The Mate Face Index is {0}".format(similarity),
+        cv2.rectangle(img_new, (result[0]['box'][0], result[0]['box'][1]),
+                      (result[0]['box'][0] + result[0]['box'][2], result[0]['box'][1] + result[0]['box'][3]),
+                      (255, 0, 0), 2)
+
+        cv2.rectangle(img_new, (result[1]['box'][0], result[1]['box'][1]),
+                      (result[1]['box'][0] + result[1]['box'][2], result[1]['box'][1] + result[1]['box'][3]),
+                      (0, 0, 255), 2)
+        cv2.putText(img_new, "The Mate Face Index is %.2f" % similarity,
                     (5, img.shape[0] + 10), 6, 0.4, (255, 0, 0), 1, cv2.LINE_AA)
 
         cv2.imshow('img_new', img_new)
         cv2.waitKey()
         cv2.destroyAllWindows()
+        cv2.imwrite('./m_jay.jpg', img_new)
 
 
 def get_geo_feature(face_ldmk):

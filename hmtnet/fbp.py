@@ -281,7 +281,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=50, gamma=0.1)
 
@@ -308,8 +308,9 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
                 # forward + backward + optimize
                 outputs = model_ft.forward(inputs)
+                outputs = outputs.view(-1, 2)
 
-                loss = criterion(outputs.view(-1, 2), labels)
+                loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer_ft.step()
 
@@ -354,8 +355,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
 
 def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
-    num_ftrs = model_ft.fc8.out_channels
-    model_ft.fc = nn.Linear(num_ftrs, 1)
+    num_ftrs = model_ft.fc8.in_channels
+    model_ft.fc = nn.Conv2d(num_ftrs, 1)
 
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
@@ -387,6 +388,7 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
 
                 # forward + backward + optimize
                 outputs = model_ft(inputs)
+                outputs = outputs.view(-1, 2)
 
                 loss = criterion(outputs, labels)
                 loss.backward()

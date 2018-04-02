@@ -12,6 +12,8 @@ from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import transforms, datasets
 
+from hmtnet.data_loader import FaceGenderDataset
+
 sys.path.append('../')
 from hmtnet.cfg import cfg
 from hmtnet import data_loader, file_utils, vgg_m_face_bn_dag
@@ -452,12 +454,17 @@ if __name__ == '__main__':
                              std=[1, 1, 1])
     ])
 
-    gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
-                                          transform=data_transform)
-    race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
-                                        transform=data_transform)
-    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
-                                                                                  batch_size=cfg['batch_size'])
+    train_loader = torch.utils.data.DataLoader(FaceGenderDataset(train=True), batch_size=cfg['batch_size'],
+                                               shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(FaceGenderDataset(train=False), batch_size=cfg['batch_size'],
+                                              shuffle=False, num_workers=4)
+
+    # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
+    #                                       transform=data_transform)
+    # race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
+    #                                     transform=data_transform)
+    # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
+    #                                                                               batch_size=cfg['batch_size'])
 
     criterion = nn.CrossEntropyLoss()
     # print('***************************start training GNet***************************')

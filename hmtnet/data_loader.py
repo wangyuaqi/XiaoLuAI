@@ -50,17 +50,46 @@ class FaceGenderDataset(Dataset):
     Face Gender dataset
     """
 
-    def __init__(self, X, y, transform=None):
-        self.images = X
-        self.labels = y
+    def __init__(self, csv_file=cfg['SCUT_FBP5500_csv'], root_dir=cfg['gender_base_dir'], train=True, transform=None):
+        self.root_dir = root_dir
+        self.img_index = pd.read_csv(csv_file, header=None, sep=',').iloc[:, 2]
+        self.img_label = pd.DataFrame(np.array([1 if _ == 'm' else 0 for _ in
+                                                pd.read_csv(csv_file, header=None, sep=',').iloc[:,
+                                                0].values.tolist()]).ravel())
+        male_shuffled_indices = np.random.permutation(len([_[0] for _ in self.img_label.values.tolist() if _[0] == 1]))
+        female_shuffled_indices = np.random.permutation(
+            len([_[0] for _ in self.img_label.values.tolist() if _[0] == 0]))
+
+        if train:
+            male_train_set_size = int(len([_[0] for _ in self.img_label.values.tolist() if _[0] == 1]) * 0.6)
+            male_train_indices = male_shuffled_indices[:male_train_set_size]
+            female_train_set_size = int(len([_[0] for _ in self.img_label.values.tolist() if _[0] == 0]) * 0.6)
+            female_train_indices = female_shuffled_indices[:female_train_set_size]
+
+            self.filenames = pd.concat(
+                [self.img_index.iloc[male_train_indices], self.img_index.iloc[female_train_indices]])
+            self.labels = pd.concat(
+                [self.img_label.iloc[male_train_indices], self.img_label.iloc[female_train_indices]])
+        else:
+            male_test_set_size = int(len([_[0] for _ in self.img_label.values.tolist() if _[0] == 1]) * 0.4)
+            male_test_indices = male_shuffled_indices[:male_test_set_size]
+            female_test_set_size = int(len([_[0] for _ in self.img_label.values.tolist() if _[0] == 0]) * 0.4)
+            female_test_indices = female_shuffled_indices[:female_test_set_size]
+
+            self.filenames = pd.concat(
+                [self.img_index.iloc[male_test_indices], self.img_index.iloc[female_test_indices]])
+            self.labels = pd.concat([self.img_label.iloc[male_test_indices], self.img_label.iloc[female_test_indices]])
+
         self.transform = transform
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.img_index)
 
     def __getitem__(self, idx):
-        sample = {'image': self.images.iloc[idx - 1].as_matrix().astype(np.float32),
-                  'label': self.labels.iloc[idx - 1].as_matrix().astype(np.float32)}
+        label = self.img_label.values.tolist()[idx]
+        img_name = os.path.join(self.root_dir, 'M' if label == 1 else 'F', self.img_index.values.tolist()[idx])
+        image = io.imread(img_name)
+        sample = {'image': image, 'label': label}
 
         if self.transform:
             sample = self.transform(sample)

@@ -12,9 +12,9 @@ from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import transforms, datasets
 
-from hmtnet.data_loader import FaceGenderDataset
 
 sys.path.append('../')
+from hmtnet.data_loader import FaceGenderDataset
 from hmtnet.cfg import cfg
 from hmtnet import data_loader, file_utils, vgg_m_face_bn_dag
 

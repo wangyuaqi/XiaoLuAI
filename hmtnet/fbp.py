@@ -12,7 +12,6 @@ from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import transforms, datasets
 
-
 sys.path.append('../')
 from hmtnet.data_loader import FaceGenderDataset
 from hmtnet.cfg import cfg
@@ -363,7 +362,7 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=50, gamma=0.1)
 
@@ -419,7 +418,7 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
     gt_labels = []
 
     for data in test_loader:
-        images, labels = data
+        images, labels = data['image'], data['score']
         if torch.cuda.is_available():
             model_ft = model_ft.cuda()
             labels = labels.cuda()
@@ -428,13 +427,13 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
             outputs = model_ft.forward(Variable(images))
 
         predicted_labels += outputs.cpu().data.numpy().tolist()
-        gt_labels += labels.numpy().tolist()
+        gt_labels += labels.cpu().numpy().tolist()
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-    mae_lr = round(mean_absolute_error(np.array(gt_labels), np.array(predicted_labels)), 4)
-    rmse_lr = round(np.math.sqrt(mean_squared_error(np.array(gt_labels), np.array(predicted_labels))), 4)
-    pc = round(np.corrcoef(np.array(gt_labels), np.array(predicted_labels))[0, 1], 4)
+    mae_lr = round(mean_absolute_error(np.array(gt_labels), np.array(predicted_labels).ravel()), 4)
+    rmse_lr = round(np.math.sqrt(mean_squared_error(np.array(gt_labels), np.array(predicted_labels).ravel())), 4)
+    pc = round(np.corrcoef(np.array(gt_labels), np.array(predicted_labels).ravel())[0, 1], 4)
 
     print('===============The Mean Absolute Error of ANet is {0}===================='.format(mae_lr))
     print('===============The Root Mean Square Error of ANet is {0}===================='.format(rmse_lr))
@@ -484,4 +483,4 @@ if __name__ == '__main__':
                                               batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
 
     print('***************************start fine-tuning ANet***************************')
-    finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 1, False)
+    finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)

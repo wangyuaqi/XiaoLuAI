@@ -47,15 +47,22 @@ def split_train_and_test_with_py_datasets(data_set, batch_size=cfg['batch_size']
 
 class FaceGenderDataset(Dataset):
     """
-    Face Gender dataset
+    Face Gender dataset with hierarchical sampling strategy
     """
 
-    def __init__(self, csv_file=cfg['SCUT_FBP5500_csv'], root_dir=cfg['gender_base_dir'], train=True, transform=None):
+    def __init__(self, csv_file=cfg['SCUT_FBP5500_csv'], root_dir=cfg['gender_base_dir'], transform=None):
         self.root_dir = root_dir
         self.img_index = pd.read_csv(csv_file, header=None, sep=',').iloc[:, 2]
         self.img_label = pd.DataFrame(np.array([1 if _ == 'm' else 0 for _ in
                                                 pd.read_csv(csv_file, header=None, sep=',').iloc[:,
                                                 0].values.tolist()]).ravel())
+
+        def get_fileindex_and_label():
+            fileindex_and_label = {}
+            for i in range(len(self.img_index.tolist())):
+                fileindex_and_label[self.img_index.values.tolist()[i]] = self.img_label.values.tolist()[i]
+
+            return fileindex_and_label
 
         m_fileindex_list = os.listdir(os.path.join(cfg['gender_base_dir'], 'M'))
         f_fileindex_list = os.listdir(os.path.join(cfg['gender_base_dir'], 'F'))
@@ -80,7 +87,11 @@ class FaceGenderDataset(Dataset):
             [pd.DataFrame(m_fileindex_list).iloc[male_test_indices],
              pd.DataFrame(f_fileindex_list).iloc[female_test_indices]])
 
-        self.test_labels = pd.concat([self.img_label.iloc[male_test_indices], self.img_label.iloc[female_test_indices]])
+        m_label = [get_fileindex_and_label()[_] for _ in m_fileindex_list]
+        f_label = [get_fileindex_and_label()[_] for _ in f_fileindex_list]
+
+        self.test_labels = pd.concat(
+            [pd.DataFrame(m_label).iloc[male_test_indices], pd.DataFrame(f_label).iloc[female_test_indices]])
 
         self.transform = transform
 

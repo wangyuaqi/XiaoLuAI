@@ -358,7 +358,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
 def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
     num_ftrs = model_ft.fc8.in_channels
-    model_ft.fc = nn.Conv2d(num_ftrs, 1)
+    model_ft.fc8 = nn.Conv2d(num_ftrs, 1, 1)
 
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
@@ -454,10 +454,11 @@ if __name__ == '__main__':
                              std=[1, 1, 1])
     ])
 
-    train_loader = torch.utils.data.DataLoader(FaceGenderDataset(train=True), batch_size=cfg['batch_size'],
-                                               shuffle=True, num_workers=4)
-    test_loader = torch.utils.data.DataLoader(FaceGenderDataset(train=False), batch_size=cfg['batch_size'],
-                                              shuffle=False, num_workers=4)
+    # hand-crafted train and test loader
+    # train_loader = torch.utils.data.DataLoader(FaceGenderDataset(train=True), batch_size=cfg['batch_size'],
+    #                                            shuffle=True, num_workers=4)
+    # test_loader = torch.utils.data.DataLoader(FaceGenderDataset(train=False), batch_size=cfg['batch_size'],
+    #                                           shuffle=False, num_workers=4)
 
     # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
     #                                       transform=data_transform)
@@ -466,21 +467,21 @@ if __name__ == '__main__':
     # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
     #                                                                               batch_size=cfg['batch_size'])
 
-    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
     # print('***************************start training GNet***************************')
     # optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, weight_decay=1e-4)
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
     # print('***************************finish training GNet***************************')
 
-    print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)
+    # print('***************************start fine-tuning VGGMFace***************************')
+    # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)
 
     # print('---------------------------------------------------------------------------')
 
-    # train_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(True, transform=data_transform),
-    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-    # test_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(False, transform=data_transform),
-    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
-    #
-    # print('***************************start fine-tuning ANet***************************')
-    # finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 1, False)
+    train_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(True, transform=data_transform),
+                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(False, transform=data_transform),
+                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+
+    print('***************************start fine-tuning ANet***************************')
+    finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 1, False)

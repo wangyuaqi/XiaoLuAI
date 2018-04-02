@@ -51,7 +51,8 @@ class FaceGenderDataset(Dataset):
     Face Gender dataset with hierarchical sampling strategy
     """
 
-    def __init__(self, csv_file=cfg['SCUT_FBP5500_csv'], root_dir=cfg['gender_base_dir'], transform=None):
+    def __init__(self, csv_file=cfg['SCUT_FBP5500_csv'], root_dir=cfg['gender_base_dir'], transform=None,
+                 male_shuffled_indices=None, female_shuffled_indices=None, train=True):
         self.root_dir = root_dir
         self.img_index = pd.read_csv(csv_file, header=None, sep=',').iloc[:, 2]
         self.img_label = pd.DataFrame(np.array([1 if _ == 'm' else 0 for _ in
@@ -68,47 +69,43 @@ class FaceGenderDataset(Dataset):
         m_fileindex_list = os.listdir(os.path.join(cfg['gender_base_dir'], 'M'))
         f_fileindex_list = os.listdir(os.path.join(cfg['gender_base_dir'], 'F'))
 
-        male_shuffled_indices = np.random.permutation(len(m_fileindex_list))
-        female_shuffled_indices = np.random.permutation(len(f_fileindex_list))
-
-        male_train_set_size = int(len(m_fileindex_list) * 0.6)
-        male_train_indices = male_shuffled_indices[:male_train_set_size]
-        female_train_set_size = int(len(f_fileindex_list) * 0.6)
-        female_train_indices = female_shuffled_indices[:female_train_set_size]
-
-        self.training_set = pd.concat(
-            [self.img_index.iloc[male_train_indices], self.img_index.iloc[female_train_indices]])
-        # self.training_labels = pd.concat(
-        #     [self.img_label.iloc[male_train_indices], self.img_label.iloc[female_train_indices]])
-
-        male_test_indices = male_shuffled_indices[male_train_set_size:]
-        female_test_indices = female_shuffled_indices[female_train_set_size:]
-
-        self.test_set = pd.concat(
-            [pd.DataFrame(m_fileindex_list).iloc[male_test_indices],
-             pd.DataFrame(f_fileindex_list).iloc[female_test_indices]])
-
         tmp = get_fileindex_and_label()
         m_label = [tmp[_][0] for _ in m_fileindex_list]
         f_label = [tmp[_][0] for _ in f_fileindex_list]
 
-        self.train_labels = pd.concat(
-            [pd.DataFrame(pd.DataFrame(m_label).iloc[male_train_indices].values.ravel().tolist()),
-             pd.DataFrame(pd.DataFrame(f_label).iloc[female_train_indices].values.ravel().tolist())])
+        male_train_set_size = int(len(m_fileindex_list) * 0.6)
+        female_train_set_size = int(len(f_fileindex_list) * 0.6)
 
-        self.test_labels = pd.concat(
-            [pd.DataFrame(pd.DataFrame(m_label).iloc[male_test_indices].values.ravel().tolist()),
-             pd.DataFrame(pd.DataFrame(f_label).iloc[female_test_indices].values.ravel().tolist())])
+        male_train_indices = male_shuffled_indices[:male_train_set_size]
+        male_test_indices = male_shuffled_indices[male_train_set_size:]
+        female_train_indices = female_shuffled_indices[:female_train_set_size]
+        female_test_indices = female_shuffled_indices[female_train_set_size:]
+
+        if train:
+            self.image_files = pd.concat(
+                [pd.DataFrame(m_fileindex_list).iloc[male_train_indices],
+                 pd.DataFrame(f_fileindex_list).iloc[female_train_indices]])
+
+            self.image_labels = pd.concat(
+                [pd.DataFrame(pd.DataFrame(m_label).iloc[male_train_indices].values.ravel().tolist()),
+                 pd.DataFrame(pd.DataFrame(f_label).iloc[female_train_indices].values.ravel().tolist())])
+        else:
+            self.image_files = pd.concat(
+                [pd.DataFrame(m_fileindex_list).iloc[male_test_indices],
+                 pd.DataFrame(f_fileindex_list).iloc[female_test_indices]])
+
+            self.image_labels = pd.concat(
+                [pd.DataFrame(pd.DataFrame(m_label).iloc[male_test_indices].values.ravel().tolist()),
+                 pd.DataFrame(pd.DataFrame(f_label).iloc[female_test_indices].values.ravel().tolist())])
 
         self.transform = transform
 
     def __len__(self):
-        return len(self.img_index)
+        return len(self.image_files)
 
     def __getitem__(self, idx):
-        label = self.img_label.values.ravel().tolist()[idx]
-        print(label)
-        img_name = os.path.join(self.root_dir, 'M' if label == 1 else 'F', self.img_index.values.tolist()[idx])
+        label = self.image_labels.values.ravel().tolist()[idx]
+        img_name = os.path.join(self.root_dir, 'M' if label == 1 else 'F', self.image_files.values.tolist()[idx][0])
         image = io.imread(img_name)
         sample = {'image': image, 'label': label}
 

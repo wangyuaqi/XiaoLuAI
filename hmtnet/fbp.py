@@ -338,7 +338,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     correct = 0
     total = 0
 
-    for data in test_loader:
+    # for data in test_loader:
+    for i, data in enumerate(test_loader, 0):
         # images, labels = data
         images, labels = data['image'], data['label']
         if torch.cuda.is_available():
@@ -466,16 +467,24 @@ if __name__ == '__main__':
     ])
 
     # hand-crafted train and test loader
-    train_loader = torch.utils.data.DataLoader(FaceGenderDataset(transform=data_transform),
-                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-    test_loader = torch.utils.data.DataLoader(FaceGenderDataset(transform=data_transform), batch_size=cfg['batch_size'],
+
+    male_shuffled_indices = np.random.permutation(2750)
+    female_shuffled_indices = np.random.permutation(2750)
+    train_loader = torch.utils.data.DataLoader(
+        FaceGenderDataset(transform=data_transform, male_shuffled_indices=male_shuffled_indices,
+                          female_shuffled_indices=female_shuffled_indices, train=True),
+        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(FaceGenderDataset(transform=data_transform,
+                                                                male_shuffled_indices=male_shuffled_indices,
+                                                                female_shuffled_indices=female_shuffled_indices,
+                                                                train=False), batch_size=cfg['batch_size'],
                                               shuffle=False, num_workers=4)
 
     # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
     #                                       transform=data_transform)
     # race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
     #                                     transform=data_transform)
-    # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=race_dataset,
+    # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
     #                                                                               batch_size=cfg['batch_size'])
 
     criterion = nn.CrossEntropyLoss()
@@ -485,7 +494,8 @@ if __name__ == '__main__':
     # print('***************************finish training GNet***************************')
 
     print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 1, False)
+    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, False)
+    print('***************************finish fine-tuning VGGMFace***************************')
 
     # print('---------------------------------------------------------------------------')
 

@@ -12,6 +12,8 @@ from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import transforms, datasets
 
+# os.environ['CUDA_VISIBLE_DEVICES'] = 'gpu02'
+
 sys.path.append('../')
 from hmtnet.data_loader import FaceGenderDataset
 from hmtnet.cfg import cfg
@@ -191,6 +193,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
         else:
             outputs = model.forward(Variable(images))
 
+        outputs = outputs.view(-1, outputs.numel())
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -258,6 +261,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, scheduler
         else:
             outputs = model.forward(Variable(images))
 
+        outputs = outputs.view(-1, outputs.numel())
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -310,7 +314,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
                 # forward + backward + optimize
                 outputs = model_ft.forward(inputs)
-                outputs = outputs.view(-1, 2)
+                outputs = outputs.view(-1, outputs.numel())
 
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -349,6 +353,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         else:
             outputs = model_ft.forward(Variable(images))
 
+        outputs = outputs.view(-1, outputs.numel())
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -494,7 +499,7 @@ if __name__ == '__main__':
     # print('***************************finish training GNet***************************')
 
     print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, False)
+    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, True)
     print('***************************finish fine-tuning VGGMFace***************************')
 
     # print('---------------------------------------------------------------------------')

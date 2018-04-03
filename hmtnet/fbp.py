@@ -133,7 +133,7 @@ class GNet(nn.Module):
         return num_features
 
 
-def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler, num_epochs=25, inference=False):
+def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epochs=25, inference=False):
     """
     train GNet
     :param model:
@@ -141,7 +141,6 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
     :param test_loader:
     :param criterion:
     :param optimizer:
-    :param scheduler:
     :param num_epochs:
     :return:
     """
@@ -187,8 +186,8 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
     else:
         print('Loading pre-trained model...')
         gnet.load_state_dict(torch.load(os.path.join('./model/gnet.pth')))
-        gnet.train(False)
 
+    gnet.train(False)
     correct = 0
     total = 0
     for data in test_loader:
@@ -200,76 +199,6 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, scheduler
         else:
             outputs = model.forward(Variable(images))
 
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum()
-
-    print('correct = %d ...' % correct)
-    print('total = %d ...' % total)
-    print('Accuracy of the network on test images: %f' % (correct / total))
-
-
-def train_rnet(model, train_loader, test_loader, criterion, optimizer, scheduler, num_epochs=25):
-    """
-    train RNet
-    :param model:
-    :param train_loader:
-    :param test_loader:
-    :param criterion:
-    :param optimizer:
-    :param scheduler:
-    :param num_epochs:
-    :return:
-    """
-    for epoch in range(num_epochs):  # loop over the dataset multiple times
-
-        running_loss = 0.0
-        for i, data in enumerate(train_loader, 0):
-            # get the inputs
-            inputs, labels = data
-
-            # wrap them in Variable
-            if torch.cuda.is_available():
-                model = model.cuda()
-                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-            else:
-                inputs, labels = Variable(inputs), Variable(labels)
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = model.forward(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-            # print statistics
-            running_loss += loss.data[0]
-            if i % 100 == 99:  # print every 200 mini-batches
-                print('[%d, %5d] loss: %.5f' %
-                      (epoch + 1, i + 1, running_loss / 100))
-                running_loss = 0.0
-
-    print('Finished Training')
-    print('Save trained model...')
-
-    model_path_dir = './model'
-    file_utils.mkdirs_if_not_exist(model_path_dir)
-    torch.save(model.state_dict(), os.path.join(model_path_dir, 'rnet.pth'))
-
-    correct = 0
-    total = 0
-    for data in test_loader:
-        images, labels = data
-        if torch.cuda.is_available():
-            model.cuda()
-            labels = labels.cuda()
-            outputs = model.forward(Variable(images.cuda()))
-        else:
-            outputs = model.forward(Variable(images))
-
-        outputs = outputs.view(-1, outputs.numel())
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -507,7 +436,7 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     print('***************************start training GNet***************************')
     optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=2, inference=True)
+    train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
     print('***************************finish training GNet***************************')
 
     # print('***************************start fine-tuning VGGMFace***************************')

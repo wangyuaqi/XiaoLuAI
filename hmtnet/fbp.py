@@ -299,8 +299,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
-                # inputs, labels = data
-                inputs, labels = data['image'], data['label']
+                inputs, labels = data
+                # inputs, labels = data['image'], data['label']
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
@@ -314,7 +314,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
                 # forward + backward + optimize
                 outputs = model_ft.forward(inputs)
-                outputs = outputs.view(-1, outputs.numel())
+                outputs = (torch.sum(outputs, dim=1) / 2).view(2, 1)
+                # outputs = outputs.view(-1, outputs.numel())
 
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -344,8 +345,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
     # for data in test_loader:
     for i, data in enumerate(test_loader, 0):
-        # images, labels = data
-        images, labels = data['image'], data['label']
+        images, labels = data
+        # images, labels = data['image'], data['label']
         if torch.cuda.is_available():
             model_ft = model_ft.cuda()
             labels = labels.cuda()
@@ -459,7 +460,7 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
 
 
 if __name__ == '__main__':
-    # gnet = GNet()
+    gnet = GNet()
     # rnet = RNet()
 
     vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag()
@@ -472,7 +473,7 @@ if __name__ == '__main__':
     ])
 
     # hand-crafted train and test loader
-
+    """
     male_shuffled_indices = np.random.permutation(2750)
     female_shuffled_indices = np.random.permutation(2750)
     train_loader = torch.utils.data.DataLoader(
@@ -484,23 +485,24 @@ if __name__ == '__main__':
                                                                 female_shuffled_indices=female_shuffled_indices,
                                                                 train=False), batch_size=cfg['batch_size'],
                                               shuffle=False, num_workers=4)
+    """
 
-    # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
-    #                                       transform=data_transform)
+    gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
+                                          transform=data_transform)
     # race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
     #                                     transform=data_transform)
-    # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
-    #                                                                               batch_size=cfg['batch_size'])
+    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
+                                                                                  batch_size=cfg['batch_size'])
 
     criterion = nn.CrossEntropyLoss()
-    # print('***************************start training GNet***************************')
-    # optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, weight_decay=1e-4)
-    # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=10)
-    # print('***************************finish training GNet***************************')
+    print('***************************start training GNet***************************')
+    optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    train_gnet(gnet, train_loader, test_loader, criterion, optimizer, scheduler=None, num_epochs=2)
+    print('***************************finish training GNet***************************')
 
-    print('***************************start fine-tuning VGGMFace***************************')
-    finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, True)
-    print('***************************finish fine-tuning VGGMFace***************************')
+    # print('***************************start fine-tuning VGGMFace***************************')
+    # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, False)
+    # print('***************************finish fine-tuning VGGMFace***************************')
 
     # print('---------------------------------------------------------------------------')
 

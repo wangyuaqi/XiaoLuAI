@@ -31,7 +31,7 @@ class VggMFaceBnDag(nn.Module):
         self.relu5 = nn.ReLU()
         self.pool5 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2), dilation=(1, 1), ceil_mode=False)
         self.fc6 = nn.Conv2d(512, 4096, kernel_size=[6, 6], stride=(1, 1))
-        self.bn54 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=False)  # err
+        self.bn54 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=False)
         self.relu6 = nn.ReLU()
         self.fc7 = nn.Conv2d(4096, 4096, kernel_size=[1, 1], stride=(1, 1))
         self.bn55 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=True)

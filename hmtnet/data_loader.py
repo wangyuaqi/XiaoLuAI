@@ -115,6 +115,75 @@ class FaceGenderDataset(Dataset):
         return sample
 
 
+class FaceRaceDataset(Dataset):
+    """
+    Face Race dataset with hierarchical sampling strategy
+    """
+
+    def __init__(self, csv_file=cfg['SCUT_FBP5500_csv'], root_dir=cfg['race_base_dir'], transform=None,
+                 yellow_shuffled_indices=None, white_shuffled_indices=None, train=True):
+        self.root_dir = root_dir
+        self.img_index = pd.read_csv(csv_file, header=None, sep=',').iloc[:, 2]
+        self.img_label = pd.DataFrame(np.array([1 if _ == 'w' else 0 for _ in
+                                                pd.read_csv(csv_file, header=None, sep=',').iloc[:,
+                                                1].values.tolist()]).ravel())
+
+        def get_fileindex_and_label():
+            fileindex_and_label = {}
+            for i in range(len(self.img_index.tolist())):
+                fileindex_and_label[self.img_index.values.tolist()[i]] = self.img_label.values.tolist()[i]
+
+            return fileindex_and_label
+
+        y_fileindex_list = os.listdir(os.path.join(cfg['race_base_dir'], 'Y'))
+        w_fileindex_list = os.listdir(os.path.join(cfg['race_base_dir'], 'W'))
+
+        tmp = get_fileindex_and_label()
+        y_label = [tmp[_][0] for _ in y_fileindex_list]
+        w_label = [tmp[_][0] for _ in w_fileindex_list]
+
+        yellow_train_set_size = int(len(y_fileindex_list) * 0.6)
+        white_train_set_size = int(len(w_fileindex_list) * 0.6)
+
+        yellow_train_indices = yellow_shuffled_indices[:yellow_train_set_size]
+        yellow_test_indices = yellow_shuffled_indices[yellow_train_set_size:]
+        white_train_indices = white_shuffled_indices[:white_train_set_size]
+        white_test_indices = white_shuffled_indices[white_train_set_size:]
+
+        if train:
+            self.image_files = pd.concat(
+                [pd.DataFrame(y_fileindex_list).iloc[yellow_train_indices],
+                 pd.DataFrame(w_fileindex_list).iloc[white_train_indices]])
+
+            self.image_labels = pd.concat(
+                [pd.DataFrame(pd.DataFrame(y_label).iloc[yellow_train_indices].values.ravel().tolist()),
+                 pd.DataFrame(pd.DataFrame(w_label).iloc[white_train_indices].values.ravel().tolist())])
+        else:
+            self.image_files = pd.concat(
+                [pd.DataFrame(y_fileindex_list).iloc[yellow_test_indices],
+                 pd.DataFrame(w_fileindex_list).iloc[white_test_indices]])
+
+            self.image_labels = pd.concat(
+                [pd.DataFrame(pd.DataFrame(y_label).iloc[yellow_test_indices].values.ravel().tolist()),
+                 pd.DataFrame(pd.DataFrame(w_label).iloc[white_test_indices].values.ravel().tolist())])
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.image_files)
+
+    def __getitem__(self, idx):
+        label = self.image_labels.values.ravel().tolist()[idx]
+        img_name = os.path.join(self.root_dir, 'W' if label == 1 else 'Y', self.image_files.values.tolist()[idx][0])
+        image = io.imread(img_name)
+        sample = {'image': image, 'label': label}
+
+        if self.transform:
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
+
+        return sample
+
+
 class FBPDataset(Dataset):
     """
     SCUT-FBP5500 dataset

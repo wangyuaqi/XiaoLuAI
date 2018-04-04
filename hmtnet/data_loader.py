@@ -215,3 +215,41 @@ class FBPDataset(Dataset):
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
 
         return sample
+
+
+class FaceDataset(Dataset):
+    """
+    Face Dataset for 5 Cross Validation
+    """
+
+    def __init__(self, cv_index=1, train=True, transform=None):
+        if train:
+            self.face_img = pd.read_csv(
+                os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index, 'train_%d.txt' % cv_index),
+                sep=' ', header=None).iloc[:, 0].tolist()
+            self.face_score = pd.read_csv(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
+                                          'train_%d.txt' % cv_index,
+                                          sep=' ', header=None).iloc[:, 1].astype(np.float).tolist()
+        else:
+            self.face_img = pd.read_csv(
+                os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index, 'test_%d.txt' % cv_index),
+                sep=' ',
+                header=None).iloc[:, 0].tolist()
+            self.face_score = pd.read_csv(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
+                                          'test_%d.txt' % cv_index, sep=' ', header=None).iloc[:, 1].astype(
+                np.float).tolist()
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.face_img)
+
+    def __getitem__(self, idx):
+        image = io.imread(os.path.join(cfg['scutfbp5500_images_dir'], self.face_img[idx]))
+        score = self.face_score[idx]
+        sample = {'image': image, 'score': score}
+
+        if self.transform:
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
+
+        return sample

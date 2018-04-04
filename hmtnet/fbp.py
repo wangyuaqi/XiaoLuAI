@@ -151,7 +151,8 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
-                inputs, labels = data
+                # inputs, labels = data
+                inputs, labels = data['image'], data['label']
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
@@ -191,7 +192,8 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     correct = 0
     total = 0
     for data in test_loader:
-        images, labels = data
+        # images, labels = data
+        images, labels = data['image'], data['label']
         if torch.cuda.is_available():
             model.cuda()
             labels = labels.cuda()
@@ -412,7 +414,6 @@ if __name__ == '__main__':
     ])
 
     # hand-crafted train and test loader
-    """
     male_shuffled_indices = np.random.permutation(2750)
     female_shuffled_indices = np.random.permutation(2750)
     train_loader = torch.utils.data.DataLoader(
@@ -424,14 +425,13 @@ if __name__ == '__main__':
                                                                 female_shuffled_indices=female_shuffled_indices,
                                                                 train=False), batch_size=cfg['batch_size'],
                                               shuffle=False, num_workers=4)
-    """
 
-    gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
-                                          transform=data_transform)
+    # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
+    #                                       transform=data_transform)
     # race_dataset = datasets.ImageFolder(root=cfg['race_base_dir'],
     #                                     transform=data_transform)
-    train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
-                                                                                  batch_size=cfg['batch_size'])
+    # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
+    #                                                                               batch_size=cfg['batch_size'])
 
     criterion = nn.CrossEntropyLoss()
     print('***************************start training GNet***************************')

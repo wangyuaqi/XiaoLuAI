@@ -24,8 +24,8 @@ class GenderBranch(nn.Module):
         self.grelu2 = nn.ReLU()
         self.gpool2 = nn.MaxPool2d(3)
 
-        self.gconv3 = nn.Conv2d(128, 128, 1, stride=2)
-        self.gbn3 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
+        self.gconv3 = nn.Conv2d(128, 2, 1, stride=2)
+        self.gbn3 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
         self.grelu3 = nn.ReLU()
         self.gpool3 = nn.MaxPool2d(2)
 
@@ -66,8 +66,8 @@ class RaceBranch(nn.Module):
         self.rbn1 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
         self.rrelu1 = nn.ReLU()
 
-        self.rconv2 = nn.Conv2d(256, 128, 3)
-        self.rbn2 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
+        self.rconv2 = nn.Conv2d(256, 2, 3)
+        self.rbn2 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
         self.rrelu2 = nn.ReLU()
         self.rpool2 = nn.MaxPool2d(3)
 

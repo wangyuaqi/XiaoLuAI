@@ -412,6 +412,8 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
 
                 # forward + backward + optimize
                 g_pred, r_pred, a_pred = hmt_net(inputs)
+                # g_pred = (torch.sum(g_pred, dim=1) / 2).view(2, 1)
+                # r_pred = (torch.sum(r_pred, dim=1) / 2).view(2, 1)
 
                 loss = criterion(g_pred, gender, r_pred, race, a_pred, attractiveness)
                 loss.backward()
@@ -420,8 +422,7 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
                 # print statistics
                 running_loss += loss.data[0]
                 if i % 100 == 99:  # print every 100 mini-batches
-                    print('[%d, %5d] loss: %.5f' %
-                          (epoch + 1, i + 1, running_loss / 100))
+                    print('[%d, %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss / 100))
                     running_loss = 0.0
 
         print('Finished Training')

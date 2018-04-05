@@ -227,17 +227,17 @@ class FaceDataset(Dataset):
             self.face_img = pd.read_csv(
                 os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index, 'train_%d.txt' % cv_index),
                 sep=' ', header=None).iloc[:, 0].tolist()
-            self.face_score = pd.read_csv(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
-                                          'train_%d.txt' % cv_index,
+            self.face_score = pd.read_csv(os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
+                                                       'train_%d.txt' % cv_index),
                                           sep=' ', header=None).iloc[:, 1].astype(np.float).tolist()
         else:
             self.face_img = pd.read_csv(
                 os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index, 'test_%d.txt' % cv_index),
                 sep=' ',
                 header=None).iloc[:, 0].tolist()
-            self.face_score = pd.read_csv(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
-                                          'test_%d.txt' % cv_index, sep=' ', header=None).iloc[:, 1].astype(
-                np.float).tolist()
+            self.face_score = pd.read_csv(os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
+                                                       'test_%d.txt' % cv_index), sep=' ', header=None).iloc[:, 1] \
+                .astype(np.float).tolist()
 
         self.transform = transform
 

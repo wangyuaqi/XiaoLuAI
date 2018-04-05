@@ -130,7 +130,6 @@ class HMTNet(nn.Module):
 
         self.gbranch = GenderBranch()
         self.rbranch = RaceBranch()
-        self.abranch = HMTNet()
 
     def forward(self, x):
         x1 = self.conv1(x)

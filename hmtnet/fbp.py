@@ -458,7 +458,7 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
             g_pred, r_pred, a_pred = hmt_net.forward(Variable(images))
 
         predicted_attractiveness_values += a_pred.cpu().data.numpy().tolist()
-        gt_attractiveness_values += g_gt.cpu().numpy().tolist()
+        gt_attractiveness_values += a_gt.cpu().numpy().tolist()
 
         g_pred = g_pred.view(-1, g_pred.numel())
         r_pred = r_pred.view(-1, r_pred.numel())

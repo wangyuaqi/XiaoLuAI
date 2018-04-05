@@ -15,8 +15,9 @@ from torchvision import transforms, datasets
 # os.environ['CUDA_VISIBLE_DEVICES'] = 'gpu02'
 
 sys.path.append('../')
+from hmtnet.losses import HMTLoss
 from hmtnet.models import RNet, GNet, HMTNet
-from hmtnet.data_loader import FaceGenderDataset, FaceRaceDataset
+from hmtnet.data_loader import FaceGenderDataset, FaceRaceDataset, FaceDataset
 from hmtnet.cfg import cfg
 from hmtnet import data_loader, file_utils, vgg_m_face_bn_dag
 
@@ -205,8 +206,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
-                inputs, labels = data
-                # inputs, labels = data['image'], data['label']
+                # inputs, labels = data
+                inputs, labels = data['image'], data['label']
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
@@ -251,8 +252,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
     # for data in test_loader:
     for i, data in enumerate(test_loader, 0):
-        images, labels = data
-        # images, labels = data['image'], data['label']
+        # images, labels = data
+        images, labels = data['image'], data['label']
         if torch.cuda.is_available():
             model_ft = model_ft.cuda()
             labels = labels.cuda()
@@ -365,11 +366,115 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
     print('===============The Pearson Correlation of ANet is {0}===================='.format(pc))
 
 
+def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=False):
+    """
+    train HMT-Net
+    :param hmt_net:
+    :param train_loader:
+    :param test_loader:
+    :param num_epochs:
+    :param inference:
+    :return:
+    """
+
+    if torch.cuda.is_available():
+        hmt_net = hmt_net.cuda()
+
+    criterion = HMTLoss()
+    optimizer = optim.SGD(hmt_net.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
+
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+
+    if not inference:
+        for epoch in range(num_epochs):  # loop over the dataset multiple times
+
+            exp_lr_scheduler.step()
+            hmt_net.train(True)
+
+            running_loss = 0.0
+
+            for i, data in enumerate(train_loader, 0):
+                # get the inputs
+                inputs, gender, race, attractiveness = data['image'], data['gender'], data['race'], \
+                                                       data['attractiveness']
+
+                # wrap them in Variable
+                if torch.cuda.is_available():
+                    hmt_net = hmt_net.cuda()
+                    inputs, gender, race, attractiveness = Variable(inputs.cuda()), Variable(gender.cuda()), Variable(
+                        race.cuda()), Variable(attractiveness.float().cuda())
+                else:
+                    inputs, gender, race, attractiveness = Variable(inputs), Variable(gender), Variable(race), \
+                                                           Variable(attractiveness.float())
+
+                # zero the parameter gradients
+                optimizer.zero_grad()
+
+                # forward + backward + optimize
+                g_pred, r_pred, a_pred = hmt_net(inputs)
+
+                loss = criterion(g_pred, gender, r_pred, race, a_pred, attractiveness)
+                loss.backward()
+                optimizer.step()
+
+                # print statistics
+                running_loss += loss.data[0]
+                if i % 100 == 99:  # print every 100 mini-batches
+                    print('[%d, %5d] loss: %.5f' %
+                          (epoch + 1, i + 1, running_loss / 100))
+                    running_loss = 0.0
+
+        print('Finished Training')
+        print('Save trained model...')
+
+        model_path_dir = './model'
+        file_utils.mkdirs_if_not_exist(model_path_dir)
+        torch.save(hmt_net.state_dict(), os.path.join(model_path_dir, 'hmt-net.pth'))
+
+    else:
+        print('Loading pre-trained model...')
+        hmt_net.load_state_dict(torch.load(os.path.join('./model/hmt-net.pth')))
+
+    hmt_net.train(False)
+
+    predicted_attractiveness_values = []
+    gt_attractiveness_values = []
+
+    for data in test_loader:
+        images, g_gt, r_gt, a_gt = data['image'], data['gender'], data['race'], \
+                                   data['attractiveness']
+        if torch.cuda.is_available():
+            hmt_net = hmt_net.cuda()
+            g_gt = g_gt.cuda()
+            r_gt = r_gt.cuda()
+            a_gt = a_gt.cuda()
+
+            g_pred, r_pred, a_pred = hmt_net.forward(Variable(images.cuda()))
+        else:
+            g_pred, r_pred, a_pred = hmt_net.forward(Variable(images))
+
+        predicted_attractiveness_values += a_pred.cpu().data.numpy().tolist()
+        gt_attractiveness_values += g_gt.cpu().numpy().tolist()
+
+    from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+    mae_lr = round(
+        mean_absolute_error(np.array(gt_attractiveness_values), np.array(predicted_attractiveness_values).ravel()), 4)
+    rmse_lr = round(np.math.sqrt(
+        mean_squared_error(np.array(gt_attractiveness_values), np.array(predicted_attractiveness_values).ravel())), 4)
+    pc = round(np.corrcoef(np.array(gt_attractiveness_values), np.array(predicted_attractiveness_values).ravel())[0, 1],
+               4)
+
+    print('===============The Mean Absolute Error of HMT-Net is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of HMT-Net is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of HMT-Net is {0}===================='.format(pc))
+
+
 if __name__ == '__main__':
     # gnet = GNet()
-    rnet = RNet()
+    # rnet = RNet()
 
-    vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag()
+    # vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag()
     data_transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
@@ -392,17 +497,17 @@ if __name__ == '__main__':
     #                                           shuffle=False, num_workers=4)
 
     # hand-crafted train and test loader for race data set
-    yellow_shuffled_indices = np.random.permutation(4000)
-    white_shuffled_indices = np.random.permutation(1500)
-    train_loader = torch.utils.data.DataLoader(
-        FaceRaceDataset(transform=data_transform, yellow_shuffled_indices=yellow_shuffled_indices,
-                        white_shuffled_indices=white_shuffled_indices, train=True),
-        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-    test_loader = torch.utils.data.DataLoader(FaceRaceDataset(transform=data_transform,
-                                                              yellow_shuffled_indices=yellow_shuffled_indices,
-                                                              white_shuffled_indices=white_shuffled_indices,
-                                                              train=False), batch_size=cfg['batch_size'],
-                                              shuffle=False, num_workers=4)
+    # yellow_shuffled_indices = np.random.permutation(4000)
+    # white_shuffled_indices = np.random.permutation(1500)
+    # train_loader = torch.utils.data.DataLoader(
+    #     FaceRaceDataset(transform=data_transform, yellow_shuffled_indices=yellow_shuffled_indices,
+    #                     white_shuffled_indices=white_shuffled_indices, train=True),
+    #     batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    # test_loader = torch.utils.data.DataLoader(FaceRaceDataset(transform=data_transform,
+    #                                                           yellow_shuffled_indices=yellow_shuffled_indices,
+    #                                                           white_shuffled_indices=white_shuffled_indices,
+    #                                                           train=False), batch_size=cfg['batch_size'],
+    #                                           shuffle=False, num_workers=4)
 
     # gender_dataset = datasets.ImageFolder(root=cfg['gender_base_dir'],
     #                                       transform=data_transform)
@@ -411,17 +516,17 @@ if __name__ == '__main__':
     # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
     #                                                                               batch_size=cfg['batch_size'])
 
-    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
 
     # print('***************************start training GNet***************************')
     # optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
     # print('***************************finish training GNet***************************')
 
-    print('***************************start training RNet***************************')
-    optimizer = optim.SGD(rnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    train_rnet(rnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
-    print('***************************finish training RNet***************************')
+    # print('***************************start training RNet***************************')
+    # optimizer = optim.SGD(rnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    # train_rnet(rnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
+    # print('***************************finish training RNet***************************')
 
     # print('***************************start fine-tuning VGGMFace***************************')
     # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, False)
@@ -436,3 +541,14 @@ if __name__ == '__main__':
     #
     # print('***************************start fine-tuning ANet***************************')
     # finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
+
+    print('+++++++++++++++++++++++++++++++++++++++++start training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
+    hmtnet = HMTNet()
+    # hand-crafted train and test loader for face data set
+    train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+
+    train_hmtnet(hmtnet, train_loader, test_loader, 2, False)
+    print('+++++++++++++++++++++++++++++++++++++++++finish training HMT-Net+++++++++++++++++++++++++++++++++++++++++')

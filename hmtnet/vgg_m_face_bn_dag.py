@@ -1,5 +1,10 @@
+import sys
+
 import torch
 import torch.nn as nn
+
+sys.path.append('../')
+from hmtnet.cfg import cfg
 
 
 class VggMFaceBnDag(nn.Module):
@@ -76,7 +81,7 @@ class VggMFaceBnDag(nn.Module):
         return num_features
 
 
-def load_vgg_m_face_bn_dag(weights_path=None, **kwargs):
+def load_vgg_m_face_bn_dag(weights_path=cfg['pretrained_vgg_face']):
     """
     load imported model instance
 
@@ -89,3 +94,12 @@ def load_vgg_m_face_bn_dag(weights_path=None, **kwargs):
         model.load_state_dict(state_dict)
 
     return model
+
+
+if __name__ == '__main__':
+    vgg_m = VggMFaceBnDag()
+    print(vgg_m)
+    # for k, v in vgg_m.items():
+    #     print('------------------')
+    #     print(k)
+    #     print('------------------')

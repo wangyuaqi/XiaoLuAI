@@ -16,7 +16,7 @@ import copy
 
 class HMTLoss(nn.Module):
 
-    def __init__(self, target, weight_g, weight_r, weight_a):
+    def __init__(self, weight_g=1, weight_r=1, weight_a=1):
         super(HMTLoss, self).__init__()
 
         self.weight_g = weight_g
@@ -27,14 +27,16 @@ class HMTLoss(nn.Module):
         self.r_criterion = nn.CrossEntropyLoss()
         self.a_criterion = nn.MSELoss()
 
-    def forward(self, input):
-        self.g_loss = self.g_criterion(input, self.target)
+    def forward(self, g_pred, g_gt, r_pred, r_gt, a_pred, a_gt):
+        g_loss = self.g_criterion(g_pred, g_gt)
+        r_loss = self.r_criterion(r_pred, r_gt)
+        a_loss = self.a_criterion(a_pred, a_gt)
 
-        self.output = input
+        hmt_loss = self.weight_g * g_loss + self.weight_r * r_loss + self.weight_a * a_loss
 
-        return self.output
+        return hmt_loss
 
-    def backward(self, retain_graph=True):
-        self.loss.backward(retain_graph=retain_graph)
-
-        return self.loss
+    # def backward(self, retain_graph=True):
+    #     self.loss.backward(retain_graph=retain_graph)
+    #
+    #     return self.loss

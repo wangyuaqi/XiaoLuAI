@@ -440,6 +440,10 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
     predicted_attractiveness_values = []
     gt_attractiveness_values = []
 
+    total = 0
+    g_correct = 0
+    r_correct = 0
+
     for data in test_loader:
         images, g_gt, r_gt, a_gt = data['image'], data['gender'], data['race'], \
                                    data['attractiveness']
@@ -455,6 +459,20 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
 
         predicted_attractiveness_values += a_pred.cpu().data.numpy().tolist()
         gt_attractiveness_values += g_gt.cpu().numpy().tolist()
+
+        g_pred = g_pred.view(-1, g_pred.numel())
+        r_pred = r_pred.view(-1, r_pred.numel())
+        _, g_predicted = torch.max(g_pred.data, 1)
+        _, r_predicted = torch.max(r_pred.data, 1)
+        total += g_gt.size(0)
+        g_correct += (g_predicted == g_gt).sum()
+        r_correct += (r_predicted == r_gt).sum()
+
+    print('total = %d ...' % total)
+    print('Gender correct sample = %d ...' % g_correct)
+    print('Race correct sample = %d ...' % r_correct)
+    print('Accuracy of Race Classification: %f' % (r_correct / total))
+    print('Accuracy of Gender Classification: %f' % (g_correct / total))
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 

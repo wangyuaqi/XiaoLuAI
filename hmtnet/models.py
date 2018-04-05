@@ -59,9 +59,8 @@ class RaceBranch(nn.Module):
     Input: BATCH*512*13*13
     """
 
-    def __init__(self, vgg_m_face_model):
+    def __init__(self):
         super(RaceBranch, self).__init__()
-        self.vgg_m_face_model = vgg_m_face_model
 
         self.rconv1 = nn.Conv2d(512, 256, 5)
         self.rbn1 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)

@@ -405,7 +405,7 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
         hmt_net = hmt_net.cuda()
 
     criterion = HMTLoss()
-    optimizer = optim.SGD(hmt_net.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
+    optimizer = optim.SGD(hmt_net.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
 
@@ -490,8 +490,12 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
         predicted_attractiveness_values += a_pred.cpu().data.numpy().tolist()
         gt_attractiveness_values += a_gt.cpu().numpy().tolist()
 
-        g_pred = g_pred.view(-1, g_pred.numel())
-        r_pred = r_pred.view(-1, r_pred.numel())
+        # g_pred = g_pred.view(-1, g_pred.numel())
+        # r_pred = r_pred.view(-1, r_pred.numel())
+
+        g_pred = g_pred.view(cfg['batch_size'], 2)
+        r_pred = r_pred.view(cfg['batch_size'], 2)
+
         _, g_predicted = torch.max(g_pred.data, 1)
         _, r_predicted = torch.max(r_pred.data, 1)
         total += g_gt.size(0)
@@ -600,5 +604,5 @@ if __name__ == '__main__':
                                               batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
                                               drop_last=True)
 
-    train_hmtnet(hmtnet, train_loader, test_loader, 2, False)
+    train_hmtnet(hmtnet, train_loader, test_loader, 200, False)
     print('+++++++++++++++++++++++++++++++++++++++++finish training HMT-Net+++++++++++++++++++++++++++++++++++++++++')

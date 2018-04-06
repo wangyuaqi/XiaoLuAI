@@ -8,6 +8,8 @@ cfg['hmt_model'] = './model/hmtnet.pth'
 cfg['gnet_model'] = './model/gnet.pth'
 cfg['rnet_model'] = './model/rnet.pth'
 
+cfg['scutfbp_images_dir'] = os.path.join(os.path.abspath(os.path.dirname(
+    cfg['scut_fbp5500_root']) + os.path.sep + "..") + '/SCUT-FBP/Faces')
 cfg['scutfbp5500_images_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Images')
 cfg['gender_base_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Gender')
 cfg['race_base_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'Race')

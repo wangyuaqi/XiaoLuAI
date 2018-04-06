@@ -4,6 +4,7 @@ import sys
 import os
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -236,7 +237,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
 
                 # forward + backward + optimize
                 outputs = model_ft.forward(inputs)
-                outputs = (torch.sum(outputs, dim=1) / 2).view(2, 1)
+                outputs = (torch.sum(outputs, dim=1) / 2).view(cfg['batch_size'], 1)
                 # outputs = outputs.view(-1, outputs.numel())
 
                 loss = criterion(outputs, labels)
@@ -286,9 +287,9 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     print('Accuracy of the network on the test images: %f' % (correct / total))
 
 
-def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
+def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
     """
-    fine-tune ANet from pre-trained VGG-M Face model
+    train ANet
     :param model_ft:
     :param train_loader:
     :param test_loader:
@@ -302,7 +303,6 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
-        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
         model_ft = nn.DataParallel(model_ft)
 
     if torch.cuda.is_available():
@@ -436,9 +436,6 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
 
                 # forward + backward + optimize
                 g_pred, r_pred, a_pred = hmt_net.forward(inputs)
-                # print('g_pred.shape = ' + str(g_pred.shape))
-                # print('r_pred.shape = ' + str(r_pred.shape))
-                # print('a_pred.shape = ' + str(a_pred.shape))
 
                 g_pred = g_pred.view(cfg['batch_size'], 2)
                 r_pred = r_pred.view(cfg['batch_size'], 2)
@@ -526,7 +523,7 @@ if __name__ == '__main__':
     # gnet = GNet()
     # rnet = RNet()
 
-    # vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag()
+    vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
     data_transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
@@ -581,7 +578,7 @@ if __name__ == '__main__':
     # print('***************************finish training RNet***************************')
 
     # print('***************************start fine-tuning VGGMFace***************************')
-    # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, criterion, 2, False)
+    # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
     # print('***************************finish fine-tuning VGGMFace***************************')
 
     # print('---------------------------------------------------------------------------')
@@ -591,18 +588,39 @@ if __name__ == '__main__':
     # test_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(False, transform=data_transform),
     #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
     #
-    # print('***************************start fine-tuning ANet***************************')
-    # finetune_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
+    print('***************************start fine-tuning ANet***************************')
+    label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
+                                  'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
+    df = pd.read_excel(label_filepath, 'Sheet1')
 
-    print('+++++++++++++++++++++++++++++++++++++++++start training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
-    hmtnet = HMTNet()
-    # hand-crafted train and test loader for face data set
-    train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
-                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
-                                               drop_last=True)
-    test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
-                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
-                                              drop_last=True)
+    shuffled_indices = np.random.permutation(500)
+    test_set_size = int(100)
+    test_indices = shuffled_indices[:test_set_size]
+    train_indices = shuffled_indices[test_set_size:]
 
-    train_hmtnet(hmtnet, train_loader, test_loader, 200, False)
-    print('+++++++++++++++++++++++++++++++++++++++++finish training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
+    train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
+    train_labels = df['Attractiveness label'].iloc[train_indices]
+    test_filenames = df['Image'].iloc[test_indices]
+    test_labels = df['Attractiveness label'].iloc[test_indices]
+
+    train_loader = torch.utils.data.DataLoader(
+        data_loader.ScutFBP(train_filenames, train_labels, transform=data_transform),
+        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(
+        data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
+        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+
+    optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
+
+    # print('+++++++++++++++++++++++++++++++++++++++++start training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
+    # hmtnet = HMTNet()
+    # train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+    #                                            drop_last=True)
+    # test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+    #                                           drop_last=True)
+    #
+    # train_hmtnet(hmtnet, train_loader, test_loader, 200, False)
+    # print('+++++++++++++++++++++++++++++++++++++++++finish training HMT-Net+++++++++++++++++++++++++++++++++++++++++')

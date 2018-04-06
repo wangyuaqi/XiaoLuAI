@@ -156,6 +156,9 @@ class HMTNet(nn.Module):
         x15 = self.conv5(x14)
         x16 = self.bn53(x15)
         x17 = self.relu5(x16)
+
+        x17 = (x11 + x17) / 2  # modified
+
         x18 = self.pool5(x17)
         x19 = self.fc6(x18)
         x20 = self.bn54(x19)
@@ -163,6 +166,9 @@ class HMTNet(nn.Module):
         x22 = self.fc7(x21)
         x23 = self.bn55(x22)
         x24 = self.relu7(x23)
+
+        x24 = (x19 + x24) / 2  # modified
+
         x25 = self.fc8(x24)
 
         g_pred = self.gbranch(x11)

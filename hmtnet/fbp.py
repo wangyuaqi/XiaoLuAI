@@ -33,6 +33,11 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     :param num_epochs:
     :return:
     """
+    if torch.cuda.device_count() > 1:
+        print("We are running on", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        model = nn.DataParallel(model)
+
     if not inference:
         model.train(True)
         for epoch in range(num_epochs):  # loop over the dataset multiple times
@@ -110,6 +115,12 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     :param num_epochs:
     :return:
     """
+
+    if torch.cuda.device_count() > 1:
+        print("We are running on", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        model = nn.DataParallel(model)
+
     if not inference:
         model.train(True)
         for epoch in range(num_epochs):  # loop over the dataset multiple times
@@ -120,7 +131,6 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
                 # inputs, labels = data
                 inputs, labels = data['image'], data['label']
 
-                # wrap them in Variable
                 if torch.cuda.is_available():
                     model = model.cuda()
                     inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
@@ -189,6 +199,11 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     """
     num_ftrs = model_ft.fc8.in_channels
     model_ft.fc8 = nn.Conv2d(num_ftrs, 2, 1)
+
+    if torch.cuda.device_count() > 1:
+        print("We are running on", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        model_ft = nn.DataParallel(model_ft)
 
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
@@ -285,6 +300,11 @@ def finetune_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25,
     num_ftrs = model_ft.fc8.in_channels
     model_ft.fc8 = nn.Conv2d(num_ftrs, 1, 1)
 
+    if torch.cuda.device_count() > 1:
+        print("We are running on", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        model_ft = nn.DataParallel(model_ft)
+
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
 
@@ -376,6 +396,10 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
     :param inference:
     :return:
     """
+    if torch.cuda.device_count() > 1:
+        print("We are running on", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        hmt_net = nn.DataParallel(hmt_net)
 
     if torch.cuda.is_available():
         hmt_net = hmt_net.cuda()

@@ -412,9 +412,13 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
 
                 # forward + backward + optimize
                 g_pred, r_pred, a_pred = hmt_net.forward(inputs)
-                g_pred = (torch.sum(g_pred, dim=1) / 2).view(cfg['batch_size'])
-                r_pred = (torch.sum(r_pred, dim=1) / 2).view(cfg['batch_size'])
-                a_pred = a_pred.view(-1)
+                # print('g_pred.shape = ' + str(g_pred.shape))
+                # print('r_pred.shape = ' + str(r_pred.shape))
+                # print('a_pred.shape = ' + str(a_pred.shape))
+
+                g_pred = g_pred.view(cfg['batch_size'], 2)
+                r_pred = r_pred.view(cfg['batch_size'], 2)
+                a_pred = a_pred.view(cfg['batch_size'], 1)
 
                 loss = criterion(g_pred, gender, r_pred, race, a_pred, attractiveness)
                 loss.backward()
@@ -566,9 +570,11 @@ if __name__ == '__main__':
     hmtnet = HMTNet()
     # hand-crafted train and test loader for face data set
     train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
-                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+                                               drop_last=True)
     test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
-                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+                                              drop_last=True)
 
     train_hmtnet(hmtnet, train_loader, test_loader, 2, False)
     print('+++++++++++++++++++++++++++++++++++++++++finish training HMT-Net+++++++++++++++++++++++++++++++++++++++++')

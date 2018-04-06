@@ -62,14 +62,18 @@ class RaceBranch(nn.Module):
     def __init__(self):
         super(RaceBranch, self).__init__()
 
-        self.rconv1 = nn.Conv2d(512, 256, 5)
+        self.rconv1 = nn.Conv2d(512, 256, 5, 2, 1)
         self.rbn1 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
         self.rrelu1 = nn.ReLU()
 
         self.rconv2 = nn.Conv2d(256, 2, 3)
         self.rbn2 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
         self.rrelu2 = nn.ReLU()
-        self.rpool2 = nn.MaxPool2d(3)
+
+        self.rconv3 = nn.Conv2d(2, 2, 3)
+        self.rbn3 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
+        self.rrelu3 = nn.ReLU()
+        self.rpool3 = nn.MaxPool2d(2)
 
     def forward(self, x):
         x1 = self.rconv1(x)
@@ -78,9 +82,12 @@ class RaceBranch(nn.Module):
         x4 = self.rconv2(x3)
         x5 = self.rbn2(x4)
         x6 = self.rrelu2(x5)
-        x7 = self.rpool2(x6)
+        x7 = self.rconv3(x6)
+        x8 = self.rbn3(x7)
+        x9 = self.rrelu3(x8)
+        x10 = self.rpool3(x9)
 
-        return x7
+        return x10
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension

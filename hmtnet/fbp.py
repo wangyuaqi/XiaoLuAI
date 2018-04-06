@@ -411,9 +411,10 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
                 optimizer.zero_grad()
 
                 # forward + backward + optimize
-                g_pred, r_pred, a_pred = hmt_net(inputs)
-                # g_pred = (torch.sum(g_pred, dim=1) / 2).view(2, 1)
-                # r_pred = (torch.sum(r_pred, dim=1) / 2).view(2, 1)
+                g_pred, r_pred, a_pred = hmt_net.forward(inputs)
+                g_pred = (torch.sum(g_pred, dim=1) / 2).view(cfg['batch_size'])
+                r_pred = (torch.sum(r_pred, dim=1) / 2).view(cfg['batch_size'])
+                a_pred = a_pred.view(-1)
 
                 loss = criterion(g_pred, gender, r_pred, race, a_pred, attractiveness)
                 loss.backward()

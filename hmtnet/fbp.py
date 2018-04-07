@@ -23,7 +23,7 @@ from hmtnet.cfg import cfg
 from hmtnet import data_loader, file_utils, vgg_m_face_bn_dag
 
 
-def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epochs=25, inference=False):
+def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epochs=200, inference=False):
     """
     train GNet
     :param model:
@@ -34,20 +34,23 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     :param num_epochs:
     :return:
     """
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
-        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
         model = nn.DataParallel(model)
 
     if not inference:
+        exp_lr_scheduler.step()
         model.train(True)
+
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
                 # inputs, labels = data
-                inputs, labels = data['image'], data['label']
+                inputs, labels = data['image'], data['gender']
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
@@ -90,7 +93,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     total = 0
     for data in test_loader:
         # images, labels = data
-        images, labels = data['image'], data['label']
+        images, labels = data['image'], data['gender']
         if torch.cuda.is_available():
             model.cuda()
             labels = labels.cuda()
@@ -108,7 +111,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     print('Accuracy of the network on test images: %f' % (correct / total))
 
 
-def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epochs=25, inference=False):
+def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epochs=200, inference=False):
     """
     train GNet
     :param model:
@@ -119,13 +122,16 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     :param num_epochs:
     :return:
     """
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
         model = nn.DataParallel(model)
 
     if not inference:
+        exp_lr_scheduler.step()
         model.train(True)
+
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             running_loss = 0.0
@@ -192,7 +198,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     print('Accuracy of the RNet on test images: %f' % (correct / total))
 
 
-def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
+def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epochs=200, inference=False):
     """
     fine-tune VGG M Face Model
     :param model_ft:
@@ -391,7 +397,7 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
     print('===============The Pearson Correlation of ANet is {0}===================='.format(pc))
 
 
-def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=False):
+def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=False):
     """
     train HMT-Net
     :param hmt_net:
@@ -525,8 +531,8 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
 
 
 if __name__ == '__main__':
-    # gnet = GNet()
-    rnet = RNet()
+    gnet = GNet()
+    # rnet = RNet()
 
     data_transform = transforms.Compose([
         transforms.Resize(224),
@@ -569,12 +575,7 @@ if __name__ == '__main__':
     # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
     #                                                                               batch_size=cfg['batch_size'])
 
-    # print('***************************start training GNet***************************')
-    # optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
-    # print('***************************finish training GNet***************************')
-
-    print('###############################start training RNet###############################')
+    print('***************************start training GNet***************************')
     criterion = nn.CrossEntropyLoss()
     train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
                                                batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
@@ -582,15 +583,25 @@ if __name__ == '__main__':
     test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
                                               batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
                                               drop_last=True)
-    optimizer = optim.SGD(rnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    train_rnet(rnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
-    print('###############################finish training RNet###############################')
+    optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=200, inference=False)
+    print('***************************finish training GNet***************************')
+
+    # print('###############################start training RNet###############################')
+    # criterion = nn.CrossEntropyLoss()
+    # train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+    #                                            drop_last=True)
+    # test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+    #                                           drop_last=True)
+    # optimizer = optim.SGD(rnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    # train_rnet(rnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
+    # print('###############################finish training RNet###############################')
 
     # print('***************************start fine-tuning VGGMFace***************************')
     # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
     # print('***************************finish fine-tuning VGGMFace***************************')
-
-    # print('---------------------------------------------------------------------------')
 
     # train_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(True, transform=data_transform),
     #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4)

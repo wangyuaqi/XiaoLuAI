@@ -287,7 +287,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     print('Accuracy of the network on the test images: %f' % (correct / total))
 
 
-def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
+def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, inference=False):
     """
     train ANet
     :param model_ft:
@@ -363,7 +363,7 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=25, in
     predicted_labels = []
     gt_labels = []
 
-    for data in test_loader:
+    for i, data in enumerate(test_loader, 0):
         images, labels = data['image'], data['score']
         if torch.cuda.is_available():
             model_ft = model_ft.cuda()
@@ -594,13 +594,13 @@ if __name__ == '__main__':
     df = pd.read_excel(label_filepath, 'Sheet1')
 
     shuffled_indices = np.random.permutation(500)
-    test_set_size = int(100)
+    test_set_size = 100
     test_indices = shuffled_indices[:test_set_size]
     train_indices = shuffled_indices[test_set_size:]
 
     train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
     train_labels = df['Attractiveness label'].iloc[train_indices]
-    test_filenames = df['Image'].iloc[test_indices]
+    test_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[test_indices].tolist()]
     test_labels = df['Attractiveness label'].iloc[test_indices]
 
     train_loader = torch.utils.data.DataLoader(
@@ -608,7 +608,7 @@ if __name__ == '__main__':
         batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
     test_loader = torch.utils.data.DataLoader(
         data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
-        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+        batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
 
     optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
     train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)

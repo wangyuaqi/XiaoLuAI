@@ -119,7 +119,6 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
-        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
         model = nn.DataParallel(model)
 
     if not inference:
@@ -130,7 +129,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
                 # inputs, labels = data
-                inputs, labels = data['image'], data['label']
+                inputs, labels = data['image'], data['race']
 
                 if torch.cuda.is_available():
                     model = model.cuda()
@@ -170,7 +169,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     total = 0
     for data in test_loader:
         # images, labels = data
-        images, labels = data['image'], data['label']
+        images, labels = data['image'], data['race']
         if torch.cuda.is_available():
             model.cuda()
             labels = labels.cuda()
@@ -184,7 +183,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
 
     print('correct = %d ...' % correct)
     print('total = %d ...' % total)
-    print('Accuracy of the network on test images: %f' % (correct / total))
+    print('Accuracy of the RNet on test images: %f' % (correct / total))
 
 
 def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epochs=25, inference=False):
@@ -521,9 +520,8 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=25, inference=Fa
 
 if __name__ == '__main__':
     # gnet = GNet()
-    # rnet = RNet()
+    rnet = RNet()
 
-    vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
     data_transform = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
@@ -565,17 +563,22 @@ if __name__ == '__main__':
     # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
     #                                                                               batch_size=cfg['batch_size'])
 
-    # criterion = nn.CrossEntropyLoss()
-
     # print('***************************start training GNet***************************')
     # optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
     # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
     # print('***************************finish training GNet***************************')
 
-    # print('***************************start training RNet***************************')
-    # optimizer = optim.SGD(rnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    # train_rnet(rnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
-    # print('***************************finish training RNet***************************')
+    print('###############################start training RNet###############################')
+    criterion = nn.CrossEntropyLoss()
+    train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+                                               drop_last=True)
+    test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+                                              drop_last=True)
+    optimizer = optim.SGD(rnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    train_rnet(rnet, train_loader, test_loader, criterion, optimizer, num_epochs=2, inference=False)
+    print('###############################finish training RNet###############################')
 
     # print('***************************start fine-tuning VGGMFace***************************')
     # finetune_vgg_m_model(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
@@ -588,30 +591,33 @@ if __name__ == '__main__':
     # test_loader = torch.utils.data.DataLoader(data_loader.FBPDataset(False, transform=data_transform),
     #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
     #
-    print('***************************start fine-tuning ANet***************************')
-    label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
-                                  'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
-    df = pd.read_excel(label_filepath, 'Sheet1')
 
-    shuffled_indices = np.random.permutation(500)
-    test_set_size = 100
-    test_indices = shuffled_indices[:test_set_size]
-    train_indices = shuffled_indices[test_set_size:]
-
-    train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
-    train_labels = df['Attractiveness label'].iloc[train_indices]
-    test_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[test_indices].tolist()]
-    test_labels = df['Attractiveness label'].iloc[test_indices]
-
-    train_loader = torch.utils.data.DataLoader(
-        data_loader.ScutFBP(train_filenames, train_labels, transform=data_transform),
-        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-    test_loader = torch.utils.data.DataLoader(
-        data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
-        batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
-
-    optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
+    # print('***************************start training ANet***************************')
+    # vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
+    # label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
+    #                               'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
+    # df = pd.read_excel(label_filepath, 'Sheet1')
+    #
+    # shuffled_indices = np.random.permutation(500)
+    # test_set_size = 100
+    # test_indices = shuffled_indices[:test_set_size]
+    # train_indices = shuffled_indices[test_set_size:]
+    #
+    # train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
+    # train_labels = df['Attractiveness label'].iloc[train_indices]
+    # test_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[test_indices].tolist()]
+    # test_labels = df['Attractiveness label'].iloc[test_indices]
+    #
+    # train_loader = torch.utils.data.DataLoader(
+    #     data_loader.ScutFBP(train_filenames, train_labels, transform=data_transform),
+    #     batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    # test_loader = torch.utils.data.DataLoader(
+    #     data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
+    #     batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+    #
+    # optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    # train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
+    # print('***************************end training ANet***************************')
 
     # print('+++++++++++++++++++++++++++++++++++++++++start training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
     # hmtnet = HMTNet()

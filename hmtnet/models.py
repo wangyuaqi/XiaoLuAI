@@ -157,7 +157,7 @@ class HMTNet(nn.Module):
         x16 = self.bn53(x15)
         x17 = self.relu5(x16)
 
-        x17 = (x11 + x17) / 2  # modified
+        x17 = (x8 + x11 + x17) / 3  # modified
 
         x18 = self.pool5(x17)
         x19 = self.fc6(x18)
@@ -167,7 +167,7 @@ class HMTNet(nn.Module):
         x23 = self.bn55(x22)
         x24 = self.relu7(x23)
 
-        x24 = (x19 + x24) / 2  # modified
+        x24 = (x19 + x22 + x24) / 3  # modified
 
         x25 = self.fc8(x24)
 
@@ -186,78 +186,60 @@ class HMTNet(nn.Module):
         return num_features
 
 
-class RNet(nn.Module):
-    """
-    definition of RaceNet
-    Accuracy: 95.32% (500 epochs)
-    """
-
-    def __init__(self):
-        super(RNet, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-        self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
-        self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv5 = nn.Conv2d(128, 2, kernel_size=3, stride=1, padding=1)
-
-        self.gfc1 = nn.Linear(56 * 56 * 2, 32)
-        self.gfc2 = nn.Linear(32, 2)
-
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = self.pool2(F.relu(self.bn2(self.conv2(x))))
-        x = self.pool4(self.conv4(self.conv3(x)))
-        x = F.relu(self.conv5(x))
-        x = x.view(-1, self.num_flat_features(x))
-
-        x = self.gfc2(F.relu(self.gfc1(x)))
-
-        return x
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-
-        return num_features
-
-
 class GNet(nn.Module):
     """
-    definition of GenderNet
-    Accuracy: 90.45% (400 epochs)
+    definition of RaceNet
     """
 
     def __init__(self):
         super(GNet, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-        self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
-        self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv5 = nn.Conv2d(128, 2, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(3, 96, kernel_size=[7, 7], stride=(2, 2))
+        self.bn1 = nn.BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2), dilation=(1, 1), ceil_mode=False)
+        self.conv2 = nn.Conv2d(96, 256, kernel_size=[5, 5], stride=(2, 2), padding=(1, 1))
+        self.bn2 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2), dilation=(1, 1), ceil_mode=True)
+        self.conv3 = nn.Conv2d(256, 512, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1))
+        self.bn3 = nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True)
+        self.relu3 = nn.ReLU()
 
-        self.gfc1 = nn.Linear(56 * 56 * 2, 32)
-        self.gfc2 = nn.Linear(32, 2)
+        self.conv4 = nn.Conv2d(512, 256, 5, 2, 1)
+        self.bn4 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
+        self.relu4 = nn.ReLU()
+        self.conv5 = nn.Conv2d(256, 2, 3)
+        self.bn5 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
+        self.relu5 = nn.ReLU()
+        self.conv6 = nn.Conv2d(2, 2, 3)
+        self.bn6 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
+        self.relu6 = nn.ReLU()
+        self.pool6 = nn.MaxPool2d(2)
 
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = self.pool2(F.relu(self.bn2(self.conv2(x))))
-        x = self.pool4(self.conv4(self.conv3(x)))
-        x = F.relu(self.conv5(x))
-        x = x.view(-1, self.num_flat_features(x))
+        x1 = self.conv1(x)
+        x2 = self.bn1(x1)
+        x3 = self.relu1(x2)
+        x4 = self.pool1(x3)
+        x5 = self.conv2(x4)
+        x6 = self.bn2(x5)
+        x7 = self.relu2(x6)
+        x8 = self.pool2(x7)
+        x9 = self.conv3(x8)
+        x10 = self.bn3(x9)
+        x11 = self.relu3(x10)
+        x12 = self.conv4(x11)
+        x13 = self.bn4(x12)
+        x14 = self.relu4(x13)
+        x15 = self.conv5(x14)
+        x16 = self.bn5(x15)
+        x17 = self.relu5(x16)
+        x18 = self.conv6(x17)
+        x19 = self.bn6(x18)
+        x20 = self.relu6(x19)
+        x21 = self.pool6(x20)
 
-        x = self.gfc2(F.relu(self.gfc1(x)))
-
-        return x
+        return x21
 
     def num_flat_features(self, x):
         size = x.size()[1:]  # all dimensions except the batch dimension
@@ -266,3 +248,163 @@ class GNet(nn.Module):
             num_features *= s
 
         return num_features
+
+
+class RNet(nn.Module):
+    """
+    definition of GenderNet
+    """
+
+    def __init__(self):
+        super(RNet, self).__init__()
+
+        self.conv1 = nn.Conv2d(3, 96, kernel_size=[7, 7], stride=(2, 2))
+        self.bn1 = nn.BatchNorm2d(96, eps=1e-05, momentum=0.1, affine=True)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2), dilation=(1, 1), ceil_mode=False)
+        self.conv2 = nn.Conv2d(96, 256, kernel_size=[5, 5], stride=(2, 2), padding=(1, 1))
+        self.bn2 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool2d(kernel_size=(3, 3), stride=(2, 2), dilation=(1, 1), ceil_mode=True)
+        self.conv3 = nn.Conv2d(256, 512, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1))
+        self.bn3 = nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True)
+        self.relu3 = nn.ReLU()
+        self.conv4 = nn.Conv2d(512, 512, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1))
+        self.bn4 = nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True)
+        self.relu4 = nn.ReLU()
+        self.conv5 = nn.Conv2d(512, 512, kernel_size=[3, 3], stride=(1, 1), padding=(1, 1))
+        self.bn5 = nn.BatchNorm2d(512, eps=1e-05, momentum=0.1, affine=True)
+
+        self.conv6 = nn.Conv2d(512, 256, 5, 2, 1)
+        self.bn6 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
+        self.relu6 = nn.ReLU()
+        self.conv7 = nn.Conv2d(256, 2, 3)
+        self.bn7 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
+        self.relu7 = nn.ReLU()
+        self.conv8 = nn.Conv2d(2, 2, 3)
+        self.bn8 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
+        self.relu8 = nn.ReLU()
+        self.pool8 = nn.MaxPool2d(2)
+
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x2 = self.bn1(x1)
+        x3 = self.relu1(x2)
+        x4 = self.pool1(x3)
+        x5 = self.conv2(x4)
+        x6 = self.bn2(x5)
+        x7 = self.relu2(x6)
+        x8 = self.pool2(x7)
+        x9 = self.conv3(x8)
+        x10 = self.bn3(x9)
+        x11 = self.relu3(x10)
+        x12 = self.conv4(x11)
+        x13 = self.bn4(x12)
+        x14 = self.relu4(x13)
+        x15 = self.conv5(x14)
+        x16 = self.bn5(x15)
+        x17 = self.conv6(x16)
+        x18 = self.bn6(x17)
+        x19 = self.relu6(x18)
+        x20 = self.conv7(x19)
+        x21 = self.bn7(x20)
+        x22 = self.relu7(x21)
+        x23 = self.conv8(x22)
+        x24 = self.bn8(x23)
+        x25 = self.relu8(x24)
+        x26 = self.pool8(x25)
+
+        return x26
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+
+        return num_features
+
+##########
+# deprecated definition
+# for GNet and RNet
+##########
+# class RNet(nn.Module):
+#     """
+#     definition of RaceNet
+#     Accuracy: 95.32% (500 epochs)
+#     """
+#
+#     def __init__(self):
+#         super(RNet, self).__init__()
+#         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1)
+#         self.bn1 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
+#         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+#         self.bn2 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
+#         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+#         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+#         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
+#         self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+#         self.conv5 = nn.Conv2d(128, 2, kernel_size=3, stride=1, padding=1)
+#
+#         self.gfc1 = nn.Linear(56 * 56 * 2, 32)
+#         self.gfc2 = nn.Linear(32, 2)
+#
+#     def forward(self, x):
+#         x = F.relu(self.bn1(self.conv1(x)))
+#         x = self.pool2(F.relu(self.bn2(self.conv2(x))))
+#         x = self.pool4(self.conv4(self.conv3(x)))
+#         x = F.relu(self.conv5(x))
+#         x = x.view(-1, self.num_flat_features(x))
+#
+#         x = self.gfc2(F.relu(self.gfc1(x)))
+#
+#         return x
+#
+#     def num_flat_features(self, x):
+#         size = x.size()[1:]  # all dimensions except the batch dimension
+#         num_features = 1
+#         for s in size:
+#             num_features *= s
+#
+#         return num_features
+
+
+# class GNet(nn.Module):
+#     """
+#     definition of GenderNet
+#     Accuracy: 90.45% (400 epochs)
+#     """
+#
+#     def __init__(self):
+#         super(GNet, self).__init__()
+#         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1)
+#         self.bn1 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
+#         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+#         self.bn2 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
+#         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+#         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+#         self.conv4 = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
+#         self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+#         self.conv5 = nn.Conv2d(128, 2, kernel_size=3, stride=1, padding=1)
+#
+#         self.gfc1 = nn.Linear(56 * 56 * 2, 32)
+#         self.gfc2 = nn.Linear(32, 2)
+#
+#     def forward(self, x):
+#         x = F.relu(self.bn1(self.conv1(x)))
+#         x = self.pool2(F.relu(self.bn2(self.conv2(x))))
+#         x = self.pool4(self.conv4(self.conv3(x)))
+#         x = F.relu(self.conv5(x))
+#         x = x.view(-1, self.num_flat_features(x))
+#
+#         x = self.gfc2(F.relu(self.gfc1(x)))
+#
+#         return x
+#
+#     def num_flat_features(self, x):
+#         size = x.size()[1:]  # all dimensions except the batch dimension
+#         num_features = 1
+#         for s in size:
+#             num_features *= s
+#
+#         return num_features

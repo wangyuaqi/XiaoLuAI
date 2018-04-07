@@ -219,7 +219,7 @@ class FBPDataset(Dataset):
 
 class FaceDataset(Dataset):
     """
-    Face Dataset for 5 Cross Validation
+    Face Dataset for SCUT-FBP5500
     """
 
     def __init__(self, cv_index=1, train=True, transform=None):

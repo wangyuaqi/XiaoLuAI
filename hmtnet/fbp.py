@@ -61,6 +61,8 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
 
                 # forward + backward + optimize
                 outputs = model.forward(inputs)
+
+                outputs = outputs.view(cfg['batch_size'], 2)
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
@@ -96,6 +98,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
         else:
             outputs = model.forward(Variable(images))
 
+        outputs = outputs.view(cfg['batch_size'], 2)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -142,6 +145,8 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
 
                 # forward + backward + optimize
                 outputs = model.forward(inputs)
+                outputs = outputs.view(cfg['batch_size'], 2)
+
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
@@ -177,6 +182,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
         else:
             outputs = model.forward(Variable(images))
 
+        outputs = outputs.view(cfg['batch_size'], 2)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()

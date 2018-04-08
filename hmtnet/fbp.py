@@ -632,7 +632,6 @@ if __name__ == '__main__':
         data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
         batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
 
-    optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
     train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 200, False)
     print('***************************end training ANet***************************')
 

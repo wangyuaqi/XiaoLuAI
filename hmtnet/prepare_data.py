@@ -3,10 +3,11 @@ script for data preprocessing
 """
 
 import os
+import shutil
 
 import pandas as pd
 import numpy as np
-import shutil
+import cv2
 
 from hmtnet.cfg import cfg
 
@@ -43,19 +44,29 @@ def split_by_attribute(attr_name='gender'):
         print('Invalid Attribute Param!!')
 
 
-if __name__ == '__main__':
-    # m_filenames, f_filenames = split_by_attribute('gender')
-    # if not os.path.exists(os.path.join(cfg['gender_base_dir'], 'M')):
-    #     os.makedirs(os.path.join(cfg['gender_base_dir'], 'M'))
-    # if not os.path.exists(os.path.join(cfg['gender_base_dir'], 'F')):
-    #     os.makedirs(os.path.join(cfg['gender_base_dir'], 'F'))
-    #
-    # for m_f in m_filenames:
-    #     shutil.copy(m_f, os.path.join(cfg['gender_base_dir'], 'M', os.path.basename(m_f)))
-    #
-    # for f_f in f_filenames:
-    #     shutil.copy(f_f, os.path.join(cfg['gender_base_dir'], 'F', os.path.basename(f_f)))
+def process_gender_imgs():
+    """
+    process gender images
+    :return:
+    """
+    m_filenames, f_filenames = split_by_attribute('gender')
+    if not os.path.exists(os.path.join(cfg['gender_base_dir'], 'M')):
+        os.makedirs(os.path.join(cfg['gender_base_dir'], 'M'))
+    if not os.path.exists(os.path.join(cfg['gender_base_dir'], 'F')):
+        os.makedirs(os.path.join(cfg['gender_base_dir'], 'F'))
 
+    for m_f in m_filenames:
+        shutil.copy(m_f, os.path.join(cfg['gender_base_dir'], 'M', os.path.basename(m_f)))
+
+    for f_f in f_filenames:
+        shutil.copy(f_f, os.path.join(cfg['gender_base_dir'], 'F', os.path.basename(f_f)))
+
+
+def process_race_imgs():
+    """
+    process race images
+    :return:
+    """
     w_filenames, y_filenames = split_by_attribute('race')
     if not os.path.exists(os.path.join(cfg['race_base_dir'], 'W')):
         os.makedirs(os.path.join(cfg['race_base_dir'], 'W'))
@@ -67,3 +78,41 @@ if __name__ == '__main__':
 
     for y_f in y_filenames:
         shutil.copy(y_f, os.path.join(cfg['race_base_dir'], 'Y', os.path.basename(y_f)))
+
+
+def det_landmarks(image_path):
+    """
+    detect faces in one image, return face bbox and landmarks
+    :param image_path:
+    :return:
+    """
+    import dlib
+    predictor = dlib.shape_predictor(cfg['dlib_model'])
+    detector = dlib.get_frontal_face_detector()
+    img = cv2.imread(image_path)
+    faces = detector(img, 1)
+
+    result = {}
+    if len(faces) > 0:
+        for k, d in enumerate(faces):
+            shape = predictor(img, d)
+            result[k] = {"bbox": [d.left(), d.top(), d.right(), d.bottom()],
+                         "landmarks": [[shape.part(i).x, shape.part(i).y] for i in range(68)]}
+
+    return result
+
+
+def crop_faces(img_dir):
+    for img_file in os.listdir(img_dir):
+        res = det_landmarks(os.path.join(img_dir, img_file))
+        for i in range(len(res)):
+            bbox = res[i]['bbox']
+            image = cv2.imread(os.path.join(img_dir, img_file))
+            cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (255, 0, 0), 2)
+            cv2.imshow('image', image)
+            cv2.waitKey()
+            cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    crop_faces(cfg['scutfbp5500_images_dir'])

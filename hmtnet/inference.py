@@ -186,12 +186,22 @@ def cal_elapse(nn_name, img_file):
 
 if __name__ == '__main__':
     result_list = []
-    for img_file in os.listdir(cfg['scutfbp5500_images_dir']):
-        result = inference(os.path.join(cfg['scutfbp5500_images_dir'], img_file))
-        print(result)
-        result_list.append([result['image'], result['attractiveness'], result['gender'][0], result['race'][0]])
 
-        col = ['image', 'pred_attractiveness', 'pred_gender', 'pred_race']
+    df = pd.read_csv(os.path.join(cfg['cv_split_base_dir'], 'cross_validation_1', 'test_1.txt'), sep=' ', header=None)
+    img_list = df.iloc[:, 0].tolist()
+    score_list = df.iloc[:, 1].tolist()
+
+    for i in range(len(img_list)):
+        print('Processing image : %s, its gt score is %f' % (img_list[i], score_list[i]))
+
+        result = inference(os.path.join(cfg['scutfbp5500_images_dir'], img_list[i]))
+        print(result)
+        result_list.append(
+            [result['image'], result['attractiveness'], score_list[i], result['gender'][0],
+             img_list[i][0], result['race'][0],
+             img_list[i].split('.')[0][2]])
+
+        col = ['image', 'pred_attractiveness', 'gt_attractiveness', 'pred_gender', 'gt_gender', 'pred_race', 'gt_race']
         df = pd.DataFrame(result_list, columns=col)
         df.to_excel("./results.xlsx", sheet_name='Results', index=False)
 

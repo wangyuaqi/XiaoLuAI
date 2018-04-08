@@ -91,9 +91,11 @@ def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
         if idx != 'relu3':
             input = module(input)
         else:
-            mat = np.transpose(input[0, 0:3, :, :].data.cpu().numpy(), [1, 2, 0])
-            cv2.imshow('relu3', mat)
-            cv2.imwrite('./relu3.jpg', mat)
+            mat = np.transpose(input[0, 11:14, :, :].data.cpu().numpy(), [1, 2, 0])
+            mat = cv2.resize(mat, (128, 128))
+            cv2.imshow('conv2', mat)
+            print(mat.shape)
+            cv2.imwrite('./conv2.jpg', mat.astype(np.uint8))
             cv2.waitKey()
             cv2.destroyAllWindows()
             break

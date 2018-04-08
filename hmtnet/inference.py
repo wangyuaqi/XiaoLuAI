@@ -184,7 +184,12 @@ def cal_elapse(nn_name, img_file):
         sys.exit(0)
 
 
-if __name__ == '__main__':
+def output_result(is_show=True):
+    """
+    output result on test set
+    :param is_show:
+    :return:
+    """
     result_list = []
 
     df = pd.read_csv(os.path.join(cfg['cv_split_base_dir'], 'cross_validation_1', 'test_1.txt'), sep=' ', header=None)
@@ -205,11 +210,14 @@ if __name__ == '__main__':
         df = pd.DataFrame(result_list, columns=col)
         df.to_excel("./results.xlsx", sheet_name='Results', index=False)
 
-        # cv2.imshow('image', cv2.imread(os.path.join(cfg['scutfbp5500_images_dir'], img_file)))
-        # cv2.waitKey()
-        # cv2.destroyAllWindows()
+        if is_show:
+            cv2.imshow('image', cv2.imread(os.path.join(cfg['scutfbp5500_images_dir'], img_list[i])))
+            cv2.waitKey()
+            cv2.destroyAllWindows()
 
-    # feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'ftw8.jpg'))
 
-    # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
-    # print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+if __name__ == '__main__':
+    feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'ftw8.jpg'))
+
+# print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+# print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

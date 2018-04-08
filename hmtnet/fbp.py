@@ -220,7 +220,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=50, gamma=0.1)
 
@@ -319,7 +319,7 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
     if torch.cuda.is_available():
         model_ft = model_ft.cuda()
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.0001, momentum=0.9, weight_decay=1e-4)
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=50, gamma=0.1)
 

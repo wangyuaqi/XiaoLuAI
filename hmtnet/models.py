@@ -1,5 +1,6 @@
 import sys
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -133,7 +134,11 @@ class HMTNet(nn.Module):
         self.fc7 = nn.Conv2d(4096, 4096, kernel_size=[1, 1], stride=(1, 1))
         self.bn55 = nn.BatchNorm2d(4096, eps=1e-05, momentum=0.1, affine=True)
         self.relu7 = nn.ReLU()
-        self.fc8 = nn.Conv2d(4096, 1, kernel_size=[1, 1], stride=(1, 1))
+        # self.fc8 = nn.Conv2d(4096, 1, kernel_size=[1, 1], stride=(1, 1))
+
+        self.fc8 = nn.Conv2d(4096, 1024, kernel_size=[1, 1], stride=(1, 1))
+        self.relu8 = nn.ReLU()
+        self.fc9 = nn.Conv2d(1024, 1, kernel_size=1)
 
         self.gbranch = GenderBranch()
         self.rbranch = RaceBranch()
@@ -157,7 +162,8 @@ class HMTNet(nn.Module):
         x16 = self.bn53(x15)
         x17 = self.relu5(x16)
 
-        x17 = (x9 + x11 + x17) / 3  # modified
+        x17 = (x9 + x11 + x17) / 3  # Avg Fusion
+        # x17 = torch.cat((x13, x17), 1)  # Depth-Wise Concatenate Fusion
 
         x18 = self.pool5(x17)
         x19 = self.fc6(x18)
@@ -169,7 +175,8 @@ class HMTNet(nn.Module):
 
         x24 = (x19 + x22 + x24) / 3  # modified
 
-        x25 = self.fc8(x24)
+        # x25 = self.fc8(x24)
+        x25 = self.fc9(self.relu8(self.fc8(x24)))
 
         g_pred = self.gbranch(x11)
         r_pred = self.rbranch(x17)

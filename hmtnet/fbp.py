@@ -575,17 +575,17 @@ if __name__ == '__main__':
     # train_loader, test_loader = data_loader.split_train_and_test_with_py_datasets(data_set=gender_dataset,
     #                                                                               batch_size=cfg['batch_size'])
 
-    print('***************************start training GNet***************************')
-    criterion = nn.CrossEntropyLoss()
-    train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
-                                               batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
-                                               drop_last=True)
-    test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
-                                              batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
-                                              drop_last=True)
-    optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=200, inference=False)
-    print('***************************finish training GNet***************************')
+    # print('***************************start training GNet***************************')
+    # criterion = nn.CrossEntropyLoss()
+    # train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+    #                                            drop_last=True)
+    # test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+    #                                           drop_last=True)
+    # optimizer = optim.SGD(gnet.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    # train_gnet(gnet, train_loader, test_loader, criterion, optimizer, num_epochs=200, inference=False)
+    # print('***************************finish training GNet***************************')
 
     # print('###############################start training RNet###############################')
     # criterion = nn.CrossEntropyLoss()
@@ -609,32 +609,32 @@ if __name__ == '__main__':
     #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
     #
 
-    # print('***************************start training ANet***************************')
-    # vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
-    # label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
-    #                               'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
-    # df = pd.read_excel(label_filepath, 'Sheet1')
-    #
-    # shuffled_indices = np.random.permutation(500)
-    # test_set_size = 100
-    # test_indices = shuffled_indices[:test_set_size]
-    # train_indices = shuffled_indices[test_set_size:]
-    #
-    # train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
-    # train_labels = df['Attractiveness label'].iloc[train_indices]
-    # test_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[test_indices].tolist()]
-    # test_labels = df['Attractiveness label'].iloc[test_indices]
-    #
-    # train_loader = torch.utils.data.DataLoader(
-    #     data_loader.ScutFBP(train_filenames, train_labels, transform=data_transform),
-    #     batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
-    # test_loader = torch.utils.data.DataLoader(
-    #     data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
-    #     batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
-    #
-    # optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
-    # train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 2, False)
-    # print('***************************end training ANet***************************')
+    print('***************************start training ANet***************************')
+    vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
+    label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
+                                  'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
+    df = pd.read_excel(label_filepath, 'Sheet1')
+
+    shuffled_indices = np.random.permutation(500)
+    test_set_size = 100
+    test_indices = shuffled_indices[:test_set_size]
+    train_indices = shuffled_indices[test_set_size:]
+
+    train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
+    train_labels = df['Attractiveness label'].iloc[train_indices]
+    test_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[test_indices].tolist()]
+    test_labels = df['Attractiveness label'].iloc[test_indices]
+
+    train_loader = torch.utils.data.DataLoader(
+        data_loader.ScutFBP(train_filenames, train_labels, transform=data_transform),
+        batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(
+        data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
+        batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+
+    optimizer = optim.SGD(vgg_m_face.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 200, False)
+    print('***************************end training ANet***************************')
 
     # print('+++++++++++++++++++++++++++++++++++++++++start training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
     # hmtnet = HMTNet()

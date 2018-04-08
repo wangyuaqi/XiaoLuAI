@@ -8,6 +8,7 @@ from skimage import io
 from PIL import Image
 import cv2
 import numpy as np
+import pandas as pd
 
 import torch
 import torch.nn as nn
@@ -59,10 +60,11 @@ def inference(image_file, hmtnet_model_file='./model/hmt-net.pth'):
     _, g_predicted = torch.max(g_pred.data, 1)
     _, r_predicted = torch.max(r_pred.data, 1)
 
-    g_pred = 'Male' if int(g_predicted.cpu()) == 1 else 'Female'
-    r_pred = 'Westerner' if int(r_predicted.cpu()) == 1 else 'Asian'
+    g_pred = 'male' if int(g_predicted.cpu()) == 1 else 'female'
+    r_pred = 'white' if int(r_predicted.cpu()) == 1 else 'yellow'
 
-    return {'gender': g_pred, 'race': r_pred, 'attractiveness': float(a_pred.cpu()), 'elapse': tok - tik}
+    return {'image': os.path.basename(image_file), 'gender': g_pred, 'race': r_pred,
+            'attractiveness': float(a_pred.cpu()), 'elapse': tok - tik}
 
 
 def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
@@ -183,13 +185,21 @@ def cal_elapse(nn_name, img_file):
 
 
 if __name__ == '__main__':
-    # for img_file in os.listdir(cfg['scutfbp5500_images_dir']):
-    #     pprint(inference(os.path.join(cfg['scutfbp5500_images_dir'], img_file)))
-    #     cv2.imshow('image', cv2.imread(os.path.join(cfg['scutfbp5500_images_dir'], img_file)))
-    #     cv2.waitKey()
-    #     cv2.destroyAllWindows()
+    result_list = []
+    for img_file in os.listdir(cfg['scutfbp5500_images_dir']):
+        result = inference(os.path.join(cfg['scutfbp5500_images_dir'], img_file))
+        print(result)
+        result_list.append([result['image'], result['attractiveness'], result['gender'][0], result['race'][0]])
+
+        col = ['image', 'pred_attractiveness', 'pred_gender', 'pred_race']
+        df = pd.DataFrame(result_list, columns=col)
+        df.to_excel("./results.xlsx", sheet_name='Results', index=False)
+
+        # cv2.imshow('image', cv2.imread(os.path.join(cfg['scutfbp5500_images_dir'], img_file)))
+        # cv2.waitKey()
+        # cv2.destroyAllWindows()
 
     # feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'ftw8.jpg'))
 
-    # print(cal_elapse('HMT-Net', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
-    print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+    # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+    # print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

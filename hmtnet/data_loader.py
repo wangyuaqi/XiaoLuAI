@@ -276,7 +276,7 @@ class ScutFBP(Dataset):
         image = io.imread(os.path.join(cfg['scutfbp_images_dir'], self.face_files[idx]))
         score = self.face_score[idx]
 
-        sample = {'image': image, 'score': score}
+        sample = {'image': image, 'attractiveness': score, 'gender': 0, 'race': 0}
 
         if self.transform:
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))

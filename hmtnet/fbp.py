@@ -332,7 +332,7 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
-                inputs, labels = data['image'], data['score']
+                inputs, labels = data['image'], data['attractiveness']
 
                 # wrap them in Variable
                 if torch.cuda.is_available():
@@ -375,7 +375,7 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
     gt_labels = []
 
     for i, data in enumerate(test_loader, 0):
-        images, labels = data['image'], data['score']
+        images, labels = data['image'], data['attractiveness']
         if torch.cuda.is_available():
             model_ft = model_ft.cuda()
             labels = labels.cuda()
@@ -609,8 +609,33 @@ if __name__ == '__main__':
     #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
     #
 
-    print('***************************start training ANet***************************')
-    vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
+    # print('***************************start training ANet***************************')
+    # vgg_m_face = vgg_m_face_bn_dag.load_vgg_m_face_bn_dag(None)
+    # label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
+    #                               'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
+    # df = pd.read_excel(label_filepath, 'Sheet1')
+    #
+    # shuffled_indices = np.random.permutation(500)
+    # test_set_size = 100
+    # test_indices = shuffled_indices[:test_set_size]
+    # train_indices = shuffled_indices[test_set_size:]
+    #
+    # train_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[train_indices].tolist()]
+    # train_labels = df['Attractiveness label'].iloc[train_indices]
+    # test_filenames = ['SCUT-FBP-%d.jpg' % _ for _ in df['Image'].iloc[test_indices].tolist()]
+    # test_labels = df['Attractiveness label'].iloc[test_indices]
+    #
+    # train_loader = torch.utils.data.DataLoader(
+    #     data_loader.ScutFBP(train_filenames, train_labels, transform=data_transform),
+    #     batch_size=cfg['batch_size'], shuffle=True, num_workers=4)
+    # test_loader = torch.utils.data.DataLoader(
+    #     data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
+    #     batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
+    #
+    # train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 200, False)
+    # print('***************************end training ANet***************************')
+
+    print('------------------------------start training HMT-Net on SCUT-FBP------------------------------')
     label_filepath = os.path.join(os.path.abspath(os.path.dirname(cfg['scut_fbp5500_root']) + os.path.sep + ".."),
                                   'SCUT-FBP/Rating_Collection/AttractivenessLabel.xlsx')
     df = pd.read_excel(label_filepath, 'Sheet1')
@@ -632,8 +657,8 @@ if __name__ == '__main__':
         data_loader.ScutFBP(test_filenames, test_labels, transform=data_transform),
         batch_size=cfg['batch_size'], shuffle=False, num_workers=4)
 
-    train_anet(vgg_m_face, train_loader, test_loader, nn.MSELoss(), 200, False)
-    print('***************************end training ANet***************************')
+    train_hmtnet(HMTNet(), train_loader, test_loader, 200, False)
+    print('------------------------------finish training HMT-Net on SCUT-FBP------------------------------')
 
     # print('+++++++++++++++++++++++++++++++++++++++++start training HMT-Net+++++++++++++++++++++++++++++++++++++++++')
     # hmtnet = HMTNet()

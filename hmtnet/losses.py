@@ -16,7 +16,7 @@ import copy
 
 class HMTLoss(nn.Module):
 
-    def __init__(self, weight_g=1, weight_r=1, weight_a=1):
+    def __init__(self, weight_g=1, weight_r=1, weight_a=2):
         super(HMTLoss, self).__init__()
 
         self.weight_g = weight_g

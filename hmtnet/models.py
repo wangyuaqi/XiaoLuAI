@@ -157,7 +157,7 @@ class HMTNet(nn.Module):
         x16 = self.bn53(x15)
         x17 = self.relu5(x16)
 
-        x17 = (x8 + x11 + x17) / 3  # modified
+        x17 = (x9 + x11 + x17) / 3  # modified
 
         x18 = self.pool5(x17)
         x19 = self.fc6(x18)

@@ -1,4 +1,4 @@
-# Hierarchical Multi-task Networks for Accurate Facial Beauty Prediction
+# Hierarchical Multi-task Networks for Race, Gender and Facial Beauty Recognition
 
 ## Introduction
 Facial beauty perception plays an increasingly important role in people's daily life, such as

@@ -21,10 +21,10 @@ from hmtnet.cfg import cfg
 from hmtnet.models import HMTNet
 
 
-def inference(image_file, hmtnet_model_file='./model/hmt-net.pth'):
+def inference(img, hmtnet_model_file='./model/hmt-net.pth'):
     """
     inference with pre-trained HMT-Net
-    :param image_file:
+    :param image_file: an image filepath or image numpy array
     :param hmtnet_model_file:
     :return:
     """
@@ -35,7 +35,12 @@ def inference(image_file, hmtnet_model_file='./model/hmt-net.pth'):
         print("We are running on", torch.cuda.device_count(), "GPUs!")
         hmt_net = nn.DataParallel(hmt_net)
 
-    image = resize(io.imread(image_file), (224, 224), mode='constant')
+    if type(img) is str:
+        image = resize(io.imread(img), (224, 224), mode='constant')
+    else:
+        img = cv2.resize(img, (224, 224))
+        image = img.astype(np.float64)
+
     image[:, :, 0] -= 131.45376586914062
     image[:, :, 1] -= 103.98748016357422
     image[:, :, 2] -= 91.46234893798828
@@ -64,8 +69,7 @@ def inference(image_file, hmtnet_model_file='./model/hmt-net.pth'):
     g_pred = 'male' if int(g_predicted.cpu()) == 1 else 'female'
     r_pred = 'white' if int(r_predicted.cpu()) == 1 else 'yellow'
 
-    return {'image': os.path.basename(image_file), 'gender': g_pred, 'race': r_pred,
-            'attractiveness': float(a_pred.cpu()), 'elapse': tok - tik}
+    return {'gender': g_pred, 'race': r_pred, 'attractiveness': float(a_pred.cpu()), 'elapse': tok - tik}
 
 
 def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
@@ -111,7 +115,6 @@ def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
                 os.makedirs('./feature_viz/')
 
             scipy.misc.imsave('./feature_viz/' + os.path.basename(image_file).split('.')[0] + '-conv4.jpg', mat)
-            # cv2.imwrite('./' + os.path.basename(image_file).split('.')[0] + '-conv2_1.jpg', cv2.fromarray(mat))
             cv2.waitKey()
             cv2.destroyAllWindows()
             break
@@ -226,7 +229,7 @@ def output_result(is_show=True):
         result = inference(os.path.join(cfg['scutfbp5500_images_dir'], img_list[i]))
         print(result)
         result_list.append(
-            [result['image'], result['attractiveness'], score_list[i], result['gender'][0],
+            [img_list[i], result['attractiveness'], score_list[i], result['gender'][0],
              img_list[i][0], result['race'][0],
              img_list[i].split('.')[0][2]])
 
@@ -240,8 +243,33 @@ def output_result(is_show=True):
             cv2.destroyAllWindows()
 
 
+def infer_and_show_img(img_filepath):
+    from hmtnet.img_utils import det_landmarks
+    dlib_result = det_landmarks(img_filepath)
+    hmt_result = inference(img_filepath)
+    print(hmt_result)
+
+    image = cv2.imread(img_filepath)
+
+    face = dlib_result[0]
+    if hmt_result['gender'] == 'male':
+        color = (255, 0, 0)
+    else:
+        color = (0, 0, 255)
+    cv2.rectangle(image, (face['bbox'][0], face['bbox'][1]), (face['bbox'][2], face['bbox'][3]), color, 2)
+
+    for ldmk in face['landmarks']:
+        cv2.circle(image, (ldmk[0], ldmk[1]), 2, (255, 245, 0), -1)
+
+    cv2.imshow('image', image)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+
 if __name__ == '__main__':
     # feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'fty688.jpg'))
 
-    print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+    infer_and_show_img('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/mtw10.jpg')
+
+    # print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
     # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

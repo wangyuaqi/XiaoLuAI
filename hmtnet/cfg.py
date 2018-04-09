@@ -21,4 +21,4 @@ cfg['4_6_split_dir'] = os.path.join(cfg['scut_fbp5500_root'], 'train_test_files/
 cfg['batch_size'] = 32
 cfg['pretrained_vgg_face'] = '/media/lucasx/Document/ModelZoo/vgg_m_face_bn_dag.pth'
 cfg['dlib_model'] = os.path.join(
-    os.path.abspath(cfg['pretrained_vgg_face']) + os.path.sep + '.') + '/shape_predictor_68_face_landmarks.dat'
+    os.path.dirname(cfg['pretrained_vgg_face'])) + '/shape_predictor_68_face_landmarks.dat'

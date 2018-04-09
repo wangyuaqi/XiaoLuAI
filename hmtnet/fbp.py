@@ -536,7 +536,7 @@ if __name__ == '__main__':
 
     data_transform = transforms.Compose([
         # transforms.Resize(224),
-        transforms.RandomRotation(),
+        transforms.RandomRotation(30),
         transforms.RandomCrop(224),
         transforms.ToTensor(),
         transforms.ColorJitter(),

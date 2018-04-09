@@ -535,7 +535,9 @@ if __name__ == '__main__':
     # rnet = RNet()
 
     data_transform = transforms.Compose([
-        transforms.Resize(224),
+        # transforms.Resize(224),
+        transforms.RandomRotation(),
+        transforms.RandomCrop(224),
         transforms.ToTensor(),
         transforms.ColorJitter(),
         transforms.Normalize(mean=[131.45376586914062, 103.98748016357422, 91.46234893798828],
@@ -662,19 +664,19 @@ if __name__ == '__main__':
 
     print('+++++++++++++++++++++++++++++++++start training HMT-Net on SCUT-FBP5500+++++++++++++++++++++++++++++++++')
     hmtnet = HMTNet()
-    # train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
-    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
-    #                                            drop_last=True)
-    # test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
-    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
-    #                                           drop_last=True)
-
-    train_loader = torch.utils.data.DataLoader(FDataset(train=True, transform=data_transform),
+    train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
                                                batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
                                                drop_last=True)
-    test_loader = torch.utils.data.DataLoader(FDataset(train=False, transform=data_transform),
+    test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
                                               batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
                                               drop_last=True)
+
+    # train_loader = torch.utils.data.DataLoader(FDataset(train=True, transform=data_transform),
+    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+    #                                            drop_last=True)
+    # test_loader = torch.utils.data.DataLoader(FDataset(train=False, transform=data_transform),
+    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+    #                                           drop_last=True)
 
     train_hmtnet(hmtnet, train_loader, test_loader, 200, False)
     print('+++++++++++++++++++++++++++++++++finish training HMT-Net SCUT-FBP5500+++++++++++++++++++++++++++++++++')

@@ -93,12 +93,13 @@ def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
             input = module(input)
         else:
             vis = visdom.Visdom()
-            vis.image(input.data.cpu().numpy())
+            # vis.image(np.transpose(input.data.cpu().numpy(), [1, 2, 0]))
 
             mat = np.transpose(input[0, 11:14, :, :].data.cpu().numpy(), [1, 2, 0])
-            mat = cv2.resize(mat, (128, 128))
+            mat = cv2.resize(mat.astype(np.float32), (128, 128))
             # cv2.imshow('conv2', mat)
             print(mat.shape)
+            vis.image(mat)
             # cv2.imwrite('./conv2.jpg', mat.astype(np.uint8))
             # cv2.waitKey()
             # cv2.destroyAllWindows()

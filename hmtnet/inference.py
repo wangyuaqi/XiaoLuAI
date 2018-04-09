@@ -69,6 +69,12 @@ def inference(image_file, hmtnet_model_file='./model/hmt-net.pth'):
 
 
 def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
+    """
+    feature visualization
+    :param image_file:
+    :param hmtnet_model_file:
+    :return:
+    """
     hmt_net = HMTNet()
     hmt_net.load_state_dict(torch.load(hmtnet_model_file))
 
@@ -112,6 +118,12 @@ def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
 
 
 def cal_elapse(nn_name, img_file):
+    """
+    calculate time elapse
+    :param nn_name:
+    :param img_file:
+    :return:
+    """
     import torchvision.models as models
 
     image = resize(io.imread(img_file), (224, 224), mode='constant')
@@ -229,7 +241,7 @@ def output_result(is_show=True):
 
 
 if __name__ == '__main__':
-    feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'fty688.jpg'))
+    # feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'fty688.jpg'))
 
-# print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
-# print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+    print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
+    # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

@@ -89,20 +89,25 @@ def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
         input = Variable(input.cuda())
 
     for idx, module in hmt_net.named_children():
-        if idx != 'relu3':
+        if idx != 'conv4':
             input = module(input)
         else:
             vis = visdom.Visdom()
             # vis.image(np.transpose(input.data.cpu().numpy(), [1, 2, 0]))
 
-            mat = np.transpose(input[0, 11:14, :, :].data.cpu().numpy(), [1, 2, 0])
-            mat = cv2.resize(mat.astype(np.float32), (128, 128))
-            # cv2.imshow('conv2', mat)
+            mat = np.transpose(input[0, 10:13, :, :].data.cpu().numpy(), [1, 2, 0])
+            mat = cv2.resize(mat, (128, 128))
+            cv2.imshow('conv4', mat)
             print(mat.shape)
-            vis.image(mat)
-            # cv2.imwrite('./conv2.jpg', mat.astype(np.uint8))
-            # cv2.waitKey()
-            # cv2.destroyAllWindows()
+            import scipy.misc
+
+            if not os.path.isdir('./feature_viz/'):
+                os.makedirs('./feature_viz/')
+
+            scipy.misc.imsave('./feature_viz/' + os.path.basename(image_file).split('.')[0] + '-conv4.jpg', mat)
+            # cv2.imwrite('./' + os.path.basename(image_file).split('.')[0] + '-conv2_1.jpg', cv2.fromarray(mat))
+            cv2.waitKey()
+            cv2.destroyAllWindows()
             break
 
 
@@ -224,7 +229,7 @@ def output_result(is_show=True):
 
 
 if __name__ == '__main__':
-    feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'ftw8.jpg'))
+    feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'fty688.jpg'))
 
 # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
 # print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

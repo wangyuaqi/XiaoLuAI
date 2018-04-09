@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 import pandas as pd
 
+import visdom
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -91,13 +92,16 @@ def feature_viz(image_file, hmtnet_model_file='./model/hmt-net.pth'):
         if idx != 'relu3':
             input = module(input)
         else:
+            vis = visdom.Visdom()
+            vis.image(input.data.cpu().numpy())
+
             mat = np.transpose(input[0, 11:14, :, :].data.cpu().numpy(), [1, 2, 0])
             mat = cv2.resize(mat, (128, 128))
-            cv2.imshow('conv2', mat)
+            # cv2.imshow('conv2', mat)
             print(mat.shape)
-            cv2.imwrite('./conv2.jpg', mat.astype(np.uint8))
-            cv2.waitKey()
-            cv2.destroyAllWindows()
+            # cv2.imwrite('./conv2.jpg', mat.astype(np.uint8))
+            # cv2.waitKey()
+            # cv2.destroyAllWindows()
             break
 
 

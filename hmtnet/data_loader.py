@@ -219,7 +219,7 @@ class FBPDataset(Dataset):
 
 class FaceDataset(Dataset):
     """
-    Face Dataset for SCUT-FBP5500
+    Face Dataset for SCUT-FBP5500 with 5-Fold CV
     """
 
     def __init__(self, cv_index=1, train=True, transform=None):
@@ -238,6 +238,44 @@ class FaceDataset(Dataset):
             self.face_score = pd.read_csv(os.path.join(cfg['cv_split_base_dir'], 'cross_validation_%d' % cv_index,
                                                        'test_%d.txt' % cv_index), sep=' ', header=None).iloc[:, 1] \
                 .astype(np.float).tolist()
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.face_img)
+
+    def __getitem__(self, idx):
+        image = io.imread(os.path.join(cfg['scutfbp5500_images_dir'], self.face_img[idx]))
+        attractiveness = self.face_score[idx]
+        gender = 1 if self.face_img[idx].split('.')[0][0] == 'm' else 0
+        race = 1 if self.face_img[idx].split('.')[0][2] == 'w' else 0
+
+        sample = {'image': image, 'attractiveness': attractiveness, 'gender': gender, 'race': race}
+
+        if self.transform:
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
+
+        return sample
+
+
+class FDataset(Dataset):
+    """
+    Face Dataset for SCUT-FBP5500 with 6/4 split CV
+    """
+
+    def __init__(self, train=True, transform=None):
+        if train:
+            self.face_img = pd.read_csv(
+                os.path.join(cfg['4_6_split_dir'], 'train.txt'),
+                sep=' ', header=None).iloc[:, 0].tolist()
+            self.face_score = pd.read_csv(os.path.join(cfg['4_6_split_dir'], 'train.txt'), sep=' ', header=None).iloc[:,
+                              1].astype(np.float).tolist()
+        else:
+            self.face_img = pd.read_csv(
+                os.path.join(cfg['4_6_split_dir'], 'test.txt'),
+                sep=' ', header=None).iloc[:, 0].tolist()
+            self.face_score = pd.read_csv(os.path.join(cfg['4_6_split_dir'], 'test.txt'), sep=' ', header=None).iloc[:,
+                              1].astype(np.float).tolist()
 
         self.transform = transform
 

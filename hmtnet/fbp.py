@@ -18,7 +18,7 @@ from torchvision import transforms, datasets
 sys.path.append('../')
 from hmtnet.losses import HMTLoss
 from hmtnet.models import RNet, GNet, HMTNet
-from hmtnet.data_loader import FaceGenderDataset, FaceRaceDataset, FaceDataset
+from hmtnet.data_loader import FaceGenderDataset, FaceRaceDataset, FaceDataset, FDataset
 from hmtnet.cfg import cfg
 from hmtnet import data_loader, file_utils, vgg_m_face_bn_dag
 
@@ -662,10 +662,17 @@ if __name__ == '__main__':
 
     print('+++++++++++++++++++++++++++++++++start training HMT-Net on SCUT-FBP5500+++++++++++++++++++++++++++++++++')
     hmtnet = HMTNet()
-    train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+    # train_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=True, transform=data_transform),
+    #                                            batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
+    #                                            drop_last=True)
+    # test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+    #                                           batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
+    #                                           drop_last=True)
+
+    train_loader = torch.utils.data.DataLoader(FDataset(train=True, transform=data_transform),
                                                batch_size=cfg['batch_size'], shuffle=True, num_workers=4,
                                                drop_last=True)
-    test_loader = torch.utils.data.DataLoader(FaceDataset(cv_index=1, train=False, transform=data_transform),
+    test_loader = torch.utils.data.DataLoader(FDataset(train=False, transform=data_transform),
                                               batch_size=cfg['batch_size'], shuffle=False, num_workers=4,
                                               drop_last=True)
 

@@ -255,6 +255,7 @@ def infer_and_show_img(img_filepath):
         image = image[0:image.shape[1], :, :]
     else:
         image = image[:, 0:image.shape[0], :]
+    # image = cv2.resize(image, (400, 400))
 
     h, w, c = image.shape
     text_area_height = 50
@@ -273,7 +274,7 @@ def infer_and_show_img(img_filepath):
     cv2.rectangle(image, (face['bbox'][0], face['bbox'][1]), (face['bbox'][2], face['bbox'][3]), color, 2)
     cv2.putText(final_image,
                 'Face Beauty Value:{0}   Race:{1}   Gender:{2}'.format(str(round(hmt_result['attractiveness'], 2)),
-                                                                        race_text, hmt_result['gender']),
+                                                                       race_text, hmt_result['gender']),
                 (int(w / 10), h + int(text_area_height / 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (99, 99, 238), 0,
                 cv2.LINE_AA)
 
@@ -291,8 +292,7 @@ def infer_and_show_img(img_filepath):
 if __name__ == '__main__':
     # feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'fty688.jpg'))
 
-    infer_and_show_img('/home/lucasx/Desktop/man.jpg')
-    # infer_and_show_img('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/mtw10.jpg')
+    infer_and_show_img('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/mtw10.jpg')
 
     # print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
     # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

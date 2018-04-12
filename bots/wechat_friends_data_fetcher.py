@@ -1,4 +1,5 @@
 import itchat, time
+import os
 from itchat.content import *
 import pandas as pd
 
@@ -48,6 +49,20 @@ def get_and_output_friends_info():
         friend['Signature'] = _['Signature']
         friend['RemarkName'] = _['RemarkName']
         friends_list.append(friend)
+
+        if not os.path.exists('./avatar'):
+            os.makedirs('./avatar')
+
+        try:
+            img = itchat.get_head_img(userName=_["UserName"])
+            if _['RemarkName'] != '':
+                fileImage = open("./avatar/" + _['RemarkName'] + ".jpg", 'wb')
+            else:
+                fileImage = open("./avatar/" + _['PYQuanPin'] + ".jpg", 'wb')
+            fileImage.write(img)
+            fileImage.close()
+        except:
+            pass
 
     df = pd.DataFrame(friends_list)
     df.to_excel(excel_writer='./wechat.xlsx', sheet_name='WeChatFriends', index=False)

@@ -1,8 +1,10 @@
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 from skimage import io, transform
+from PIL import Image
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -12,25 +14,27 @@ sys.path.append('../')
 from deepbeauty.cfg import cfg
 
 
-class ScutFBPDataset(Dataset):
+class ScutFBP(Dataset):
     """
-    SCUT-FBP dataset.
+    SCUT-FBP dataset
     """
 
-    def __init__(self, csv_file, transform=None):
-        self.landmarks_frame = pd.read_csv(csv_file)
+    def __init__(self, csv_file='./cvsplit/SCUT-FBP.xlsx', transform=None):
+        df = pd.read_excel(csv_file, sheet_name='Sheet1', header=True)
+        self.img_indices = df['Image'].tolist()
+        self.face_scores = df['Attractiveness label'].tolist()
         self.transform = transform
 
     def __len__(self):
-        return len(self.landmarks_frame)
+        return len(self.img_indices)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(cfg['scut_fbp_dir'],
-                                self.landmarks_frame.iloc[idx, 0])
-        image = io.imread(img_name)
-        sample = {'image': image, 'score': landmarks}
+        image = io.imread(os.path.join(cfg['scut_fbp_dir'], self.img_indices[idx]))
+        score = self.face_scores[idx]
+
+        sample = {'image': image, 'score': score}
 
         if self.transform:
-            sample = self.transform(sample)
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
 
         return sample

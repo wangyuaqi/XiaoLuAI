@@ -1,13 +1,18 @@
 import sys
 import os
 
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 from torch.optim import lr_scheduler
-import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
+
+from deepbeauty.data_loder import ScutFBPDataset
 
 sys.path.append('../')
 from deepbeauty.utils import mkdirs_if_not_exist
@@ -98,4 +103,30 @@ def ft_deep_beauty_model():
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
+    df = pd.read_excel(csv_file='./cvsplit/SCUT-FBP.xlsx', sheet_name='Sheet1', header=True)
+    X_train, X_test, y_train, y_test = train_test_split(df['Image'].tolist(), df['Attractiveness label'],
+                                                        test_size=0.2, random_state=0)
 
+    train_dataset = ScutFBPDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
+        transforms.ColorJitter(),
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
+        transforms.RandomRotation(30),
+        transforms.ToTensor()
+    ]))
+
+    test_dataset = ScutFBPDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
+        transforms.ColorJitter(),
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
+        transforms.RandomRotation(30),
+        transforms.ToTensor()
+    ]))
+
+    train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
+                                  shuffle=True, num_workers=4)
+    test_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
+                                 shuffle=False, num_workers=4)
+
+    train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
+                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=30, inference=False)

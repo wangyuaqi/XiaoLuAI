@@ -2,35 +2,30 @@ import os
 import sys
 
 import numpy as np
-import pandas as pd
-from skimage import io, transform
 from PIL import Image
-import torch
-import torchvision
-import torchvision.transforms as transforms
-from torch.utils.data import Dataset, DataLoader
+from skimage import io
+from torch.utils.data import Dataset
 
 sys.path.append('../')
 from deepbeauty.cfg import cfg
 
 
-class ScutFBP(Dataset):
+class ScutFBPDataset(Dataset):
     """
     SCUT-FBP dataset
     """
 
-    def __init__(self, csv_file='./cvsplit/SCUT-FBP.xlsx', transform=None):
-        df = pd.read_excel(csv_file, sheet_name='Sheet1', header=True)
-        self.img_indices = df['Image'].tolist()
-        self.face_scores = df['Attractiveness label'].tolist()
+    def __init__(self, f_list, f_labels, transform=None):
+        self.face_files = f_list
+        self.face_score = f_labels.tolist()
         self.transform = transform
 
     def __len__(self):
-        return len(self.img_indices)
+        return len(self.face_files)
 
     def __getitem__(self, idx):
-        image = io.imread(os.path.join(cfg['scut_fbp_dir'], self.img_indices[idx]))
-        score = self.face_scores[idx]
+        image = io.imread(os.path.join(cfg['scut_fbp_dir'], self.face_files[idx]))
+        score = self.face_score[idx]
 
         sample = {'image': image, 'score': score}
 

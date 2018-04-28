@@ -11,9 +11,8 @@ from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
-from bicnn.data_loder import ScutFBPDataset
-
 sys.path.append('../')
+from bicnn.data_loder import ScutFBPDataset
 from bicnn.utils import mkdirs_if_not_exist
 from bicnn.cfg import cfg
 
@@ -140,7 +139,7 @@ def ft_deep_beauty_model():
                                  shuffle=False, num_workers=4)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
-                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=30, inference=True)
+                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
 if __name__ == '__main__':

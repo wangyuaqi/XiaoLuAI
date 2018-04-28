@@ -20,9 +20,9 @@ from bicnn.cfg import cfg
 
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
                 inference=False):
-    print('Start training Bi-CNN...')
     model = model.float()
     if not inference:
+        print('Start training Bi-CNN...')
         for epoch in range(num_epochs):  # loop over the dataset multiple times
             model.train()
             scheduler.step()
@@ -75,7 +75,6 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     predicted_labels = []
     gt_labels = []
     for data in test_dataloader:
-        # images, labels = data
         images, labels = data['image'], data['score']
         if torch.cuda.is_available():
             device = torch.device('cuda')
@@ -84,9 +83,6 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
             outputs = model.forward(images)
         else:
             outputs = model.forward(images)
-
-        outputs = outputs.view(cfg['batch_size'], 1)
-        _, predicted = torch.max(outputs.data, 1)
 
         predicted_labels += outputs.cpu().data.numpy().tolist()
         gt_labels += labels.cpu().numpy().tolist()
@@ -144,7 +140,7 @@ def ft_deep_beauty_model():
                                  shuffle=False, num_workers=4)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
-                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=30, inference=False)
+                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=30, inference=True)
 
 
 if __name__ == '__main__':

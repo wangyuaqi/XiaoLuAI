@@ -1,5 +1,0 @@
-## Deep Beauty: a Cascade Deep Neural Networks for Facial Beauty Prediction
-
-#### Prerequisite
-* PyTorch == 0.4.0   
-* torchvision == 0.2.1

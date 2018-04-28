@@ -7,7 +7,7 @@ from skimage import io
 from torch.utils.data import Dataset
 
 sys.path.append('../')
-from deepbeauty.cfg import cfg
+from bicnn.cfg import cfg
 
 
 class ScutFBPDataset(Dataset):
@@ -24,7 +24,7 @@ class ScutFBPDataset(Dataset):
         return len(self.face_files)
 
     def __getitem__(self, idx):
-        image = io.imread(os.path.join(cfg['scut_fbp_dir'], self.face_files[idx]))
+        image = io.imread(os.path.join(cfg['scut_fbp_dir'], 'SCUT-FBP-%d.jpg' % self.face_files[idx]))
         score = self.face_score[idx]
 
         sample = {'image': image, 'score': score}

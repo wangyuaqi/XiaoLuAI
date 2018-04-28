@@ -1,46 +1,49 @@
-import sys
 import os
+import sys
 
-import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
+from sklearn.model_selection import train_test_split
 from torch.optim import lr_scheduler
-import torchvision
-from torchvision import datasets, models, transforms
+from torch.utils.data import DataLoader
+from torchvision import models, transforms
 
-from deepbeauty.data_loder import ScutFBPDataset
+from bicnn.data_loder import ScutFBPDataset
 
 sys.path.append('../')
-from deepbeauty.utils import mkdirs_if_not_exist
-from deepbeauty.cfg import cfg
+from bicnn.utils import mkdirs_if_not_exist
+from bicnn.cfg import cfg
 
 
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
                 inference=False):
+    print('Start training Bi-CNN...')
+    model = model.float()
     if not inference:
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
-                inputs, labels = data
-                if torch.cuda.device_count() > 1:
-                    if torch.cuda.is_available():
-                        device = torch.device('cuda')
-                        model = model.to(device)
-                        inputs = inputs.to(device)
-                        labels = labels.to(device)
+                inputs, labels = data['image'], data['score']
 
+                if torch.cuda.is_available():
+                    device = torch.device('cuda')
+                    model = model.to(device)
+                    inputs = inputs.to(device)
+                    labels = labels.to(device)
+
+                if torch.cuda.device_count() > 1:
                     print("Let's use", torch.cuda.device_count(), "GPUs!")
                     model = nn.DataParallel(model)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
 
-                # forward + backward + optimize
+                inputs = inputs.float()
+                labels = labels.float().view(cfg['batch_size'], 1)
+
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -53,16 +56,16 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
                           (epoch + 1, i + 1, running_loss / 50))
                     running_loss = 0.0
 
-        print('Finished Training\n')
+        print('Finished training Bi-CNN...\n')
         print('Saving trained model...')
         model_path_dir = './model'
         mkdirs_if_not_exist(model_path_dir)
-        torch.save(model.state_dict(), os.path.join(model_path_dir, 'deep_beauty.pth'))
+        torch.save(model.state_dict(), os.path.join(model_path_dir, 'bi-cnn.pth'))
         print('Deep beauty model has been saved successfully~')
 
     else:
         print('Loading pre-trained model...')
-        model.load_state_dict(torch.load(os.path.join('./model/deep_beauty.pth')))
+        model.load_state_dict(torch.load(os.path.join('./model/bi-cnn.pth')))
 
     model.train(False)
     correct = 0
@@ -96,14 +99,14 @@ def ft_deep_beauty_model():
         device = torch.device("cuda")
         model_ft = model_ft.to(device)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
 
     # Observe that all parameters are being optimized
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
-    df = pd.read_excel(csv_file='./cvsplit/SCUT-FBP.xlsx', sheet_name='Sheet1', header=True)
+    df = pd.read_excel('./cvsplit/SCUT-FBP.xlsx', sheet_name='Sheet1')
     X_train, X_test, y_train, y_test = train_test_split(df['Image'].tolist(), df['Attractiveness label'],
                                                         test_size=0.2, random_state=0)
 
@@ -125,8 +128,12 @@ def ft_deep_beauty_model():
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
                                   shuffle=True, num_workers=4)
-    test_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
+    test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
                                  shuffle=False, num_workers=4)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=30, inference=False)
+
+
+if __name__ == '__main__':
+    ft_deep_beauty_model()

@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -23,6 +24,8 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     model = model.float()
     if not inference:
         for epoch in range(num_epochs):  # loop over the dataset multiple times
+            model.train()
+            scheduler.step()
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
@@ -67,9 +70,10 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
         print('Loading pre-trained model...')
         model.load_state_dict(torch.load(os.path.join('./model/bi-cnn.pth')))
 
-    model.train(False)
-    correct = 0
-    total = 0
+    model.eval()
+
+    predicted_labels = []
+    gt_labels = []
     for data in test_dataloader:
         # images, labels = data
         images, labels = data['image'], data['score']
@@ -83,11 +87,19 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
         outputs = outputs.view(cfg['batch_size'], 1)
         _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum()
 
-    print('correct = %d ...' % correct)
-    print('total = %d ...' % total)
+        predicted_labels += outputs.cpu().data.numpy().tolist()
+        gt_labels += labels.cpu().numpy().tolist()
+
+    from sklearn.metrics import mean_absolute_error, mean_squared_error
+
+    mae_lr = round(mean_absolute_error(np.array(gt_labels), np.array(predicted_labels).ravel()), 4)
+    rmse_lr = round(np.math.sqrt(mean_squared_error(np.array(gt_labels), np.array(predicted_labels).ravel())), 4)
+    pc = round(np.corrcoef(np.array(gt_labels), np.array(predicted_labels).ravel())[0, 1], 4)
+
+    print('===============The Mean Absolute Error of Bi-CNN is {0}===================='.format(mae_lr))
+    print('===============The Root Mean Square Error of Bi-CNN is {0}===================='.format(rmse_lr))
+    print('===============The Pearson Correlation of Bi-CNN is {0}===================='.format(pc))
 
 
 def ft_deep_beauty_model():

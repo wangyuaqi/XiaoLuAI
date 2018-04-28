@@ -63,7 +63,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
         model_path_dir = './model'
         mkdirs_if_not_exist(model_path_dir)
         torch.save(model.state_dict(), os.path.join(model_path_dir, 'bi-cnn.pth'))
-        print('Deep beauty model has been saved successfully~')
+        print('Bi-CNN has been saved successfully~')
 
     else:
         print('Loading pre-trained model...')
@@ -109,7 +109,7 @@ def ft_deep_beauty_model():
     criterion = nn.MSELoss()
 
     # Observe that all parameters are being optimized
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 

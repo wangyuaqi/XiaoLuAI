@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
-from bicnn.data_loder import ScutFBPDataset
+from bicnn.data_loder import ScutFBPDataset, HotOrNotDataset
 from bicnn.utils import mkdirs_if_not_exist
 from bicnn.cfg import cfg
 
@@ -97,7 +97,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Pearson Correlation of Bi-CNN is {0}===================='.format(pc))
 
 
-def ft_deep_beauty_model():
+def run_bicnn_scutfbp():
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 1)
@@ -142,5 +142,47 @@ def ft_deep_beauty_model():
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
+def run_bicnn_eccv():
+    model_ft = models.resnet18(pretrained=True)
+    num_ftrs = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_ftrs, 1)
+
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        model_ft = model_ft.to(device)
+
+    criterion = nn.MSELoss()
+
+    # Observe that all parameters are being optimized
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
+
+    train_dataset = HotOrNotDataset(cv_split=1, train=True, transform=transforms.Compose([
+        transforms.ColorJitter(),
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
+        transforms.RandomRotation(30),
+        transforms.ToTensor()
+    ]))
+
+    test_dataset = HotOrNotDataset(cv_split=1, train=False, transform=transforms.Compose([
+        transforms.ColorJitter(),
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
+        transforms.RandomRotation(30),
+        transforms.ToTensor()
+    ]))
+
+    train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
+                                  shuffle=True, num_workers=4)
+    test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
+                                 shuffle=False, num_workers=4)
+
+    train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
+                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
+
+
 if __name__ == '__main__':
-    ft_deep_beauty_model()
+    # run_bicnn_scutfbp()
+    run_bicnn_eccv()

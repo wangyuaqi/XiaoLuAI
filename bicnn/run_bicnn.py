@@ -175,9 +175,9 @@ def run_bicnn_eccv():
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
-                                  shuffle=True, num_workers=4)
+                                  shuffle=True, num_workers=4, drop_last=True)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
-                                 shuffle=False, num_workers=4)
+                                 shuffle=False, num_workers=4, drop_last=True)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)

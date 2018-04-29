@@ -142,7 +142,12 @@ def run_bicnn_scutfbp():
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
-def run_bicnn_eccv():
+def run_bicnn_eccv(cv_split):
+    """
+    train and test ECCV HotOrNot dataset
+    :param cv_split:
+    :return:
+    """
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 1)
@@ -158,7 +163,7 @@ def run_bicnn_eccv():
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
-    train_dataset = HotOrNotDataset(cv_split=1, train=True, transform=transforms.Compose([
+    train_dataset = HotOrNotDataset(cv_split=cv_split, train=True, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(256),
         transforms.RandomCrop(224),
@@ -166,7 +171,7 @@ def run_bicnn_eccv():
         transforms.ToTensor()
     ]))
 
-    test_dataset = HotOrNotDataset(cv_split=1, train=False, transform=transforms.Compose([
+    test_dataset = HotOrNotDataset(cv_split=cv_split, train=False, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(256),
         transforms.RandomCrop(224),
@@ -185,4 +190,4 @@ def run_bicnn_eccv():
 
 if __name__ == '__main__':
     # run_bicnn_scutfbp()
-    run_bicnn_eccv()
+    run_bicnn_eccv(cv_split=1)

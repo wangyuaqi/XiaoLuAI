@@ -43,10 +43,30 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
                 optimizer.zero_grad()
 
                 inputs = inputs.float()
-                labels = labels.float().view(cfg['batch_size'], 1)
+                labels = labels.float()
+                # labels = labels.float().view(cfg['batch_size'], 5)
 
                 outputs = model(inputs)
-                loss = criterion(outputs, labels)
+                out = []
+                for _ in outputs.to("cpu").data.numpy():
+                    reg_score = torch.zeros(1)
+                    for i in range(0, 5, 1):
+                        reg_score += _[i] * (i + 1)
+
+                    if reg_score < 1:
+                        reg_score = 1
+                    elif reg_score > 5:
+                        reg_score = 5
+
+                    out.append(reg_score)
+
+                out = torch.from_numpy(np.array(out))
+                if torch.cuda.is_available():
+                    device = torch.device('cuda')
+                    out = out.float()
+                    out = out.to(device)
+
+                loss = criterion(out, labels)
                 loss.backward()
                 optimizer.step()
 
@@ -99,7 +119,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 def run_bicnn_scutfbp():
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 1)
+    model_ft.fc = nn.Linear(num_ftrs, 5)
 
     if torch.cuda.is_available():
         device = torch.device("cuda")

@@ -1,4 +1,4 @@
-## Bi-CNN: Binary Convolutional Neural Networks for Facial Beauty Prediction
+## Bi-CNN: Binary-branched Convolutional Neural Networks for Facial Beauty Prediction
 
 #### Prerequisite
 * PyTorch == 0.4.0   

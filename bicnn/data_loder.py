@@ -1,5 +1,6 @@
 import os
 import sys
+import math
 from collections import OrderedDict
 
 import numpy as np
@@ -20,6 +21,31 @@ class ScutFBPDataset(Dataset):
     def __init__(self, f_list, f_labels, transform=None):
         self.face_files = f_list
         self.face_score = f_labels.tolist()
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.face_files)
+
+    def __getitem__(self, idx):
+        image = io.imread(os.path.join(cfg['scut_fbp_dir'], 'SCUT-FBP-%d.jpg' % self.face_files[idx]))
+        score = self.face_score[idx]
+
+        sample = {'image': image, 'score': score}
+
+        if self.transform:
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
+
+        return sample
+
+
+class ScutFBPExpDataset(Dataset):
+    """
+    SCUT-FBP Expected dataset
+    """
+
+    def __init__(self, f_list, f_labels, transform=None):
+        self.face_files = f_list
+        self.face_score = [round(_) for _ in f_labels.tolist()]
         self.transform = transform
 
     def __len__(self):

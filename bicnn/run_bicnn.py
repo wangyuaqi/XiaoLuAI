@@ -108,15 +108,13 @@ def run_bicnn_scutfbp():
                                                         test_size=0.2, random_state=0)
 
     train_dataset = ScutFBPDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
-        transforms.Resize(256),
-        transforms.RandomCrop(224),
+        transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
     test_dataset = ScutFBPDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
-        transforms.Resize(256),
-        transforms.RandomCrop(224),
+        transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))

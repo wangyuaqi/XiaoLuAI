@@ -7,20 +7,27 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
+import torch.nn.functional as F
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
-from bicnn.data_loder import ScutFBPDataset, HotOrNotDataset
+from bicnn.data_loder import ScutFBPDataset, HotOrNotDataset, ScutFBPExpDataset
 from bicnn.utils import mkdirs_if_not_exist
 from bicnn.cfg import cfg
 
 
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
                 inference=False):
-    model = model.float()
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # model = model.float()
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        model = nn.DataParallel(model)
+    model = model.to(device)
+
     if not inference:
         print('Start training Bi-CNN...')
         for epoch in range(num_epochs):
@@ -31,41 +38,17 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
             for i, data in enumerate(train_dataloader, 0):
                 inputs, labels = data['image'], data['score']
 
-                model = model.to(device)
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-
-                if torch.cuda.device_count() > 1:
-                    print("Let's use", torch.cuda.device_count(), "GPUs!")
-                    model = nn.DataParallel(model)
 
                 optimizer.zero_grad()
 
                 inputs = inputs.float()
-                labels = labels.float()
                 # labels = labels.float().view(cfg['batch_size'], 5)
 
                 outputs = model(inputs)
-                out = []
-                for _ in outputs.to("cpu").data.numpy():
-                    reg_score = torch.zeros(1)
-                    for i in range(0, 5, 1):
-                        reg_score += _[i] * (i + 1)
 
-                    if reg_score < 1:
-                        reg_score = 1
-                    elif reg_score > 5:
-                        reg_score = 5
-
-                    out.append(reg_score)
-
-                out = torch.from_numpy(np.array(out))
-                if torch.cuda.is_available():
-                    device = torch.device('cuda')
-                    out = out.float()
-                    out = out.to(device)
-
-                loss = criterion(out, labels)
+                loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
 
@@ -80,12 +63,12 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
         print('Saving trained model...')
         model_path_dir = './model'
         mkdirs_if_not_exist(model_path_dir)
-        torch.save(model.state_dict(), os.path.join(model_path_dir, 'bi-cnn.pth'))
+        torch.save(model.state_dict(), os.path.join(model_path_dir, 'exp-bi-cnn.pth'))
         print('Bi-CNN has been saved successfully~')
 
     else:
         print('Loading pre-trained model...')
-        model.load_state_dict(torch.load(os.path.join('./model/bi-cnn.pth')))
+        model.load_state_dict(torch.load(os.path.join('./model/exp-bi-cnn.pth')))
 
     model.eval()
 
@@ -96,8 +79,14 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
         labels = labels.to(device)
         images = images.to(device)
         outputs = model.forward(images)
+        # _, predicted = torch.max(outputs.data, 1)
 
-        predicted_labels += outputs.cpu().data.numpy().tolist()
+        for out in F.softmax(outputs).to("cpu"):
+            tmp = 0
+            for i in range(1, 6, 1):
+                tmp += out[i - 1] * i
+        predicted_labels.append(tmp)
+
         gt_labels += labels.cpu().numpy().tolist()
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -116,11 +105,7 @@ def run_bicnn_scutfbp():
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 5)
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-        model_ft = model_ft.to(device)
-
-    criterion = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
@@ -130,18 +115,16 @@ def run_bicnn_scutfbp():
     X_train, X_test, y_train, y_test = train_test_split(df['Image'].tolist(), df['Attractiveness label'],
                                                         test_size=0.2, random_state=0)
 
-    train_dataset = ScutFBPDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
+    train_dataset = ScutFBPExpDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
         transforms.ColorJitter(),
-        transforms.Resize(256),
-        transforms.RandomCrop(224),
+        transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
-    test_dataset = ScutFBPDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
+    test_dataset = ScutFBPExpDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
         transforms.ColorJitter(),
-        transforms.Resize(256),
-        transforms.RandomCrop(224),
+        transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
@@ -152,7 +135,7 @@ def run_bicnn_scutfbp():
                                  shuffle=False, num_workers=4)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
-                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
+                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=10, inference=True)
 
 
 def run_bicnn_eccv(cv_split):
@@ -164,10 +147,6 @@ def run_bicnn_eccv(cv_split):
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 1)
-
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-        model_ft = model_ft.to(device)
 
     criterion = nn.MSELoss()
 

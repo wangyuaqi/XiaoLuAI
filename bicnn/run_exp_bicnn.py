@@ -20,7 +20,6 @@ from bicnn.cfg import cfg
 
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
                 inference=False):
-    # model = model.float()
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     if torch.cuda.device_count() > 1:

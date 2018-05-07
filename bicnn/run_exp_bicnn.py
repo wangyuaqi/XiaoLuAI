@@ -20,6 +20,7 @@ from bicnn.cfg import cfg
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
                 inference=False):
     model = model.float()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if not inference:
         print('Start training Bi-CNN...')
         for epoch in range(num_epochs):
@@ -30,11 +31,9 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
             for i, data in enumerate(train_dataloader, 0):
                 inputs, labels = data['image'], data['score']
 
-                if torch.cuda.is_available():
-                    device = torch.device('cuda')
-                    model = model.to(device)
-                    inputs = inputs.to(device)
-                    labels = labels.to(device)
+                model = model.to(device)
+                inputs = inputs.to(device)
+                labels = labels.to(device)
 
                 if torch.cuda.device_count() > 1:
                     print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -94,13 +93,9 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     gt_labels = []
     for data in test_dataloader:
         images, labels = data['image'], data['score']
-        if torch.cuda.is_available():
-            device = torch.device('cuda')
-            labels = labels.to(device)
-            images = images.to(device)
-            outputs = model.forward(images)
-        else:
-            outputs = model.forward(images)
+        labels = labels.to(device)
+        images = images.to(device)
+        outputs = model.forward(images)
 
         predicted_labels += outputs.cpu().data.numpy().tolist()
         gt_labels += labels.cpu().numpy().tolist()
@@ -182,7 +177,6 @@ def run_bicnn_eccv(cv_split):
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
     train_dataset = HotOrNotDataset(cv_split=cv_split, train=True, transform=transforms.Compose([
-        transforms.ColorJitter(),
         transforms.Resize(256),
         transforms.RandomCrop(224),
         transforms.RandomRotation(30),

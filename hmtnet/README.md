@@ -2,8 +2,8 @@
 
 ## Prerequisite
 * [Python3](https://www.python.org/) 
-* [PyTorch 0.3.1](http://pytorch.org/)
-* [torchvision >= 0.2.0](http://pytorch.org/)
+* [PyTorch 0.4.0](http://pytorch.org/)
+* [torchvision >= 0.2.1](http://pytorch.org/)
 * [Numpy](http://www.numpy.org/)
 
 ## How to use

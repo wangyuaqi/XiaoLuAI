@@ -35,6 +35,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     :return:
     """
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
@@ -42,7 +43,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
 
     if not inference:
         exp_lr_scheduler.step()
-        model.train(True)
+        model.train()
 
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -52,12 +53,8 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
                 # inputs, labels = data
                 inputs, labels = data['image'], data['gender']
 
-                # wrap them in Variable
-                if torch.cuda.is_available():
-                    model = model.cuda()
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-                else:
-                    inputs, labels = Variable(inputs), Variable(labels)
+                model = model.to(device)
+                inputs, labels = inputs.to(device), labels.to(device)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -88,18 +85,15 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
         print('Loading pre-trained model...')
         model.load_state_dict(torch.load(os.path.join('./model/gnet.pth')))
 
-    model.train(False)
+    model.eval()
     correct = 0
     total = 0
     for data in test_loader:
         # images, labels = data
         images, labels = data['image'], data['gender']
-        if torch.cuda.is_available():
-            model.cuda()
-            labels = labels.cuda()
-            outputs = model.forward(Variable(images.cuda()))
-        else:
-            outputs = model.forward(Variable(images))
+        model = model.to(device)
+        labels = labels.to(device)
+        outputs = model.forward(images.to(device))
 
         outputs = outputs.view(cfg['batch_size'], 2)
         _, predicted = torch.max(outputs.data, 1)
@@ -123,6 +117,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
     :return:
     """
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.1)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
@@ -130,7 +125,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
 
     if not inference:
         exp_lr_scheduler.step()
-        model.train(True)
+        model.train()
 
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
@@ -140,11 +135,8 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
                 # inputs, labels = data
                 inputs, labels = data['image'], data['race']
 
-                if torch.cuda.is_available():
-                    model = model.cuda()
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-                else:
-                    inputs, labels = Variable(inputs), Variable(labels)
+                model = model.to(device)
+                inputs, labels = inputs.to(device), labels.to(device)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -175,18 +167,15 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
         print('Loading pre-trained model...')
         model.load_state_dict(torch.load(os.path.join('./model/rnet.pth')))
 
-    model.train(False)
+    model.eval()
     correct = 0
     total = 0
     for data in test_loader:
         # images, labels = data
         images, labels = data['image'], data['race']
-        if torch.cuda.is_available():
-            model.cuda()
-            labels = labels.cuda()
-            outputs = model.forward(Variable(images.cuda()))
-        else:
-            outputs = model.forward(Variable(images))
+        model = model.to(device)
+        labels = labels.to(device)
+        outputs = model.forward(images.to(device))
 
         outputs = outputs.view(cfg['batch_size'], 2)
         _, predicted = torch.max(outputs.data, 1)
@@ -211,14 +200,14 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     """
     num_ftrs = model_ft.fc8.in_channels
     model_ft.fc8 = nn.Conv2d(num_ftrs, 2, 1)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
         # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
         model_ft = nn.DataParallel(model_ft)
 
-    if torch.cuda.is_available():
-        model_ft = model_ft.cuda()
+    model_ft = model_ft.to(device)
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
@@ -228,7 +217,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             exp_lr_scheduler.step()
-            model_ft.train(True)
+            model_ft.train()
 
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
@@ -236,12 +225,8 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
                 # inputs, labels = data
                 inputs, labels = data['image'], data['label']
 
-                # wrap them in Variable
-                if torch.cuda.is_available():
-                    model_ft = model_ft.cuda()
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-                else:
-                    inputs, labels = Variable(inputs), Variable(labels)
+                model_ft = model_ft.to(device)
+                inputs, labels = inputs.to(device), labels.to(device)
 
                 # zero the parameter gradients
                 optimizer_ft.zero_grad()
@@ -273,7 +258,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
         print('Loading pre-trained model...')
         model_ft.load_state_dict(torch.load(os.path.join('./model/ft_vgg_m.pth')))
 
-    model_ft.train(False)
+    model_ft.eval()
     correct = 0
     total = 0
 
@@ -281,12 +266,9 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
     for i, data in enumerate(test_loader, 0):
         # images, labels = data
         images, labels = data['image'], data['label']
-        if torch.cuda.is_available():
-            model_ft = model_ft.cuda()
-            labels = labels.cuda()
-            outputs = model_ft.forward(Variable(images.cuda()))
-        else:
-            outputs = model_ft.forward(Variable(images))
+        model_ft = model_ft.to(device)
+        labels = labels.to(device)
+        outputs = model_ft.forward(images.to(device))
 
         outputs = outputs.view(-1, outputs.numel())
         _, predicted = torch.max(outputs.data, 1)
@@ -311,13 +293,13 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
     """
     num_ftrs = model_ft.fc8.in_channels
     model_ft.fc8 = nn.Conv2d(num_ftrs, 1, 1)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
         model_ft = nn.DataParallel(model_ft)
 
-    if torch.cuda.is_available():
-        model_ft = model_ft.cuda()
+    model_ft = model_ft.to(device)
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
@@ -327,19 +309,15 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             exp_lr_scheduler.step()
-            model_ft.train(True)
+            model_ft.train()
 
             running_loss = 0.0
             for i, data in enumerate(train_loader, 0):
                 # get the inputs
                 inputs, labels = data['image'], data['attractiveness']
 
-                # wrap them in Variable
-                if torch.cuda.is_available():
-                    model_ft = model_ft.cuda()
-                    inputs, labels = Variable(inputs.cuda()), Variable(labels.float().cuda())
-                else:
-                    inputs, labels = Variable(inputs), Variable(labels.float())
+                model_ft = model_ft.to(device)
+                inputs, labels = inputs.to(device), labels.float().to(device)
 
                 # zero the parameter gradients
                 optimizer_ft.zero_grad()
@@ -370,18 +348,15 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
         print('Loading pre-trained model...')
         model_ft.load_state_dict(torch.load(os.path.join('./model/anet.pth')))
 
-    model_ft.train(False)
+    model_ft.eval()
     predicted_labels = []
     gt_labels = []
 
     for i, data in enumerate(test_loader, 0):
         images, labels = data['image'], data['attractiveness']
-        if torch.cuda.is_available():
-            model_ft = model_ft.cuda()
-            labels = labels.cuda()
-            outputs = model_ft.forward(Variable(images.cuda()))
-        else:
-            outputs = model_ft.forward(Variable(images))
+        model_ft = model_ft.to(device)
+        labels = labels.to(device)
+        outputs = model_ft.forward(images.to(device))
 
         predicted_labels += outputs.cpu().data.numpy().tolist()
         gt_labels += labels.cpu().numpy().tolist()
@@ -407,13 +382,14 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=F
     :param inference:
     :return:
     """
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     if torch.cuda.device_count() > 1:
         print("We are running on", torch.cuda.device_count(), "GPUs!")
         # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
         hmt_net = nn.DataParallel(hmt_net)
 
-    if torch.cuda.is_available():
-        hmt_net = hmt_net.cuda()
+    hmt_net = hmt_net.to(device)
 
     criterion = HMTLoss()
     optimizer = optim.SGD(hmt_net.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
@@ -424,7 +400,7 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=F
         for epoch in range(num_epochs):  # loop over the dataset multiple times
 
             exp_lr_scheduler.step()
-            hmt_net.train(True)
+            hmt_net.train()
 
             running_loss = 0.0
 
@@ -433,14 +409,9 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=F
                 inputs, gender, race, attractiveness = data['image'], data['gender'], data['race'], \
                                                        data['attractiveness']
 
-                # wrap them in Variable
-                if torch.cuda.is_available():
-                    hmt_net = hmt_net.cuda()
-                    inputs, gender, race, attractiveness = Variable(inputs.cuda()), Variable(gender.cuda()), Variable(
-                        race.cuda()), Variable(attractiveness.float().cuda())
-                else:
-                    inputs, gender, race, attractiveness = Variable(inputs), Variable(gender), Variable(race), \
-                                                           Variable(attractiveness.float())
+                hmt_net = hmt_net.cuda()
+                inputs, gender, race, attractiveness = inputs.to(device), gender.to(device), race.to(
+                    device), attractiveness.float().to(device)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -473,7 +444,7 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=F
         print('Loading pre-trained model...')
         hmt_net.load_state_dict(torch.load(os.path.join('./model/hmt-net.pth')))
 
-    hmt_net.train(False)
+    hmt_net.eval()
 
     predicted_attractiveness_values = []
     gt_attractiveness_values = []
@@ -485,15 +456,12 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=F
     for data in test_loader:
         images, g_gt, r_gt, a_gt = data['image'], data['gender'], data['race'], \
                                    data['attractiveness']
-        if torch.cuda.is_available():
-            hmt_net = hmt_net.cuda()
-            g_gt = g_gt.cuda()
-            r_gt = r_gt.cuda()
-            a_gt = a_gt.cuda()
+        hmt_net = hmt_net.to(device)
+        g_gt = g_gt.to(device)
+        r_gt = r_gt.to(device)
+        a_gt = a_gt.to(device)
 
-            g_pred, r_pred, a_pred = hmt_net.forward(Variable(images.cuda()))
-        else:
-            g_pred, r_pred, a_pred = hmt_net.forward(Variable(images))
+        g_pred, r_pred, a_pred = hmt_net.forward(images.to(device))
 
         predicted_attractiveness_values += a_pred.cpu().data.numpy().tolist()
         gt_attractiveness_values += a_gt.cpu().numpy().tolist()

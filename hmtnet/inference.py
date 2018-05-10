@@ -350,7 +350,8 @@ def infer_and_show_mul_people_img(img_filepath):
 if __name__ == '__main__':
     # feature_viz(os.path.join(cfg['scutfbp5500_images_dir'], 'fty688.jpg'))
 
-    infer_and_show_mul_people_img('./psb.jpg')
+    # infer_and_show_mul_people_img('./psb.jpg')
+    infer_and_show_mul_people_img('./hcl.jpg')
 
     # print(inference('/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))
     # print(cal_elapse('AlexNet', '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/Images/ftw8.jpg'))

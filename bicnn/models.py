@@ -181,3 +181,39 @@ def resnet50(pretrained=False, **kwargs):
 
     return model
 
+
+class BiCNN(nn.Module):
+    """
+    definition of BiCNN
+    """
+
+    def __init__(self):
+        super(BiCNN, self).__init__()
+        self.meta = {'mean': [131.45376586914062, 103.98748016357422, 91.46234893798828],
+                     'std': [1, 1, 1],
+                     'imageSize': [224, 224, 3]}
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
+        self.relu1 = nn.ReLU()
+        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True)
+        self.relu2 = nn.ReLU()
+        self.mpool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.bn3 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
+        self.relu3 = nn.ReLU()
+        self.conv4 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+        self.bn4 = nn.BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True)
+        self.relu4 = nn.ReLU()
+        self.mpool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+
+    def forward(self, x):
+        return x
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features

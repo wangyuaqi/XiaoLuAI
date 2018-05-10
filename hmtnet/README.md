@@ -10,3 +10,6 @@
 * Install 3rd party libraries   
     ````sudo pip3 install -r requirements.txt````
 * Change the [cfg.py file](./cfg.py) to suit your local path
+
+## Paper
+__Hierarchical Multi-task Networks for Race, Gender and Facial Beauty Recognition__ (submitted to ACM MM18)

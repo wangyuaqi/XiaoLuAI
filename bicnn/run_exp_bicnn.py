@@ -28,9 +28,9 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     model = model.to(device)
 
     if not inference:
+        model.train()
         print('Start training Bi-CNN...')
         for epoch in range(num_epochs):
-            model.train()
             scheduler.step()
 
             running_loss = 0.0
@@ -84,7 +84,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
             tmp = 0
             for i in range(1, 6, 1):
                 tmp += out[i - 1] * i
-        predicted_labels.append(tmp)
+            predicted_labels.append(float(tmp.detach().numpy()))
 
         gt_labels += labels.cpu().numpy().tolist()
 
@@ -100,6 +100,10 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
 
 def run_bicnn_scutfbp():
+    """
+    train ResNet18 with 5-Class output
+    :return:
+    """
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
     model_ft.fc = nn.Linear(num_ftrs, 5)
@@ -134,7 +138,7 @@ def run_bicnn_scutfbp():
                                  shuffle=False, num_workers=4)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
-                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=10, inference=True)
+                criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
 def run_bicnn_eccv(cv_split):

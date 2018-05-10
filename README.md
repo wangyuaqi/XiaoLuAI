@@ -7,13 +7,13 @@
 ## Prerequisites
    In order to make use of this repo, you should have several libraries or frameworks installed on your machine.
    
-   >[TensorFlow](https://www.tensorflow.org/)   
-   >[OpenCV3](http://www.opencv.org/)   
-   >[Python3](https://www.python.org/)  
-   >[requests](http://www.python-requests.org/en/master/)     
-   >[itchat](https://pypi.python.org/pypi/itchat/1.3.5)    
-   >[BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.html)  
-   >[PyTorch](http://pytorch.org/)
+   * [TensorFlow](https://www.tensorflow.org/)   
+   * [OpenCV3](http://www.opencv.org/)   
+   * [Python3](https://www.python.org/)  
+   * [requests](http://www.python-requests.org/en/master/)     
+   * [itchat](https://pypi.python.org/pypi/itchat/1.3.5)    
+   * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/index.html)  
+   * [PyTorch](http://pytorch.org/)
   
 ## How to use
     sudo pip3 install -r requirements.txt

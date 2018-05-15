@@ -12,6 +12,8 @@ from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
+from bicnn.models import BiCNN
+from bicnn.losses import BiLoss
 from bicnn.data_loder import ScutFBPDataset, HotOrNotDataset
 from bicnn.utils import mkdirs_if_not_exist
 from bicnn.cfg import cfg
@@ -35,18 +37,20 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
-                inputs, labels = data['image'], data['score']
+                inputs, scores, classes = data['image'], data['score'], data['class']
 
                 inputs = inputs.to(device)
-                labels = labels.to(device)
+                scores = scores.to(device)
+                classes = classes.to(device)
 
                 optimizer.zero_grad()
 
                 inputs = inputs.float()
-                labels = labels.float().view(cfg['batch_size'], 1)
+                scores = scores.float().view(cfg['batch_size'], 1)
+                # classes = classes.int().view(cfg['batch_size'], 5)
 
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
+                reg_out, cls_out = model(inputs)
+                loss = criterion(cls_out, classes, reg_out, scores)
                 loss.backward()
                 optimizer.step()
 
@@ -73,13 +77,12 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     predicted_labels = []
     gt_labels = []
     for data in test_dataloader:
-        images, labels = data['image'], data['score']
-        labels = labels.to(device)
+        images, scores, classes = data['image'], data['score'], data['class']
         images = images.to(device)
-        outputs = model.forward(images)
+        scores = scores.to(device)
+        classes = classes.to(device)
 
-        predicted_labels += outputs.cpu().data.numpy().tolist()
-        gt_labels += labels.cpu().numpy().tolist()
+        reg_out, cls_out = model.forward(images)
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -92,14 +95,14 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Pearson Correlation of Bi-CNN is {0}===================='.format(pc))
 
 
-def run_bicnn_scutfbp():
-    model_ft = models.resnet18(pretrained=True)
-    num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 1)
+def run_bicnn_scutfbp(model):
+    # model_ft = models.resnet18(pretrained=True)
+    # num_ftrs = model_ft.fc.in_features
+    # model_ft.fc = nn.Linear(num_ftrs, 1)
 
-    criterion = nn.MSELoss()
+    criterion = BiLoss()
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
@@ -124,7 +127,7 @@ def run_bicnn_scutfbp():
     test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
                                  shuffle=False, num_workers=4)
 
-    train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
+    train_model(model=model, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
@@ -171,5 +174,5 @@ def run_bicnn_eccv(cv_split):
 
 
 if __name__ == '__main__':
-    run_bicnn_scutfbp()
+    run_bicnn_scutfbp(model=BiCNN())
     # run_bicnn_eccv(cv_split=1)

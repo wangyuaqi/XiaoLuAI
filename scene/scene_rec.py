@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
-from scene import cfg
+from scene.cfg import cfg
 from scene.data_loader import IndoorDataset
 
 
@@ -40,6 +40,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
+                print(i)
                 inputs, labels = data['image'], data['class']
 
                 inputs = inputs.to(device)

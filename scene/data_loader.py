@@ -27,13 +27,15 @@ class IndoorDataset(Dataset):
         if train:
             with open(os.path.join(cfg['base_dir'], 'TrainImages.txt'), mode='rt') as f:
                 for line in f.readlines():
-                    img_file_list.append(line.strip().replace('\n', ''))
+                    # img_file_list.append(line.strip().replace('\n', ''))
+                    img_file_list.append(line.split('/')[1].strip().replace('\n', ''))
                     img_label_list.append(mapping[line.split('/')[0]])
                     img_category_list.append(line.split('/')[0])
         else:
             with open(os.path.join(cfg['base_dir'], 'TestImages.txt'), mode='rt') as f:
                 for line in f.readlines():
-                    img_file_list.append(line.strip().replace('\n', ''))
+                    # img_file_list.append(line.strip().replace('\n', ''))
+                    img_file_list.append(line.split('/')[1].strip().replace('\n', ''))
                     img_label_list.append(mapping[line.split('/')[0]])
                     img_category_list.append(line.split('/')[0])
 
@@ -46,7 +48,9 @@ class IndoorDataset(Dataset):
         return len(self.files)
 
     def __getitem__(self, idx):
-        image = io.imread(os.path.join(cfg['base_dir'], 'Images', self.files[idx]))
+        # image = io.imread(os.path.join(cfg['base_dir'], 'Images', self.files[idx]))
+        print(os.path.join(cfg['base_dir'], 'Images', self.categories[idx], self.files[idx]))
+        image = io.imread(os.path.join(cfg['base_dir'], 'Images', self.categories[idx], self.files[idx]))
         cls = self.labels[idx]
 
         sample = {'image': image, 'class': cls}

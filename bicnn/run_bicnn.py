@@ -74,15 +74,18 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
     model.eval()
 
+    print('Start testing Bi-CNN...')
     predicted_labels = []
     gt_labels = []
     for data in test_dataloader:
         images, scores, classes = data['image'], data['score'], data['class']
         images = images.to(device)
-        scores = scores.to(device)
         classes = classes.to(device)
 
         reg_out, cls_out = model.forward(images)
+
+        predicted_labels += reg_out.to("cpu").detach().numpy().tolist()
+        gt_labels += scores.to("cpu").detach().numpy().tolist()
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -96,10 +99,6 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
 
 def run_bicnn_scutfbp(model):
-    # model_ft = models.resnet18(pretrained=True)
-    # num_ftrs = model_ft.fc.in_features
-    # model_ft.fc = nn.Linear(num_ftrs, 1)
-
     criterion = BiLoss()
 
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
@@ -123,9 +122,9 @@ def run_bicnn_scutfbp(model):
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
-                                  shuffle=True, num_workers=4)
+                                  shuffle=True, num_workers=4, drop_last=True)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
-                                 shuffle=False, num_workers=4)
+                                 shuffle=False, num_workers=4, drop_last=True)
 
     train_model(model=model, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)

@@ -30,7 +30,7 @@ class ScutFBPDataset(Dataset):
         image = io.imread(os.path.join(cfg['scut_fbp_dir'], 'SCUT-FBP-%d.jpg' % self.face_files[idx]))
         score = self.face_score[idx]
 
-        sample = {'image': image, 'score': score, 'class': round(score)}
+        sample = {'image': image, 'score': score, 'class': round(score) - 1}
 
         if self.transform:
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))

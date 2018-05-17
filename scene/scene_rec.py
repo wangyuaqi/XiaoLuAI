@@ -40,7 +40,6 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
-                print(i)
                 inputs, labels = data['image'], data['class']
 
                 inputs = inputs.to(device)
@@ -115,7 +114,8 @@ def run_resnet18_on_indoor():
         transforms.Resize(256),
         transforms.RandomCrop(224),
         transforms.RandomRotation(30),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ]))
 
     test_dataset = IndoorDataset(train=False, transform=transforms.Compose([
@@ -123,7 +123,8 @@ def run_resnet18_on_indoor():
         transforms.Resize(256),
         transforms.RandomCrop(224),
         transforms.RandomRotation(30),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],

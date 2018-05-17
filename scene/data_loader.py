@@ -3,6 +3,7 @@ import os
 import sys
 
 import numpy as np
+from skimage import img_as_float
 from PIL import Image
 from skimage import io
 from torch.utils.data import Dataset
@@ -27,14 +28,12 @@ class IndoorDataset(Dataset):
         if train:
             with open(os.path.join(cfg['base_dir'], 'TrainImages.txt'), mode='rt') as f:
                 for line in f.readlines():
-                    # img_file_list.append(line.strip().replace('\n', ''))
                     img_file_list.append(line.split('/')[1].strip().replace('\n', ''))
                     img_label_list.append(mapping[line.split('/')[0]])
                     img_category_list.append(line.split('/')[0])
         else:
             with open(os.path.join(cfg['base_dir'], 'TestImages.txt'), mode='rt') as f:
                 for line in f.readlines():
-                    # img_file_list.append(line.strip().replace('\n', ''))
                     img_file_list.append(line.split('/')[1].strip().replace('\n', ''))
                     img_label_list.append(mapping[line.split('/')[0]])
                     img_category_list.append(line.split('/')[0])

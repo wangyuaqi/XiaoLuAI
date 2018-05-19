@@ -7,7 +7,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.autograd import Variable
 from torchvision import transforms, datasets
 
 CLASS_NUM = 3
@@ -15,11 +14,11 @@ EPOCH = 30
 BATCH = 16
 # IMAGE_SIZE = 224
 IMAGE_SIZE = 128
-LR_INIT = 1e-5
-WEIGHT_DECAY = 1e-2
+LR_INIT = 1e-3
+WEIGHT_DECAY = 1e-4
 
 
-def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages', type='train'):
+def prepare_data(root_dir='E:/DataSet/CV/TrainAndTestPornImages', type='train'):
     """
     build dataloader
     :param type: train for trainset, test for testset
@@ -27,8 +26,10 @@ def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornIma
     :return:
     """
     data_transform = transforms.Compose([
-        transforms.RandomSizedCrop(IMAGE_SIZE),
+        transforms.Resize(160),
+        transforms.RandomCrop(IMAGE_SIZE),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
                              std=[0.5, 0.5, 0.5])
@@ -36,7 +37,7 @@ def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornIma
     hymenoptera_dataset = datasets.ImageFolder(root=os.path.join(root_dir, type),
                                                transform=data_transform)
     dataset_loader = torch.utils.data.DataLoader(hymenoptera_dataset,
-                                                 batch_size=BATCH, shuffle=True,
+                                                 batch_size=BATCH, shuffle=True if type == 'train' else False,
                                                  num_workers=4)
 
     return dataset_loader
@@ -45,25 +46,22 @@ def prepare_data(root_dir='/media/lucasx/Document/DataSet/CV/TrainAndTestPornIma
 class PRNet(nn.Module):
     """Porn Recognition Network"""
 
-    def __init__(self):
+    def __init__(self, num_class=3):
         super(PRNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, 5, stride=1)
         self.conv2 = nn.Conv2d(64, 256, 3)
         self.conv3 = nn.Conv2d(256, 512, 3)
         self.conv4 = nn.Conv2d(512, 64, 1)
-        self.fc1 = nn.Linear(64 * 8 * 8, 3, nn.Dropout(0.5))
+        self.fc1 = nn.Linear(64 * 8 * 8, num_class, nn.Dropout(0.5))
         # self.fc2 = nn.Linear(256, 3, nn.Dropout(0.5))
 
     def forward(self, x):
-        # Max pooling over a (2, 2) window
         x = F.max_pool2d(F.relu(self.conv1(x)), 3)
-        # If the size is a square you can only specify a single number
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = F.max_pool2d(F.relu(self.conv3(x)), 2)
         x = self.conv4(x)
         x = x.view(-1, self.num_flat_features(x))
-        x = F.relu(self.fc1(x))
-        x = F.log_softmax(x)
+        x = self.fc1(x)
 
         return x
 
@@ -142,9 +140,14 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     :return:
     """
     net = PRNet()
+    net.train()
     # net = MobileNet()
-    if torch.cuda.is_available():
-        net = net.cuda()
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        net = nn.DataParallel(net)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    net = net.to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=LR_INIT, momentum=0.9, weight_decay=WEIGHT_DECAY)
@@ -153,13 +156,9 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     for epoch in range(EPOCH):  # loop over the dataset multiple times
 
         running_loss = 0.0
-        for i_batch, sample_batched in enumerate(trainloader):
+        for i_batch, sample_batched in enumerate(trainloader, 0):
             inputs, labels = sample_batched
-            if torch.cuda.is_available():
-                inputs = Variable(inputs.cuda())
-                labels = Variable(labels.cuda())
-            else:
-                inputs, labels = Variable(inputs), Variable(labels)
+            inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
             outputs = net.forward(inputs)
@@ -168,10 +167,10 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
             optimizer.step()
 
             # print statistics
-            running_loss += loss.data[0]
-            if i_batch % 100 == 0:
+            running_loss += loss.item()
+            if i_batch % 50 == 49:
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i_batch + 1, running_loss / 2000))
+                      (epoch + 1, i_batch + 1, running_loss / 50))
                 running_loss = 0.0
 
                 print("Save model to %sprnet.pth" % model_path_dir)
@@ -186,11 +185,10 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
     total = 0
     for data in testloader:
         images, labels = data
-        if torch.cuda.is_available():
-            images = images.cuda()
-            labels = labels.cuda()
+        images = images.to(device)
+        labels = labels.to(device)
 
-        outputs = net(Variable(images))
+        outputs = net(images)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -206,7 +204,7 @@ def train_and_test(trainloader, testloader, model_path_dir='./model/'):
             images = images.cuda()
             labels = labels.cuda()
 
-        outputs = net(Variable(images))
+        outputs = net(images)
         _, predicted = torch.max(outputs.data, 1)
         c = (predicted == labels).squeeze()
         for i in range(3):
@@ -227,19 +225,25 @@ def inference(testloader):
     :param testloader:
     :return:
     """
-    # net = PRNet()
-    net = MobileNet()
+    net = PRNet()
+    # net = MobileNet()
+
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        net = nn.DataParallel(net)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     net.load_state_dict(torch.load('./model/prnet.pth'))
     correct = 0
     total = 0
     for data in testloader:
         images, labels = data
-        if torch.cuda.is_available():
-            net = net.cuda()
-            images = images.cuda()
-            labels = labels.cuda()
+        net = net.to(device)
+        images = images.to(device)
+        labels = labels.to(device)
 
-        outputs = net(Variable(images))
+        outputs = net(images)
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum()
@@ -251,11 +255,10 @@ def inference(testloader):
     class_total = list(0. for i in range(3))
     for data in testloader:
         images, labels = data
-        if torch.cuda.is_available():
-            images = images.cuda()
-            labels = labels.cuda()
+        images = images.to(device)
+        labels = labels.to(device)
 
-        outputs = net(Variable(images))
+        outputs = net(images)
         _, predicted = torch.max(outputs.data, 1)
         c = (predicted == labels).squeeze()
         for i in range(3):

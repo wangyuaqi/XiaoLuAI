@@ -10,7 +10,7 @@ import torch.optim as optim
 from torchvision import transforms, datasets
 
 CLASS_NUM = 3
-EPOCH = 80
+EPOCH = 100
 BATCH = 16
 # IMAGE_SIZE = 224
 IMAGE_SIZE = 128
@@ -258,7 +258,7 @@ def inference(testloader):
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)
             c = (predicted == labels).squeeze()
-            for i in range(4):
+            for i in range(3):
                 label = labels[i]
                 class_correct[label] += c[i].item()
                 class_total[label] += 1

@@ -15,7 +15,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 
-BASE_DIR = '/media/lucasx/Document/DataSet/CV/TrainAndTestPornImages'
+BASE_DIR = 'E:/DataSet/CV/TrainAndTestPornImages'
 
 
 def get_skin_area(image_filepath):

@@ -10,12 +10,12 @@ import torch.optim as optim
 from torchvision import transforms, datasets
 
 CLASS_NUM = 3
-EPOCH = 30
+EPOCH = 80
 BATCH = 16
 # IMAGE_SIZE = 224
 IMAGE_SIZE = 128
 LR_INIT = 1e-3
-WEIGHT_DECAY = 1e-4
+WEIGHT_DECAY = 1e-5
 
 
 def prepare_data(root_dir='E:/DataSet/CV/TrainAndTestPornImages', type='train'):
@@ -250,27 +250,21 @@ def inference(testloader):
 
     print('Accuracy of the network on the test images: %d %%' % (100 * correct / total))
 
-    classes = [0, 1, 2]
-    class_correct = list(0. for i in range(3))
-    class_total = list(0. for i in range(3))
-    for data in testloader:
-        images, labels = data
-        images = images.to(device)
-        labels = labels.to(device)
+    class_correct = list(0. for i in range(10))
+    class_total = list(0. for i in range(10))
+    with torch.no_grad():
+        for data in testloader:
+            images, labels = data
+            outputs = net(images)
+            _, predicted = torch.max(outputs, 1)
+            c = (predicted == labels).squeeze()
+            for i in range(4):
+                label = labels[i]
+                class_correct[label] += c[i].item()
+                class_total[label] += 1
 
-        outputs = net(images)
-        _, predicted = torch.max(outputs.data, 1)
-        c = (predicted == labels).squeeze()
-        for i in range(3):
-            label = labels[i]
-            class_correct[label] += c[i]
-            class_total[label] += 1
-
-    print('=' * 100)
     for i in range(3):
-        print('Accuracy of type %5s : %2d %%' % (
-            classes[i], 100 * class_correct[i] / class_total[i]))
-    print('=' * 100)
+        print('Accuracy of %d : %2d %%' % (i, 100 * class_correct[i] / class_total[i]))
 
 
 if __name__ == '__main__':

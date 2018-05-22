@@ -47,7 +47,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
                 inputs = inputs.float()
                 scores = scores.float().view(cfg['batch_size'], 1)
-                # classes = classes.int().view(cfg['batch_size'], 5)
+                classes = classes.int().view(cfg['batch_size'], 3)
 
                 reg_out, cls_out = model(inputs)
                 loss = criterion(cls_out, classes, reg_out, scores)
@@ -98,7 +98,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Pearson Correlation of CRNet is {0}===================='.format(pc))
 
 
-def run_bicnn_scutfbp(model, epoch=100):
+def run_bicnn_scutfbp(model, epoch=30):
     criterion = CRLoss()
 
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
@@ -137,7 +137,7 @@ def run_bicnn_scutfbp(model, epoch=100):
                 inference=False)
 
 
-def run_bicnn_eccv(model, cv_split=1, epoch=100):
+def run_bicnn_eccv(model, cv_split=1, epoch=30):
     """
     train and test ECCV HotOrNot dataset
     :param cv_split:
@@ -184,4 +184,4 @@ def run_bicnn_eccv(model, cv_split=1, epoch=100):
 
 if __name__ == '__main__':
     # run_bicnn_scutfbp(model=CRNet(), epoch=80)
-    run_bicnn_eccv(model=CRNet(), cv_split=1, epoch=50)
+    run_bicnn_eccv(model=CRNet(), cv_split=1, epoch=30)

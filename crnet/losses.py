@@ -1,13 +1,13 @@
 import torch.nn as nn
 
 
-class BiLoss(nn.Module):
+class CRLoss(nn.Module):
     """
-    BiLoss definition
+    CRLoss definition
     """
 
     def __init__(self, cls_w=0.4, reg_w=0.6):
-        super(BiLoss, self).__init__()
+        super(CRLoss, self).__init__()
 
         self.cls_w = cls_w
         self.reg_w = reg_w
@@ -19,6 +19,6 @@ class BiLoss(nn.Module):
         class_loss = self.class_criterion(cls_pred, cls_gt)
         regression_loss = self.regression_criterion(score_pred, score_gt)
 
-        bi_loss = self.cls_w * class_loss + self.reg_w * regression_loss
+        cr_loss = self.cls_w * class_loss + self.reg_w * regression_loss
 
-        return bi_loss
+        return cr_loss

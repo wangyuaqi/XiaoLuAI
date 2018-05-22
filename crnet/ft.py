@@ -13,9 +13,9 @@ from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
-from bicnn.data_loder import ScutFBPDataset, HotOrNotDataset, ScutFBPExpDataset, HotOrNotExpDataset
-from bicnn.utils import mkdirs_if_not_exist
-from bicnn.cfg import cfg
+from crnet.data_loder import ScutFBPDataset, HotOrNotExpDataset
+from crnet.utils import mkdirs_if_not_exist
+from crnet.cfg import cfg
 
 
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
@@ -29,64 +29,60 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
     if not inference:
         model.train()
-        print('Start training Bi-CNN...')
+        print('Start training NN...')
         for epoch in range(num_epochs):
             scheduler.step()
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
-                inputs, labels = data['image'], data['score']
+                inputs, scores, classes = data['image'], data['score'], data['class']
 
                 inputs = inputs.to(device)
-                labels = labels.to(device)
+                scores = scores.to(device)
+                classes = classes.to(device)
 
                 optimizer.zero_grad()
 
                 inputs = inputs.float()
-                # labels = labels.float().view(cfg['batch_size'], 5)
+                scores = scores.float().view(cfg['batch_size'], 1)
 
                 outputs = model(inputs)
 
-                loss = criterion(outputs, labels)
+                loss = criterion(outputs, scores)
                 loss.backward()
                 optimizer.step()
 
                 # print statistics
                 running_loss += loss.item()
-                if i % 50 == 49:  # print every 50 mini-batches
+                if i % 10 == 9:  # print every 10 mini-batches
                     print('[%d, %5d] loss: %.3f' %
-                          (epoch + 1, i + 1, running_loss / 50))
+                          (epoch + 1, i + 1, running_loss / 10))
                     running_loss = 0.0
 
-        print('Finished training Bi-CNN...\n')
+        print('Finished training NN...\n')
         print('Saving trained model...')
         model_path_dir = './model'
         mkdirs_if_not_exist(model_path_dir)
-        torch.save(model.state_dict(), os.path.join(model_path_dir, 'exp-bi-cnn.pth'))
+        torch.save(model.state_dict(), os.path.join(model_path_dir, 'vgg.pth'))
         print('Bi-CNN has been saved successfully~')
 
     else:
         print('Loading pre-trained model...')
-        model.load_state_dict(torch.load(os.path.join('./model/exp-bi-cnn.pth')))
+        model.load_state_dict(torch.load(os.path.join('./model/vgg.pth')))
 
     model.eval()
 
     predicted_labels = []
     gt_labels = []
     for data in test_dataloader:
-        images, labels = data['image'], data['score']
-        labels = labels.to(device)
+        images, scores, classes = data['image'], data['score'], data['class']
         images = images.to(device)
-        outputs = model.forward(images)
-        # _, predicted = torch.max(outputs.data, 1)
+        classes = classes.to(device)
 
-        for out in F.softmax(outputs).to("cpu"):
-            tmp = 0
-            for i in range(1, 6, 1):
-                tmp += out[i - 1] * i
-            predicted_labels.append(float(tmp.detach().numpy()))
+        reg_out = model.forward(images)
 
-        gt_labels += labels.cpu().numpy().tolist()
+        predicted_labels += reg_out.to("cpu").detach().numpy().tolist()
+        gt_labels += scores.to("cpu").detach().numpy().tolist()
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -101,14 +97,14 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
 def run_bicnn_scutfbp():
     """
-    train ResNet18 with 5-Class output
+    fine-tune ResNet18
     :return:
     """
-    model_ft = models.resnet18(pretrained=True)
+    model_ft = models.resnet18(pretrained=False)
     num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 5)
+    model_ft.fc = nn.Linear(num_ftrs, 1)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
 
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
@@ -118,14 +114,14 @@ def run_bicnn_scutfbp():
     X_train, X_test, y_train, y_test = train_test_split(df['Image'].tolist(), df['Attractiveness label'],
                                                         test_size=0.2, random_state=0)
 
-    train_dataset = ScutFBPExpDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
+    train_dataset = ScutFBPDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
-    test_dataset = ScutFBPExpDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
+    test_dataset = ScutFBPDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(224),
         transforms.RandomRotation(30),
@@ -133,9 +129,9 @@ def run_bicnn_scutfbp():
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
-                                  shuffle=True, num_workers=4)
+                                  shuffle=True, num_workers=4, drop_last=True)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
-                                 shuffle=False, num_workers=4)
+                                 shuffle=False, num_workers=4, drop_last=True)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
@@ -149,9 +145,9 @@ def run_bicnn_eccv(cv_split):
     """
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 7)
+    model_ft.fc = nn.Linear(num_ftrs, 1)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.MSELoss()
 
     # Observe that all parameters are being optimized
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
@@ -184,4 +180,8 @@ def run_bicnn_eccv(cv_split):
 
 if __name__ == '__main__':
     # run_bicnn_scutfbp()
-    run_bicnn_eccv(cv_split=1)
+    # run_bicnn_eccv(cv_split=1)
+
+    model_ft = models.resnet18(pretrained=False)
+    for name, module in model_ft.named_children():
+        print(name, '>', module)

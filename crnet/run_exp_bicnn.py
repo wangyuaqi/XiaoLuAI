@@ -7,21 +7,19 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
+import torch.nn.functional as F
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
-from bicnn.models import BiCNN
-from bicnn.losses import BiLoss
-from bicnn.data_loder import ScutFBPDataset, HotOrNotDataset
-from bicnn.utils import mkdirs_if_not_exist
-from bicnn.cfg import cfg
+from crnet.data_loder import ScutFBPDataset, HotOrNotDataset, ScutFBPExpDataset, HotOrNotExpDataset
+from crnet.utils import mkdirs_if_not_exist
+from crnet.cfg import cfg
 
 
 def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, scheduler, num_epochs=25,
                 inference=False):
-    model = model.float()
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     if torch.cuda.device_count() > 1:
@@ -30,27 +28,26 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     model = model.to(device)
 
     if not inference:
+        model.train()
         print('Start training Bi-CNN...')
         for epoch in range(num_epochs):
-            model.train()
             scheduler.step()
 
             running_loss = 0.0
             for i, data in enumerate(train_dataloader, 0):
-                inputs, scores, classes = data['image'], data['score'], data['class']
+                inputs, labels = data['image'], data['score']
 
                 inputs = inputs.to(device)
-                scores = scores.to(device)
-                classes = classes.to(device)
+                labels = labels.to(device)
 
                 optimizer.zero_grad()
 
                 inputs = inputs.float()
-                scores = scores.float().view(cfg['batch_size'], 1)
-                # classes = classes.int().view(cfg['batch_size'], 5)
+                # labels = labels.float().view(cfg['batch_size'], 5)
 
-                reg_out, cls_out = model(inputs)
-                loss = criterion(cls_out, classes, reg_out, scores)
+                outputs = model(inputs)
+
+                loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
 
@@ -65,27 +62,31 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
         print('Saving trained model...')
         model_path_dir = './model'
         mkdirs_if_not_exist(model_path_dir)
-        torch.save(model.state_dict(), os.path.join(model_path_dir, 'bi-cnn.pth'))
+        torch.save(model.state_dict(), os.path.join(model_path_dir, 'exp-bi-cnn.pth'))
         print('Bi-CNN has been saved successfully~')
 
     else:
         print('Loading pre-trained model...')
-        model.load_state_dict(torch.load(os.path.join('./model/bi-cnn.pth')))
+        model.load_state_dict(torch.load(os.path.join('./model/exp-bi-cnn.pth')))
 
     model.eval()
 
-    print('Start testing Bi-CNN...')
     predicted_labels = []
     gt_labels = []
     for data in test_dataloader:
-        images, scores, classes = data['image'], data['score'], data['class']
+        images, labels = data['image'], data['score']
+        labels = labels.to(device)
         images = images.to(device)
-        classes = classes.to(device)
+        outputs = model.forward(images)
+        # _, predicted = torch.max(outputs.data, 1)
 
-        reg_out, cls_out = model.forward(images)
+        for out in F.softmax(outputs).to("cpu"):
+            tmp = 0
+            for i in range(1, 6, 1):
+                tmp += out[i - 1] * i
+            predicted_labels.append(float(tmp.detach().numpy()))
 
-        predicted_labels += reg_out.to("cpu").detach().numpy().tolist()
-        gt_labels += scores.to("cpu").detach().numpy().tolist()
+        gt_labels += labels.cpu().numpy().tolist()
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -98,10 +99,18 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Pearson Correlation of Bi-CNN is {0}===================='.format(pc))
 
 
-def run_bicnn_scutfbp(model):
-    criterion = BiLoss()
+def run_bicnn_scutfbp():
+    """
+    train ResNet18 with 5-Class output
+    :return:
+    """
+    model_ft = models.resnet18(pretrained=True)
+    num_ftrs = model_ft.fc.in_features
+    model_ft.fc = nn.Linear(num_ftrs, 5)
 
-    optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
+    criterion = nn.CrossEntropyLoss()
+
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
@@ -109,26 +118,26 @@ def run_bicnn_scutfbp(model):
     X_train, X_test, y_train, y_test = train_test_split(df['Image'].tolist(), df['Attractiveness label'],
                                                         test_size=0.2, random_state=0)
 
-    print('start loading SCUT-FBP dataset...')
-    train_dataset = ScutFBPDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
+    train_dataset = ScutFBPExpDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
+        transforms.ColorJitter(),
         transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
-    test_dataset = ScutFBPDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
+    test_dataset = ScutFBPExpDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
+        transforms.ColorJitter(),
         transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
-                                  shuffle=True, num_workers=4, drop_last=True)
+                                  shuffle=True, num_workers=4)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
-                                 shuffle=False, num_workers=4, drop_last=True)
+                                 shuffle=False, num_workers=4)
 
-    print('finish loading SCUT-FBP dataset...')
-    train_model(model=model, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
+    train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
@@ -140,43 +149,39 @@ def run_bicnn_eccv(cv_split):
     """
     model_ft = models.resnet18(pretrained=True)
     num_ftrs = model_ft.fc.in_features
-    model_ft.fc = nn.Linear(num_ftrs, 1)
+    model_ft.fc = nn.Linear(num_ftrs, 7)
 
-    criterion = nn.MSELoss()
+    criterion = nn.CrossEntropyLoss()
 
     # Observe that all parameters are being optimized
     optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
-    print('start loading ECCV HotOrNot dataset...')
-    train_dataset = HotOrNotDataset(cv_split=cv_split, train=True, transform=transforms.Compose([
-        transforms.Resize(224),
+    train_dataset = HotOrNotExpDataset(cv_split=cv_split, train=True, transform=transforms.Compose([
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
         transforms.RandomRotation(30),
-        transforms.Normalize(mean=[131.45376586914062, 103.98748016357422, 91.46234893798828],
-                             std=[1, 1, 1]),
         transforms.ToTensor()
     ]))
 
-    test_dataset = HotOrNotDataset(cv_split=cv_split, train=False, transform=transforms.Compose([
-        transforms.Resize(224),
+    test_dataset = HotOrNotExpDataset(cv_split=cv_split, train=False, transform=transforms.Compose([
+        transforms.ColorJitter(),
+        transforms.Resize(256),
+        transforms.RandomCrop(224),
         transforms.RandomRotation(30),
-        transforms.Normalize(mean=[131.45376586914062, 103.98748016357422, 91.46234893798828],
-                             std=[1, 1, 1]),
         transforms.ToTensor()
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],
-                                  shuffle=True, num_workers=4, drop_last=True)
+                                  shuffle=True, num_workers=4)
     test_dataloader = DataLoader(test_dataset, batch_size=cfg['batch_size'],
-                                 shuffle=False, num_workers=4, drop_last=True)
-
-    print('finish loading ECCV HotOrNot dataset...')
+                                 shuffle=False, num_workers=4)
 
     train_model(model=model_ft, train_dataloader=train_dataloader, test_dataloader=test_dataloader,
                 criterion=criterion, optimizer=optimizer_ft, scheduler=exp_lr_scheduler, num_epochs=50, inference=False)
 
 
 if __name__ == '__main__':
-    run_bicnn_scutfbp(model=BiCNN())
-    # run_bicnn_eccv(cv_split=1)
+    # run_bicnn_scutfbp()
+    run_bicnn_eccv(cv_split=1)

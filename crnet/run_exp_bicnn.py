@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchvision import models, transforms
 
 sys.path.append('../')
-from crnet.data_loder import ScutFBPDataset, HotOrNotDataset, ScutFBPExpDataset, HotOrNotExpDataset
+from crnet.data_loder import ScutFBPDataset, HotOrNotDataset
 from crnet.utils import mkdirs_if_not_exist
 from crnet.cfg import cfg
 
@@ -118,14 +118,14 @@ def run_bicnn_scutfbp():
     X_train, X_test, y_train, y_test = train_test_split(df['Image'].tolist(), df['Attractiveness label'],
                                                         test_size=0.2, random_state=0)
 
-    train_dataset = ScutFBPExpDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
+    train_dataset = ScutFBPDataset(f_list=X_train, f_labels=y_train, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
-    test_dataset = ScutFBPExpDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
+    test_dataset = ScutFBPDataset(f_list=X_test, f_labels=y_test, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(224),
         transforms.RandomRotation(30),
@@ -158,14 +158,14 @@ def run_bicnn_eccv(cv_split):
 
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=20, gamma=0.1)
 
-    train_dataset = HotOrNotExpDataset(cv_split=cv_split, train=True, transform=transforms.Compose([
+    train_dataset = HotOrNotDataset(cv_split=cv_split, train=True, transform=transforms.Compose([
         transforms.Resize(256),
         transforms.RandomCrop(224),
         transforms.RandomRotation(30),
         transforms.ToTensor()
     ]))
 
-    test_dataset = HotOrNotExpDataset(cv_split=cv_split, train=False, transform=transforms.Compose([
+    test_dataset = HotOrNotDataset(cv_split=cv_split, train=False, transform=transforms.Compose([
         transforms.ColorJitter(),
         transforms.Resize(256),
         transforms.RandomCrop(224),

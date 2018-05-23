@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from torch.optim import lr_scheduler
 from torch.utils.data import DataLoader
@@ -47,7 +48,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
                 inputs = inputs.float()
                 scores = scores.float().view(cfg['batch_size'], 1)
-                classes = classes.int().view(cfg['batch_size'], 3)
+                # classes = classes.int().view(cfg['batch_size'], 3)
 
                 reg_out, cls_out = model(inputs)
                 loss = criterion(cls_out, classes, reg_out, scores)
@@ -80,9 +81,17 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     for data in test_dataloader:
         images, scores, classes = data['image'], data['score'], data['class']
         images = images.to(device)
-        classes = classes.to(device)
 
         reg_out, cls_out = model.forward(images)
+
+        # bat_list = []
+        # for out in F.softmax(cls_out).to("cpu"):
+        #     tmp = 0
+        #     for i in range(0, 3, 1):
+        #         tmp += out[i] * (i - 1)
+        #     bat_list.append(float(tmp.detach().numpy()))
+
+        # predicted_labels += (0.6 * reg_out.to("cpu").detach().numpy() + 0.4 * np.array(bat_list)).tolist()
 
         predicted_labels += reg_out.to("cpu").detach().numpy().tolist()
         gt_labels += scores.to("cpu").detach().numpy().tolist()
@@ -157,7 +166,7 @@ def run_bicnn_eccv(model, cv_split=1, epoch=30):
         transforms.ColorJitter(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                             std=[0.5, 0.5, 0.5])
+                             std=[1, 1, 1])
     ]))
 
     test_dataset = HotOrNotDataset(cv_split=cv_split, train=False, transform=transforms.Compose([
@@ -167,7 +176,7 @@ def run_bicnn_eccv(model, cv_split=1, epoch=30):
         transforms.ColorJitter(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                             std=[0.5, 0.5, 0.5])
+                             std=[1, 1, 1])
     ]))
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg['batch_size'],

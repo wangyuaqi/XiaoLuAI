@@ -106,6 +106,11 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Root Mean Square Error of CRNet is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of CRNet is {0}===================='.format(pc))
 
+    col = ['gt', 'pred']
+    df = pd.DataFrame([[gt_labels[i], predicted_labels[i][0]] for i in range(len(gt_labels))], columns=col)
+    df.to_excel("./output.xlsx", sheet_name='Output', index=False)
+    print('Output Excel has been generated~')
+
 
 def run_bicnn_scutfbp(model, epoch=30):
     criterion = CRLoss()

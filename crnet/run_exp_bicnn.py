@@ -98,6 +98,10 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Root Mean Square Error of Bi-CNN is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of Bi-CNN is {0}===================='.format(pc))
 
+    col = ['gt', 'pred']
+    df = pd.DataFrame([gt_labels, predicted_labels], columns=col)
+    df.to_excel("./output.xlsx", sheet_name='Output', index=False)
+
 
 def run_bicnn_scutfbp():
     """

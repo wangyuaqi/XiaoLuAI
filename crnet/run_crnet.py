@@ -78,8 +78,9 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('Start testing CRNet...')
     predicted_labels = []
     gt_labels = []
+    filenames = []
     for data in test_dataloader:
-        images, scores, classes = data['image'], data['score'], data['class']
+        images, scores, classes, filename = data['image'], data['score'], data['class'], data['filename']
         images = images.to(device)
 
         reg_out, cls_out = model.forward(images)
@@ -95,6 +96,7 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
 
         predicted_labels += reg_out.to("cpu").detach().numpy().tolist()
         gt_labels += scores.to("cpu").detach().numpy().tolist()
+        filenames += filename
 
     from sklearn.metrics import mean_absolute_error, mean_squared_error
 
@@ -106,13 +108,14 @@ def train_model(model, train_dataloader, test_dataloader, criterion, optimizer, 
     print('===============The Root Mean Square Error of CRNet is {0}===================='.format(rmse_lr))
     print('===============The Pearson Correlation of CRNet is {0}===================='.format(pc))
 
-    col = ['gt', 'pred']
-    df = pd.DataFrame([[gt_labels[i], predicted_labels[i][0]] for i in range(len(gt_labels))], columns=col)
+    col = ['filename', 'gt', 'pred']
+    df = pd.DataFrame([[filenames[i], gt_labels[i], predicted_labels[i][0]] for i in range(len(gt_labels))],
+                      columns=col)
     df.to_excel("./output.xlsx", sheet_name='Output', index=False)
     print('Output Excel has been generated~')
 
 
-def run_bicnn_scutfbp(model, epoch=30):
+def run_crnet_scutfbp(model, epoch=30):
     criterion = CRLoss()
 
     optimizer_ft = optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-4)
@@ -151,7 +154,7 @@ def run_bicnn_scutfbp(model, epoch=30):
                 inference=False)
 
 
-def run_bicnn_eccv(model, cv_split=1, epoch=30):
+def run_crnet_eccv(model, cv_split=1, epoch=30):
     """
     train and test ECCV HotOrNot dataset
     :param cv_split:
@@ -197,5 +200,5 @@ def run_bicnn_eccv(model, cv_split=1, epoch=30):
 
 
 if __name__ == '__main__':
-    # run_bicnn_scutfbp(model=CRNet(), epoch=80)
-    run_bicnn_eccv(model=CRNet(), cv_split=1, epoch=30)
+    run_crnet_scutfbp(model=CRNet(), epoch=30)
+    # run_crnet_eccv(model=CRNet(), cv_split=1, epoch=30)

@@ -29,7 +29,8 @@ class ScutFBPDataset(Dataset):
         image = io.imread(os.path.join(cfg['scut_fbp_dir'], 'SCUT-FBP-%d.jpg' % self.face_files[idx]))
         score = self.face_score[idx]
 
-        sample = {'image': image, 'score': score, 'class': round(score) - 1}
+        sample = {'image': image, 'score': score, 'class': round(score) - 1,
+                  'filename': 'SCUT-FBP-%d.jpg' % self.face_files[idx]}
 
         if self.transform:
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
@@ -80,7 +81,7 @@ class HotOrNotDataset(Dataset):
         elif score >= 1:
             cls = 2
 
-        sample = {'image': image, 'score': score, 'class': cls}
+        sample = {'image': image, 'score': score, 'class': cls, 'filename': os.path.basename(self.face_files[idx])}
 
         if self.transform:
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))

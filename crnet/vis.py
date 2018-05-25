@@ -47,14 +47,19 @@ def viz(img_path, model=CRNet()):
                 if idx != 'avgpool':
                     input = mod(input)
                 else:
-                    mat = np.transpose(input[0, [10], :, :].data.cpu().numpy(), [1, 2, 0])
+                    # mat = np.transpose(input[0, [1, 1, 1], :, :].data.cpu().numpy(), [1, 2, 0])
+                    mat = np.transpose(input[0, :, :, :].data.cpu().numpy(), [1, 2, 0])
+                    mat = np.mean(mat, axis=2).reshape([mat.shape[0], mat.shape[0], 1])
+                    print(mat.shape)
                     # mat = resize(mat, (224, 224), mode='constant')
                     mat = cv2.resize(mat, (224, 224))
                     org = resize(io.imread(img_path), (224, 224), mode='constant')
+
                     dst = np.zeros([224, 224, 3])
-                    dst[:, :, 0] = 0.4 * org[:, :, 0] + 0.6 * mat
-                    dst[:, :, 1] = 0.4 * org[:, :, 1] + 0.6 * mat
-                    dst[:, :, 2] = 0.4 * org[:, :, 2] + 0.6 * mat
+                    dst[:, :, 0] = 0.2 * org[:, :, 0] + 0.8 * mat
+                    dst[:, :, 1] = 0.2 * org[:, :, 1] + 0.8 * mat
+                    dst[:, :, 2] = 0.2 * org[:, :, 2] + 0.8 * mat
+
                     # dst = org + mat
 
                     # plt.figure("Image")
@@ -74,6 +79,6 @@ def viz(img_path, model=CRNet()):
 
 
 if __name__ == '__main__':
-    filelist = [cfg['scut_fbp_dir'] + "/SCUT-FBP-%d.jpg" % _ for _ in range(1, 5, 1)]
+    filelist = [cfg['scut_fbp_dir'] + "/SCUT-FBP-%d.jpg" % _ for _ in [101, 57, 242, 380, 192, 469, 241, 174]]
     for f in filelist:
         viz(f, CRNet())

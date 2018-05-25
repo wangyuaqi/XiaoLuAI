@@ -161,7 +161,7 @@ class CRNet(nn.Module):
 
         self.model = model_ft
         self.regressor = Regressor(model_ft)
-        self.classifier = Classifier(model_ft, num_cls=3)
+        self.classifier = Classifier(model_ft, num_cls=5)
 
     def forward(self, x):
         for name, module in self.model.named_children():

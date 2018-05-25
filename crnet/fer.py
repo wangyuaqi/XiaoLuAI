@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import cv2
 from skimage import io
 from skimage.transform import resize
 
@@ -51,6 +52,8 @@ def deep_ft(imgfile, model):
     print(imgfile)
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image = resize(io.imread(imgfile), (224, 224), mode='constant')
+    # image = cv2.imread(imgfile)
+    # image = cv2.resize(image, (224, 224)).astype(np.float32)
     if image.shape == (224, 224, 3):
         image[:, :, 0] -= np.mean(image[:, :, 0])
         image[:, :, 1] -= np.mean(image[:, :, 1])
@@ -76,11 +79,14 @@ def deep_ft(imgfile, model):
                     break
         elif name == 'regressor':
             x = x.view(-1, 512)
-            for nm, mod in module.named_children():
-                if nm != 'fc3':
-                    x = mod.forward(x)
-                else:
-                    return x.to('cpu').detach().numpy().ravel().tolist()
+
+            return x.to('cpu').detach().numpy().ravel().tolist()
+
+            # for nm, mod in module.named_children():
+            #     if nm != 'fc1':
+            #         x = mod.forward(x)
+            #     else:
+            #         return x.to('cpu').detach().numpy().ravel().tolist()
 
 
 def fer_jaffe(X, y):
@@ -113,8 +119,8 @@ if __name__ == '__main__':
         model = nn.DataParallel(model)
     model = model.to(device)
 
-    # print('Loading pre-trained model...')
-    # model.load_state_dict(torch.load(os.path.join('./model/crnet.pth')))
+    print('Loading pre-trained model...')
+    model.load_state_dict(torch.load(os.path.join('./model/crnet.pth')))
     model.eval()
 
     X, y = prepare_data(model)

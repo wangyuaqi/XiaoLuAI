@@ -87,3 +87,35 @@ class HotOrNotDataset(Dataset):
             sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
 
         return sample
+
+
+class JaffeDataset(Dataset):
+    """
+    Jaffe dataset
+    """
+
+    def __init__(self, lb_path='./cvsplit/jaffe.csv', transform=None):
+        df = pd.read_csv(lb_path, sep=' ')
+
+        self.files = [os.path.join(cfg['jaffe_dir'], df['PIC'][i].replace('-', '.') + '.' + str(df['#'][i]) + '.tiff')
+                      for i
+                      in range(len(df['#'].tolist()))]
+        self.labels = []
+        for index, row in df.iterrows():
+            if index > 0:
+                self.labels.append(np.argmax(np.array(row[1: 7].tolist())))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        image = io.imread(self.files[idx])
+        label = self.labels[idx]
+
+        sample = {'image': image, 'label': label}
+
+        if self.transform:
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
+
+        return sample

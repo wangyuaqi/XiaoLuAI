@@ -11,8 +11,10 @@ from gensim.models.word2vec import LineSentence
 
 from sklearn.model_selection import train_test_split
 from sklearn import svm
+from sklearn.metrics import confusion_matrix
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+W2V_DIMENSION = 300
 
 
 def get_w2v(train=True):
@@ -25,8 +27,9 @@ def get_w2v(train=True):
 
     print('loading corpus...')
     # for xlsx in ['./数学之美.xlsx', './数据挖掘导论.xlsx', './数据挖掘概念与技术.xlsx', './机器学习.xlsx']:
-    for xlsx in ['./数据挖掘概念与技术.xlsx']:
+    for xlsx in ['./数学之美.xlsx']:
         df = pd.read_excel(xlsx, index_col=None)
+        df = df.dropna(how='any')
         documents += df['Comment'].tolist()
         rates += df['Rate'].tolist()
         # print(df.loc[:, ['Comment', 'Rate']])
@@ -52,7 +55,7 @@ def get_w2v(train=True):
     print(texts)
     if train:
         print('training word2vec...')
-        model = Word2Vec(texts, size=300, window=5, min_count=1, workers=4)
+        model = Word2Vec(texts, size=W2V_DIMENSION, window=5, min_count=1, workers=4)
         model.save('./doubanbook.model')
 
     else:
@@ -62,20 +65,24 @@ def get_w2v(train=True):
     # print(model.wv['数学'])
     # similarity = model.wv.similarity('算法', '机器学习')
     # print(similarity)
-    features = []
+    features = list()
+    labels = list()
 
-    for text in texts:
-        features.append(np.array([model.wv[tx].tolist() for tx in text]).mean(axis=0).tolist())
+    for i in range(len(texts)):
+        f = np.array([model.wv[tx] for tx in texts[i]]).mean(axis=0).flatten().tolist()
+        if len(f) == W2V_DIMENSION:
+            features.append(f)
+            labels.append(rates[i])
 
-    return np.array(features), np.array(rates)
+    return np.array(features), np.array(labels)
 
 
 if __name__ == '__main__':
     X, y = get_w2v(True)
-    print(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    print(X.shape)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
     svc = svm.SVC()
     svc.fit(X_train, y_train)
-    score = svc.score(X_test, y_test)
-    print('Acc on test set is %d' % score)
+    cm = confusion_matrix(svc.predict(X_test), y_test)
+    print(cm)

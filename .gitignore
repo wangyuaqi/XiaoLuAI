@@ -20,3 +20,12 @@ hmtnet/__pycache__/vgg_m_face_bn_dag.cpython-35.pyc
 hmtnet/model/
 bots/avatar/
 flowers/__pycache__/
+crnet/model/
+crnet/output.xlsx
+crnet/output_eccv.xlsx
+crnet/test.py
+facescore/tf_records/
+hmtnet/__pycache__/
+nlp/doubanbook.model
+"nlp/\346\225\260\345\255\246\344\271\213\347\276\216.xlsx"
+scene/__pycache__/

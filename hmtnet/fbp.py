@@ -67,7 +67,7 @@ def train_gnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
                 optimizer.step()
 
                 # print statistics
-                running_loss += loss.data[0]
+                running_loss += loss.item()
                 if i % 100 == 99:  # print every 200 mini-batches
                     print('[%d, %5d] loss: %.5f' %
                           (epoch + 1, i + 1, running_loss / 100))
@@ -149,7 +149,7 @@ def train_rnet(model, train_loader, test_loader, criterion, optimizer, num_epoch
                 optimizer.step()
 
                 # print statistics
-                running_loss += loss.data[0]
+                running_loss += loss.item()
                 if i % 100 == 99:  # print every 200 mini-batches
                     print('[%d, %5d] loss: %.5f' %
                           (epoch + 1, i + 1, running_loss / 100))
@@ -240,7 +240,7 @@ def finetune_vgg_m_model(model_ft, train_loader, test_loader, criterion, num_epo
                 optimizer_ft.step()
 
                 # print statistics
-                running_loss += loss.data[0]
+                running_loss += loss.item()
                 if i % 100 == 99:  # print every 100 mini-batches
                     print('[%d, %5d] loss: %.5f' %
                           (epoch + 1, i + 1, running_loss / 100))
@@ -330,7 +330,7 @@ def train_anet(model_ft, train_loader, test_loader, criterion, num_epochs=200, i
                 optimizer_ft.step()
 
                 # print statistics
-                running_loss += loss.data[0]
+                running_loss += loss.item()
                 if i % 100 == 99:  # print every 100 mini-batches
                     print('[%d, %5d] loss: %.5f' %
                           (epoch + 1, i + 1, running_loss / 100))
@@ -420,14 +420,14 @@ def train_hmtnet(hmt_net, train_loader, test_loader, num_epochs=200, inference=F
 
                 g_pred = g_pred.view(cfg['batch_size'], 2)
                 r_pred = r_pred.view(cfg['batch_size'], 2)
-                a_pred = a_pred.view(cfg['batch_size'], 1)
+                # a_pred = a_pred.view(cfg['batch_size'], 1)
 
                 loss = criterion(g_pred, gender, r_pred, race, a_pred, attractiveness)
                 loss.backward()
                 optimizer.step()
 
                 # print statistics
-                running_loss += loss.data[0]
+                running_loss += loss.item()
                 if i % 100 == 99:  # print every 100 mini-batches
                     print('[%d, %5d] loss: %.5f' % (epoch + 1, i + 1, running_loss / 100))
                     running_loss = 0.0

@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 cfg = OrderedDict()
 
+cfg['raf_root'] = 'E:/DataSet/CV/TreeCNN/RAF-Face'
+
 cfg['scut_fbp5500_root'] = '/media/lucasx/Document/DataSet/Face/SCUT-FBP5500/'
 cfg['hmt_model'] = './model/hmtnet.pth'
 cfg['gnet_model'] = './model/gnet.pth'

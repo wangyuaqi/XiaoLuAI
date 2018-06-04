@@ -46,6 +46,77 @@ def split_train_and_test_with_py_datasets(data_set, batch_size=cfg['batch_size']
     return train_loader, test_loader
 
 
+class RafFaceDataset(Dataset):
+    """
+    RAF-Face dataset for Face Expression Recognition
+    """
+
+    def __init__(self, train=True, type='basic', transform=None):
+        manual_annotation_dir = os.path.join(cfg['raf_root'], '%s/Annotation/manual' % type)
+        emotion_label_txt_path = os.path.join(cfg['raf_root'], "%s/EmoLabel/list_patition_label.txt" % type)
+
+        emotion_dict = dict(np.loadtxt(emotion_label_txt_path, dtype=np.str))
+
+        if train:
+            face_files = []
+            genders = []
+            races = []
+            ages = []
+            emotions = []
+            for _ in os.listdir(manual_annotation_dir):
+                if _.startswith('train_'):
+                    face_fname = _.replace('_manu_attri', '_aligned').replace('.txt', '.jpg')
+                    face_files.append(os.path.join(cfg['raf_root'], '%s/Image/aligned' % type, face_fname))
+                    with open(os.path.join(manual_annotation_dir, _), mode='rt') as f:
+                        manu_info_list = f.readlines()
+                    genders.append(int(manu_info_list[5]))
+                    races.append(int(manu_info_list[6]))
+                    ages.append(int(manu_info_list[7]))
+                    emotions.append(int(emotion_dict[face_fname.replace('_aligned', '')].strip()) - 1)
+
+        else:
+            face_files = []
+            genders = []
+            races = []
+            ages = []
+            emotions = []
+            for _ in os.listdir(manual_annotation_dir):
+                if _.startswith('test_'):
+                    face_fname = _.replace('_manu_attri', '_aligned').replace('.txt', '.jpg')
+                    face_files.append(os.path.join(cfg['raf_root'], '%s/Image/aligned' % type, face_fname))
+                    with open(os.path.join(manual_annotation_dir, _), mode='rt') as f:
+                        manu_info_list = f.readlines()
+                    genders.append(int(manu_info_list[5]))
+                    races.append(int(manu_info_list[6]))
+                    ages.append(int(manu_info_list[7]))
+                    emotions.append(int(emotion_dict[face_fname.replace('_aligned', '')].strip()) - 1)
+
+        self.face_files = face_files
+        self.genders = genders
+        self.races = races
+        self.ages = ages
+        self.emotions = emotions
+
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.face_files)
+
+    def __getitem__(self, idx):
+        image = io.imread(self.face_files[idx])
+        gender = self.genders[idx]
+        race = self.races[idx]
+        age = self.ages[idx]
+        emotion = self.emotions[idx]
+
+        sample = {'image': image, 'gender': gender, 'race': race, 'age': age, 'emotion': emotion}
+
+        if self.transform:
+            sample['image'] = self.transform(Image.fromarray(sample['image'].astype(np.uint8)))
+
+        return sample
+
+
 class FaceGenderDataset(Dataset):
     """
     Face Gender dataset with hierarchical sampling strategy

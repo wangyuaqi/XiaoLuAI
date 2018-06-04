@@ -1,11 +1,8 @@
 import sys
 
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 sys.path.append('../')
-from hmtnet import vgg_m_face_bn_dag
 
 
 class GenderBranch(nn.Module):
@@ -14,7 +11,7 @@ class GenderBranch(nn.Module):
     Input: BATCH*512*13*13
     """
 
-    def __init__(self):
+    def __init__(self, output_num=2):
         super(GenderBranch, self).__init__()
         self.gconv1 = nn.Conv2d(512, 256, 3)
         self.gbn1 = nn.BatchNorm2d(256, eps=1e-05, momentum=0.1, affine=True)
@@ -25,7 +22,7 @@ class GenderBranch(nn.Module):
         self.grelu2 = nn.ReLU()
         self.gpool2 = nn.MaxPool2d(3)
 
-        self.gconv3 = nn.Conv2d(128, 2, 1, stride=2)
+        self.gconv3 = nn.Conv2d(128, output_num, 1, stride=2)
         self.gbn3 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
         self.grelu3 = nn.ReLU()
         self.gpool3 = nn.MaxPool2d(2)
@@ -60,7 +57,7 @@ class RaceBranch(nn.Module):
     Input: BATCH*512*13*13
     """
 
-    def __init__(self):
+    def __init__(self, output_num=2):
         super(RaceBranch, self).__init__()
 
         self.rconv1 = nn.Conv2d(512, 256, 5, 2, 1)
@@ -71,7 +68,7 @@ class RaceBranch(nn.Module):
         self.rbn2 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
         self.rrelu2 = nn.ReLU()
 
-        self.rconv3 = nn.Conv2d(2, 2, 3)
+        self.rconv3 = nn.Conv2d(2, output_num, 3)
         self.rbn3 = nn.BatchNorm2d(2, eps=1e-05, momentum=0.1, affine=True)
         self.rrelu3 = nn.ReLU()
         self.rpool3 = nn.MaxPool2d(2)

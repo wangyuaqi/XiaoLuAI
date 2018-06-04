@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.autograd import Variable
 from torch.optim import lr_scheduler
 from torchvision import transforms, datasets
 
@@ -503,7 +502,7 @@ if __name__ == '__main__':
     # rnet = RNet()
 
     data_transform = transforms.Compose([
-        # transforms.Resize(224),
+        transforms.Resize(227),
         transforms.RandomRotation(30),
         transforms.RandomCrop(224),
         transforms.ToTensor(),

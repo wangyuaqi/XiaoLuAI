@@ -12,6 +12,8 @@ from gensim.models.word2vec import LineSentence
 from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 W2V_DIMENSION = 300
@@ -27,13 +29,14 @@ def get_w2v(train=True):
 
     print('loading corpus...')
     # for xlsx in ['./数学之美.xlsx', './数据挖掘导论.xlsx', './数据挖掘概念与技术.xlsx', './机器学习.xlsx']:
-    for xlsx in ['./数学之美.xlsx']:
+    for xlsx in ['./机器学习.xlsx']:
         df = pd.read_excel(xlsx, index_col=None)
         df = df.dropna(how='any')
         documents += df['Comment'].tolist()
         rates += df['Rate'].tolist()
         # print(df.loc[:, ['Comment', 'Rate']])
 
+    rates = [0 if _ <= 3 else 1 for _ in rates]
     print('tokenizer starts working...')
 
     texts = []
@@ -82,7 +85,11 @@ if __name__ == '__main__':
     print(X.shape)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
-    svc = svm.SVC()
+    svc = svm.SVC(C=1)
     svc.fit(X_train, y_train)
     cm = confusion_matrix(svc.predict(X_test), y_test)
     print(cm)
+    f1 = f1_score(y_test, svc.predict(X_test), average='macro')
+    print('F1 score: ', f1)
+    acc = accuracy_score(y_test, svc.predict(X_test))
+    print('Accuracy: ', acc)

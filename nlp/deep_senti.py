@@ -16,7 +16,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-W2V_DIMENSION = 300
+W2V_DIMENSION = 10
 
 
 def get_w2v(train=True):
@@ -29,18 +29,24 @@ def get_w2v(train=True):
 
     print('loading corpus...')
     # for xlsx in ['./数学之美.xlsx', './数据挖掘导论.xlsx', './数据挖掘概念与技术.xlsx', './机器学习.xlsx']:
-    for xlsx in ['./机器学习.xlsx']:
+    for xlsx in ['./谁的青春不迷茫.xlsx']:
         df = pd.read_excel(xlsx, index_col=None)
         df = df.dropna(how='any')
         documents += df['Comment'].tolist()
         rates += df['Rate'].tolist()
-        # print(df.loc[:, ['Comment', 'Rate']])
 
-    rates = [0 if _ <= 3 else 1 for _ in rates]
+    rate_label = []
+    for _ in rates:
+        if 1 <= _ <= 2:
+            rate_label.append(0)
+        elif _ == 3:
+            rate_label.append(1)
+        else:
+            rate_label.append(2)
+
     print('tokenizer starts working...')
 
     texts = []
-    import jieba
     import jieba.analyse
 
     jieba.load_userdict('./user_dict.txt')
@@ -58,7 +64,7 @@ def get_w2v(train=True):
     print(texts)
     if train:
         print('training word2vec...')
-        model = Word2Vec(texts, size=W2V_DIMENSION, window=5, min_count=1, workers=4)
+        model = Word2Vec(texts, size=W2V_DIMENSION, window=5, min_count=1, workers=4, iter=20)
         model.save('./doubanbook.model')
 
     else:
@@ -75,7 +81,7 @@ def get_w2v(train=True):
         f = np.array([model.wv[tx] for tx in texts[i]]).mean(axis=0).flatten().tolist()
         if len(f) == W2V_DIMENSION:
             features.append(f)
-            labels.append(rates[i])
+            labels.append(rate_label[i])
 
     return np.array(features), np.array(labels)
 
@@ -83,7 +89,7 @@ def get_w2v(train=True):
 if __name__ == '__main__':
     X, y = get_w2v(True)
     print(X.shape)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     svc = svm.SVC(C=1)
     svc.fit(X_train, y_train)

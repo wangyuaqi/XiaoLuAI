@@ -27,7 +27,6 @@
    * [WeChat Bots](./bots) 
    * [Face Detection](./facedetection) 
    * [Facial Beauty Analysis](./facescore) 
-   * [HMT-Net](./hmtnet) 
    * [NLP](./nlp) 
    * [Image Guarder](./imgguarder) 
    * [Fine-grained Flower Recognition](./flowers) 

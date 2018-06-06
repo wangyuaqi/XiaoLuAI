@@ -245,7 +245,7 @@ def bilstm_senti(X_train, X_test, y_train, y_test):
 
 
 if __name__ == '__main__':
-    X, y = get_w2v(False)
+    X, y = get_w2v(True)
     print(X.shape)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

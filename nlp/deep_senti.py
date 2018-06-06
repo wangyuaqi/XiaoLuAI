@@ -1,5 +1,5 @@
 """
-Deep Learning for Sentiment Analysis on DouBan Book
+Deep Learning for Sentiment Analysis on DouBan Comments
 """
 
 import logging
@@ -13,23 +13,25 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
 from gensim.models import Word2Vec
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.decomposition import PCA
 from sklearn import svm
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
-from tqdm import tqdm
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
+TFIDF_FEATURE_NUM = 50
 W2V_DIMENSION = 300
 BATCH_SIZE = 16
 EPOCH = 20
 
 
-def get_w2v(train=True):
+def read_corpus():
     """
-    get word2vec representation
+    read corpus from Excel file and cut words
     :return:
     """
     documents = []
@@ -69,6 +71,29 @@ def get_w2v(train=True):
 
         texts.append(words_in_doc)
 
+    return texts, rate_label
+
+
+def corpus_to_tfidf_vector(texts, rate_label):
+    """
+    convert segmented corpus in a list into TF-IDF array
+    :param texts:
+    :return:
+    """
+    vectorizer = CountVectorizer(min_df=1, max_features=TFIDF_FEATURE_NUM)
+    transformer = TfidfTransformer(smooth_idf=True)
+    corpus_list = [''.join(text) for text in texts]
+    X = vectorizer.fit_transform(corpus_list)
+    tfidf = transformer.fit_transform(X)
+
+    return tfidf.toarray(), rate_label
+
+
+def get_w2v(texts, rate_label, train=True):
+    """
+    get word2vec representation
+    :return:
+    """
     print(texts)
     if train:
         print('training word2vec...')
@@ -245,8 +270,13 @@ def bilstm_senti(X_train, X_test, y_train, y_test):
 
 
 if __name__ == '__main__':
-    X, y = get_w2v(True)
+    texts, rate_label = read_corpus()
+    # X, y = corpus_to_tfidf_vector(texts, rate_label)
+    X, y = get_w2v(texts, rate_label, True)
+    print(X.shape)
+    pca = PCA(n_components=30)
+    X = pca.fit_transform(X)
     print(X.shape)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    bilstm_senti(X_train, X_test, y_train, y_test)
+    svm_senti(X_train, y_train, X_test, y_test)

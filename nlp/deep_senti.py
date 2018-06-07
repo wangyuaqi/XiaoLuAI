@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-TFIDF_FEATURE_NUM = 50
+TFIDF_FEATURE_NUM = 200
 W2V_DIMENSION = 300
 BATCH_SIZE = 16
 EPOCH = 20

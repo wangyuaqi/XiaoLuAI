@@ -10,21 +10,22 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-
-from gensim.models import Word2Vec
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.decomposition import PCA
+from gensim.models import Word2Vec, Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
 from sklearn import svm
+from sklearn.decomposition import PCA
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
+from torch.utils.data import Dataset, DataLoader
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 TFIDF_FEATURE_NUM = 200
 W2V_DIMENSION = 300
+D2V_DIMENSION = 100
 BATCH_SIZE = 16
 EPOCH = 20
 
@@ -38,8 +39,9 @@ def read_corpus():
     rates = []
 
     print('loading corpus...')
-    # for xlsx in ['./数学之美.xlsx', './数据挖掘导论.xlsx', './数据挖掘概念与技术.xlsx', './机器学习.xlsx']:
-    for xlsx in ['./谁的青春不迷茫.xlsx']:
+    # for xlsx in ['./谁的青春不迷茫.xlsx']:
+    for xlsx in ['Python核心编程第二版.xlsx', './谁的青春不迷茫.xlsx', 'HeadFirst数据分析.xlsx', '大数据时代.xlsx',
+                 '你若安好便是晴天.xlsx', '悲伤逆流成河.xlsx']:
         df = pd.read_excel(xlsx, index_col=None)
         df = df.dropna(how='any')
         documents += df['Comment'].tolist()
@@ -98,11 +100,11 @@ def get_w2v(texts, rate_label, train=True):
     if train:
         print('training word2vec...')
         model = Word2Vec(texts, size=W2V_DIMENSION, window=5, min_count=1, workers=4, iter=20)
-        model.save('./doubanbook.model')
+        model.save('./doubanbook_w2v.model')
 
     else:
         print('loading pretrained word2vec model...')
-        model = Word2Vec.load('./doubanbook.model')
+        model = Word2Vec.load('./doubanbook_w2v.model')
 
     # print(model.wv['数学'])
     # similarity = model.wv.similarity('算法', '机器学习')
@@ -115,6 +117,38 @@ def get_w2v(texts, rate_label, train=True):
         if len(f) == W2V_DIMENSION:
             features.append(f)
             labels.append(rate_label[i])
+
+    return np.array(features), np.array(labels)
+
+
+def get_d2v(words_list, labels, train=True):
+    """
+    get doc2vec representation
+    :param words_list:
+    :param labels:
+    :param train:
+    :return:
+    """
+    if train:
+        print('training doc2vec...')
+        documents = []
+        for i in range(len(words_list)):
+            documents.append(TaggedDocument(words_list[i], [labels[i]]))
+
+        model = Doc2Vec(size=D2V_DIMENSION, min_count=1, workers=4)
+        model.build_vocab(documents)
+        model.train(documents, total_examples=model.corpus_count, epochs=20)
+        model.save('./doubanbook_d2v.model')
+    else:
+        print('loading pretrained doc2vec model...')
+        model = Doc2Vec.load('./doubanbook_d2v.model')
+
+    features = list()
+
+    for words in words_list:
+        f = model.infer_vector(words)
+        if len(f) == D2V_DIMENSION:
+            features.append(f)
 
     return np.array(features), np.array(labels)
 
@@ -204,6 +238,7 @@ def get_accuracy(truth, pred):
     for i in range(len(truth)):
         if truth[i] == pred[i]:
             right += 1.0
+
     return right / len(truth)
 
 
@@ -273,6 +308,10 @@ if __name__ == '__main__':
     texts, rate_label = read_corpus()
     # X, y = corpus_to_tfidf_vector(texts, rate_label)
     X, y = get_w2v(texts, rate_label, True)
+
+    print(pd.Series(y).value_counts())
+
+    # X, y = get_d2v(texts, rate_label, True)
     print(X.shape)
     pca = PCA(n_components=30)
     X = pca.fit_transform(X)

@@ -29,6 +29,8 @@ D2V_DIMENSION = 100
 BATCH_SIZE = 16
 EPOCH = 20
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 def read_corpus():
     """
@@ -209,13 +211,9 @@ class DoubanCommentsDataset(Dataset):
     Douban Comments Dataset
     """
 
-    def __init__(self, X_train, y_train, X_test, y_test, train=True):
-        if train:
-            self.X = X_train
-            self.y = y_train
-        else:
-            self.X = X_test
-            self.y = y_test
+    def __init__(self, X, y):
+        self.X = X
+        self.y = y
 
     def __len__(self):
         return len(self.y)
@@ -224,6 +222,75 @@ class DoubanCommentsDataset(Dataset):
         sample = {'ft': self.X[idx], 'senti': self.y[idx]}
 
         return sample
+
+
+class RNN(nn.Module):
+    def __init__(self, input_size=30, hidden_size=128, num_layers=2, num_classes=3):
+        super(RNN, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, num_classes)
+
+    def forward(self, x):
+        # Set initial hidden and cell states
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
+
+        # Forward propagate LSTM
+        out, _ = self.lstm(x, (h0, c0))  # out: tensor of shape (batch_size, seq_length, hidden_size)
+
+        # Decode the hidden state of the last time step
+        out = self.fc(out[:, -1, :])
+
+        return out
+
+
+def rnn_senti(X_train, y_train, X_test, y_test):
+    rnn = RNN().to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(rnn.parameters(), lr=1e-4)
+
+    print('prepare datasets for RNN...')
+
+    train_loader = torch.utils.data.DataLoader(DoubanCommentsDataset(X_train, y_train), batch_size=BATCH_SIZE,
+                                               shuffle=True, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(DoubanCommentsDataset(X_test, y_test), batch_size=BATCH_SIZE,
+                                              shuffle=False, num_workers=4)
+
+    # Train the model
+    total_step = len(train_loader)
+    rnn.train()
+    for epoch in range(EPOCH):
+        for i, data in enumerate(train_loader):
+            ft, senti = data['ft'].reshape(-1, BATCH_SIZE, 30).to(device), data['senti'].to(device)
+
+            # Forward pass
+            outputs = rnn.forward(ft)
+            loss = criterion(outputs, senti)
+
+            # Backward and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if (i + 1) % 100 == 0:
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
+                      .format(epoch + 1, EPOCH, i + 1, total_step, loss.item()))
+
+    # Test the model
+    rnn.eval()
+    with torch.no_grad():
+        correct = 0
+        total = 0
+        for data in test_loader:
+            ft, senti = data['ft'].to(device), data['senti'].to(device)
+            outputs = rnn(ft)
+            _, predicted = torch.max(outputs.data, 1)
+            total += senti.size(0)
+            correct += (predicted == senti).sum().item()
+
+        print('Test Accuracy of the model on test set: {} %'.format(100 * correct / total))
 
 
 def get_accuracy(truth, pred):
@@ -307,7 +374,7 @@ def bilstm_senti(X_train, X_test, y_train, y_test):
 if __name__ == '__main__':
     texts, rate_label = read_corpus()
     # X, y = corpus_to_tfidf_vector(texts, rate_label)
-    X, y = get_w2v(texts, rate_label, True)
+    X, y = get_w2v(texts, rate_label, False)
 
     print(pd.Series(y).value_counts())
 
@@ -318,4 +385,5 @@ if __name__ == '__main__':
     print(X.shape)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    svm_senti(X_train, y_train, X_test, y_test)
+    # svm_senti(X_train, y_train, X_test, y_test)
+    rnn_senti(X_train, y_train, X_test, y_test)

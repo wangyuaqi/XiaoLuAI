@@ -3,7 +3,9 @@ Deep Learning for Sentiment Analysis on DouBan Comments
 """
 import logging
 import sys
+import os
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -18,12 +20,73 @@ from torch.utils.data import Dataset
 
 sys.path.append('../')
 from nlp.data import read_corpus, get_w2v, DoubanCommentsDataset
-from nlp.models import DoubanRNN
+from nlp.models import DoubanRNN, AutoEncoder
 from nlp.config import *
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def unsupervised_pretrain(data_loader):
+    """
+    train Deep AutoEncoder
+    :param data_loader: 
+    :return: 
+    """
+    autoencoder = AutoEncoder().to(device)
+    autoencoder.float()
+    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=10e-3, weight_decay=1e-4)
+    mse = nn.MSELoss()
+
+    print('start training Deep AutoEncoder...')
+    for epoch in range(30):
+        running_loss = 0.0
+        for i, data in enumerate(data_loader):
+            ft = data['ft'].to(device)
+            ft = ft.float()
+
+            optimizer.zero_grad()
+            encoded, decoded = autoencoder(ft)
+
+            loss = mse(decoded, ft)
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+            if i % 10 == 9:  # print every 10 mini-batches
+                print('[%d, %5d] loss: %.3f' %
+                      (epoch + 1, i + 1, running_loss / 10))
+                running_loss = 0.0
+
+    model_path = './model/autoencoder.pth'
+    if not os.path.isdir('./model') or not os.path.exists('./model'):
+        os.makedirs('./model')
+    torch.save(autoencoder.state_dict(), model_path)
+
+    print('Finished Training')
+
+
+def deep_ft_extract(X):
+    """
+    extract deep features from a pre-trained DeepAE
+    :param X:
+    :return:
+    """
+    print('Loading pre-trained Deep AutoEncoder...')
+    autoencoder = AutoEncoder()
+    autoencoder.load_state_dict(torch.load('./model/autoencoder.pth'))
+    X_new = []
+
+    for x in X:
+        for idx, module in autoencoder.named_children():
+            if idx != 'decoder':
+                x = torch.from_numpy(np.array(x)).unsqueeze(0).float()
+                x = module(x)
+                # print(x.numpy().tolist())
+                X_new.append(x.detach().numpy().flatten().tolist())
+
+    return X_new
 
 
 def svm_senti(X_train, y_train, X_test, y_test):
@@ -100,10 +163,16 @@ if __name__ == '__main__':
 
     # X, y = get_d2v(texts, rate_label, True)
     print(X.shape)
-    pca = PCA(n_components=30)
-    X = pca.fit_transform(X)
-    print(X.shape)
+    data_loader = torch.utils.data.DataLoader(DoubanCommentsDataset(X, y), batch_size=BATCH_SIZE, shuffle=True,
+                                              num_workers=4)
+    # unsupervised_pretrain(data_loader)
+    # pca = PCA(n_components=30)
+    # X = pca.fit_transform(X)
+    # print(X.shape)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # svm_senti(X_train, y_train, X_test, y_test)
-    rnn_senti(X_train, y_train, X_test, y_test)
+    X_train = deep_ft_extract(X_train)
+    X_test = deep_ft_extract(X_test)
+
+    svm_senti(X_train, y_train, X_test, y_test)
+    # rnn_senti(X_train, y_train, X_test, y_test)

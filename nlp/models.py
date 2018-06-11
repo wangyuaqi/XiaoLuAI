@@ -47,3 +47,34 @@ class DoubanRNN(nn.Module):
 
     def init_hidden(self):
         return torch.zeros(1, self.hidden_size)
+
+
+class AutoEncoder(nn.Module):
+    """
+    Deep AutoEncoder
+    """
+
+    def __init__(self):
+        super(AutoEncoder, self).__init__()
+
+        self.encoder = nn.Sequential(
+            nn.Linear(300, 128),
+            nn.Tanh(),
+            nn.Linear(128, 64),
+            nn.Tanh(),
+            nn.Linear(64, 30)
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(30, 64),
+            nn.Tanh(),
+            nn.Linear(64, 128),
+            nn.Tanh(),
+            nn.Linear(128, 300),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+
+        return encoded, decoded

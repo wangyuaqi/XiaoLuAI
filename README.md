@@ -1,7 +1,7 @@
 # XiaoLuAI
 
 ## Introduction 
-   This repository is maintained by [@LucasX](https://github.com/EclipseXuLu) for research in computer vision, NLP, deep learning, and etc.
+   This repository is maintained by [@LucasX](https://github.com/lucasxlu) for research in computer vision, NLP, deep learning, and etc.
    All the source code and data can be just used for research and experiments.
    
 ## Prerequisites

@@ -157,7 +157,7 @@ def rnn_senti(X_train, y_train, X_test, y_test):
 if __name__ == '__main__':
     texts, rate_label = read_corpus()
     # X, y = corpus_to_tfidf_vector(texts, rate_label)
-    X, y = get_w2v(texts, rate_label, False)
+    X, y = get_w2v(texts, rate_label, True)
 
     print(pd.Series(y).value_counts())
 
@@ -165,10 +165,10 @@ if __name__ == '__main__':
     print(X.shape)
     data_loader = torch.utils.data.DataLoader(DoubanCommentsDataset(X, y), batch_size=BATCH_SIZE, shuffle=True,
                                               num_workers=4)
-    # unsupervised_pretrain(data_loader)
     # pca = PCA(n_components=30)
     # X = pca.fit_transform(X)
     # print(X.shape)
+    unsupervised_pretrain(data_loader)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     X_train = deep_ft_extract(X_train)

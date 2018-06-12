@@ -2,6 +2,7 @@
 text pre-processing and loading
 """
 import sys
+import os
 
 import numpy as np
 import pandas as pd
@@ -91,11 +92,13 @@ def get_w2v(texts, rate_label, train=True):
     if train:
         print('training word2vec...')
         model = Word2Vec(texts, size=W2V_DIMENSION, window=5, min_count=1, workers=4, iter=20)
-        model.save('./doubanbook_w2v.model')
+        if not os.path.isdir('./model') or not os.path.exists('./model'):
+            os.makedirs('./model')
+        model.save('./model/doubanbook_w2v.model')
 
     else:
         print('loading pretrained word2vec model...')
-        model = Word2Vec.load('./doubanbook_w2v.model')
+        model = Word2Vec.load('./model/doubanbook_w2v.model')
 
     # print(model.wv['数学'])
     # similarity = model.wv.similarity('算法', '机器学习')
@@ -129,10 +132,12 @@ def get_d2v(words_list, labels, train=True):
         model = Doc2Vec(size=D2V_DIMENSION, min_count=1, workers=4)
         model.build_vocab(documents)
         model.train(documents, total_examples=model.corpus_count, epochs=20)
-        model.save('./doubanbook_d2v.model')
+        if not os.path.isdir('./model') or not os.path.exists('./model'):
+            os.makedirs('./model')
+        model.save('./model/doubanbook_d2v.model')
     else:
         print('loading pretrained doc2vec model...')
-        model = Doc2Vec.load('./doubanbook_d2v.model')
+        model = Doc2Vec.load('./model/doubanbook_d2v.model')
 
     features = list()
 

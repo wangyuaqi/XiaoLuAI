@@ -36,11 +36,11 @@ def unsupervised_pretrain(data_loader):
     """
     autoencoder = AutoEncoder().to(device)
     autoencoder.float()
-    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=1e-5, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=1e-5, weight_decay=1e-6)
     mse = nn.MSELoss()
 
     print('start training Deep AutoEncoder...')
-    for epoch in range(30):
+    for epoch in range(15):
         running_loss = 0.0
         for i, data in enumerate(data_loader):
             ft = data['ft'].to(device)
@@ -161,19 +161,21 @@ if __name__ == '__main__':
     # X, y = get_d2v(texts, rate_label, True)
     print(pd.Series(y).value_counts())
 
-    print(X.shape)
-    pca = PCA(n_components=30)
-    X = pca.fit_transform(X)
-    print(X.shape)
-
     data_loader = torch.utils.data.DataLoader(DoubanCommentsDataset(X, y), batch_size=BATCH_SIZE, shuffle=True,
                                               num_workers=4)
-    # unsupervised_pretrain(data_loader)
+    unsupervised_pretrain(data_loader)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-    # X_train = deep_ft_extract(X_train)
-    # X_test = deep_ft_extract(X_test)
+    X_train_ae = deep_ft_extract(X_train)
+    X_test_ae = deep_ft_extract(X_test)
+
+    pca = PCA(n_components=30)
+    X_train = pca.fit_transform(X_train)
+    X_test = pca.fit_transform(X_test)
+
+    X_train = np.concatenate((X_train, X_train_ae), axis=1)
+    X_test = np.concatenate((X_test, X_test_ae), axis=1)
 
     svm_senti(X_train, y_train, X_test, y_test)
     # rnn_senti(X_train, y_train, X_test, y_test)

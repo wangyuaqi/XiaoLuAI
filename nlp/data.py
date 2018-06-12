@@ -31,6 +31,8 @@ def read_corpus():
                  '你若安好便是晴天.xlsx', '悲伤逆流成河.xlsx']:
         df = pd.read_excel(xlsx, index_col=None)
         df = df.dropna(how='any')
+
+        df = df[df['Rate'] != 3]
         documents += df['Comment'].tolist()
         rates += df['Rate'].tolist()
 
@@ -38,10 +40,10 @@ def read_corpus():
     for _ in rates:
         if 1 <= _ <= 2:
             rate_label.append(0)
-        elif _ == 3:
+        # elif _ == 3:
+        #     rate_label.append(1)
+        elif 4 <= _ <= 5:
             rate_label.append(1)
-        else:
-            rate_label.append(2)
 
     print('tokenizer starts working...')
 
@@ -49,7 +51,7 @@ def read_corpus():
     import jieba.analyse
 
     jieba.load_userdict('./user_dict.txt')
-    jieba.analyse.set_stop_words('stopwords.txt')
+    jieba.analyse.set_stop_words('./stopwords.txt')
     stopwords = [_.replace('\n', '') for _ in open('./stopwords.txt', encoding='utf-8').readlines()]
 
     for doc in documents:

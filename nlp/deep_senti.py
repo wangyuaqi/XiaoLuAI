@@ -36,7 +36,7 @@ def unsupervised_pretrain(data_loader):
     """
     autoencoder = AutoEncoder().to(device)
     autoencoder.float()
-    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=10e-3, weight_decay=1e-4)
+    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=1e-5, weight_decay=1e-5)
     mse = nn.MSELoss()
 
     print('start training Deep AutoEncoder...')
@@ -54,9 +54,9 @@ def unsupervised_pretrain(data_loader):
             optimizer.step()
 
             running_loss += loss.item()
-            if i % 10 == 9:  # print every 10 mini-batches
+            if i % 50 == 49:  # print every 50 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 10))
+                      (epoch + 1, i + 1, running_loss / 50))
                 running_loss = 0.0
 
     model_path = './model/autoencoder.pth'
@@ -158,21 +158,22 @@ if __name__ == '__main__':
     texts, rate_label = read_corpus()
     # X, y = corpus_to_tfidf_vector(texts, rate_label)
     X, y = get_w2v(texts, rate_label, True)
-
+    # X, y = get_d2v(texts, rate_label, True)
     print(pd.Series(y).value_counts())
 
-    # X, y = get_d2v(texts, rate_label, True)
     print(X.shape)
+    pca = PCA(n_components=30)
+    X = pca.fit_transform(X)
+    print(X.shape)
+
     data_loader = torch.utils.data.DataLoader(DoubanCommentsDataset(X, y), batch_size=BATCH_SIZE, shuffle=True,
                                               num_workers=4)
-    # pca = PCA(n_components=30)
-    # X = pca.fit_transform(X)
-    # print(X.shape)
-    unsupervised_pretrain(data_loader)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # unsupervised_pretrain(data_loader)
 
-    X_train = deep_ft_extract(X_train)
-    X_test = deep_ft_extract(X_test)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+    # X_train = deep_ft_extract(X_train)
+    # X_test = deep_ft_extract(X_test)
 
     svm_senti(X_train, y_train, X_test, y_test)
     # rnn_senti(X_train, y_train, X_test, y_test)

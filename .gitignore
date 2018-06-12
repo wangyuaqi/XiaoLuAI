@@ -10,7 +10,4 @@ bots/itchat.pkl
 bots/wechat.xlsx
 bots/avatar/
 facescore/tf_records/
-flowers/__pycache__/
-nlp/doubanbook_d2v.model
-nlp/doubanbook_w2v.model
-scene/__pycache__/
+nlp/model/

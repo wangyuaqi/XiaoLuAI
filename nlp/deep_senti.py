@@ -11,11 +11,13 @@ import torch
 import torch.nn as nn
 import torch.functional as F
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
+from sklearn.externals import joblib
 from torch.utils.data import Dataset
 
 sys.path.append('../')
@@ -36,7 +38,7 @@ def unsupervised_pretrain(data_loader):
     """
     autoencoder = AutoEncoder().to(device)
     autoencoder.float()
-    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=1e-5, weight_decay=1e-6)
+    optimizer = torch.optim.Adam(autoencoder.parameters(), lr=1e-5, weight_decay=1e-7)
     mse = nn.MSELoss()
 
     print('start training Deep AutoEncoder...')
@@ -98,7 +100,7 @@ def svm_senti(X_train, y_train, X_test, y_test):
     :param y_test:
     :return:
     """
-    svc = svm.SVC(C=1)
+    svc = svm.SVC(C=1, kernel='rbf')
     svc.fit(X_train, y_train)
     cm = confusion_matrix(svc.predict(X_test), y_test)
     print(cm)
@@ -106,6 +108,29 @@ def svm_senti(X_train, y_train, X_test, y_test):
     print('F1 score: ', f1)
     acc = accuracy_score(y_test, svc.predict(X_test))
     print('Accuracy: ', acc)
+
+    joblib.dump(svc, './model/svc.pkl')
+
+
+def rand_forest_senti(X_train, y_train, X_test, y_test):
+    """
+    train sentiment classifier based on Random Forest
+    :param X_train:
+    :param y_train:
+    :param X_test:
+    :param y_test:
+    :return:
+    """
+    rf = RandomForestClassifier(n_estimators=20)
+    rf.fit(X_train, y_train)
+    cm = confusion_matrix(rf.predict(X_test), y_test)
+    print(cm)
+    f1 = f1_score(y_test, rf.predict(X_test), average='macro')
+    print('F1 score: ', f1)
+    acc = accuracy_score(y_test, rf.predict(X_test))
+    print('Accuracy: ', acc)
+
+    joblib.dump(rf, './model/rand_forest.pkl')
 
 
 def rnn_senti(X_train, y_train, X_test, y_test):
@@ -178,4 +203,5 @@ if __name__ == '__main__':
     X_test = np.concatenate((X_test, X_test_ae), axis=1)
 
     svm_senti(X_train, y_train, X_test, y_test)
+    # rand_forest_senti(X_train, y_train, X_test, y_test)
     # rnn_senti(X_train, y_train, X_test, y_test)

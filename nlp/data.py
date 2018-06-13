@@ -16,6 +16,9 @@ from torchtext import data
 sys.path.append('../')
 from nlp.config import TFIDF_FEATURE_NUM, W2V_DIMENSION, D2V_DIMENSION
 
+STOP_DENOTATION = [u'，', u'。', u'！', u'...', u'《', u'》', u'%', u'😂', u'\n', u'、', u'=', u' ', u'+', u'-', u'~', u'',
+                   u'......', u'#']
+
 
 def read_corpus():
     """
@@ -55,11 +58,8 @@ def read_corpus():
     stopwords = [_.replace('\n', '') for _ in open('./stopwords.txt', encoding='utf-8').readlines()]
 
     for doc in documents:
-        words_in_doc = list(jieba.cut(doc))
-        for _ in stopwords:
-            if _ in words_in_doc:
-                words_in_doc.remove(_)
-
+        words_in_doc = list(jieba.cut(doc.strip()))
+        words_in_doc = list(filter(lambda w: w not in STOP_DENOTATION + stopwords, words_in_doc))
         texts.append(words_in_doc)
 
     return texts, rate_label

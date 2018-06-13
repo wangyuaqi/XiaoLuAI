@@ -26,9 +26,9 @@ def read_corpus():
     rates = []
 
     print('loading corpus...')
-    # for xlsx in ['./谁的青春不迷茫.xlsx']:
-    for xlsx in ['Python核心编程第二版.xlsx', './谁的青春不迷茫.xlsx', 'HeadFirst数据分析.xlsx', '大数据时代.xlsx',
-                 '你若安好便是晴天.xlsx', '悲伤逆流成河.xlsx']:
+    # for xlsx in [u'./谁的青春不迷茫.xlsx']:
+    for xlsx in [u'Python核心编程第二版.xlsx', u'./谁的青春不迷茫.xlsx', u'HeadFirst数据分析.xlsx', u'大数据时代.xlsx',
+                 u'你若安好便是晴天.xlsx', u'悲伤逆流成河.xlsx']:
         df = pd.read_excel(xlsx, index_col=None)
         df = df.dropna(how='any')
 

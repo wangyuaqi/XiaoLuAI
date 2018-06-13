@@ -40,7 +40,7 @@ def unsupervised_pretrain(data_loader):
     mse = nn.MSELoss()
 
     print('start training Deep AutoEncoder...')
-    for epoch in range(5):
+    for epoch in range(8):
         running_loss = 0.0
         for i, data in enumerate(data_loader):
             ft = data['ft'].to(device)

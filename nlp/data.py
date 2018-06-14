@@ -16,8 +16,7 @@ from torchtext import data
 sys.path.append('../')
 from nlp.config import TFIDF_FEATURE_NUM, W2V_DIMENSION, D2V_DIMENSION
 
-STOP_DENOTATION = [u'，', u'。', u'！', u'...', u'《', u'》', u'%', u'😂', u'\n', u'、', u'=', u' ', u'+', u'-', u'~', u'',
-                   u'......', u'#']
+STOP_DENOTATION = [u'《', u'》', u'%', u'\n', u'、', u'=', u' ', u'+', u'-', u'~', u'', u'#', u'＜', u'＞']
 
 
 def read_corpus():

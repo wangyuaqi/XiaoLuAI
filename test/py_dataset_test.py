@@ -1,8 +1,8 @@
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-from facescore.config import *
-from facescore.face_beauty_pytorch import FaceBeautyDataset
+from mateface.config import *
+from mateface.face_beauty_pytorch import FaceBeautyDataset
 
 transform = transforms.Compose(
     [transforms.RandomCrop(config['image_size']),

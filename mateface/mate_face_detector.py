@@ -41,7 +41,7 @@ def detect_face(face_img_file):
                 result[1]['box'][1]:result[1]['box'][1] + result[1]['box'][3]]
 
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-        from facescore.features import hog_from_cv, LBP_from_cv
+        from mateface.features import hog_from_cv, LBP_from_cv
 
         feature1 = np.concatenate(
             (hog_from_cv(cv2.resize(face1, (128, 128))), LBP_from_cv(cv2.resize(face1, (128, 128)))))
@@ -52,7 +52,7 @@ def detect_face(face_img_file):
         print('Cosine Similarity = %f' % cos_sim)
 
         # detect with dlib
-        from facescore import face_beauty_regressor
+        from mateface import face_beauty_regressor
         ldmk = face_beauty_regressor.det_landmarks(face_img_file)
         geo_dis = cal_geo_dis(get_geo_feature(ldmk[0]['landmarks']), get_geo_feature(ldmk[1]['landmarks']))
         print('Geo distance = %f' % geo_dis)

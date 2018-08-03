@@ -17,9 +17,9 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import cross_val_score
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from facescore.config import *
-from facescore.vgg_face_beauty_regressor import extract_feature, extract_conv_feature
-from facescore.face_beauty_regressor import PCA
+from mateface.config import *
+from mateface.vgg_face_beauty_regressor import extract_feature, extract_conv_feature
+from mateface.face_beauty_regressor import PCA
 
 
 def test_model():

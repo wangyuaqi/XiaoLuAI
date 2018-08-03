@@ -7,8 +7,8 @@ import tensorflow as tf
 from scipy.misc import imread, imresize
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from facescore.vgg_face import vgg_face
-from facescore.config import config
+from mateface.vgg_face import vgg_face
+from mateface.config import config
 
 
 def extract_feature(image_filepath, layer_name='conv5_1'):

@@ -26,7 +26,7 @@
 ## Features
    * [WeChat Bots](./bots) 
    * [Face Detection](./facedetection) 
-   * [Facial Beauty Analysis](./facescore) 
+   * [Mate Face Recognition](mateface) 
    * [NLP](./nlp) 
    * [Image Guarder](./imgguarder) 
    * [Fine-grained Flower Recognition](./flowers) 

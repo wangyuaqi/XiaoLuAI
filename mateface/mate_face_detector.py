@@ -11,6 +11,34 @@ from mtcnn.mtcnn import MTCNN
 from scipy import spatial
 
 
+def det_landmarks(image_path, dlib_model="E:/ModelZoo/shape_predictor_68_face_landmarks.dat"):
+    """
+    detect faces in one image, return face bbox and landmarks
+    :param dlib_model:
+    :param image_path:
+    :return:
+    """
+    if not os.path.exists(dlib_model):
+        print('Please download pretrained dlib model from:\n')
+        print('http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2')
+        sys.exit(0)
+
+    import dlib
+    predictor = dlib.shape_predictor(dlib_model)
+    detector = dlib.get_frontal_face_detector()
+    img = cv2.imread(image_path)
+    faces = detector(img, 1)
+
+    result = {}
+    if len(faces) > 0:
+        for k, d in enumerate(faces):
+            shape = predictor(img, d)
+            result[k] = {"bbox": [d.left(), d.top(), d.right(), d.bottom()],
+                         "landmarks": [[shape.part(i).x, shape.part(i).y] for i in range(68)]}
+
+    return result
+
+
 def detect_face(face_img_file):
     """
     detect face with MTCNN and draw face region with OpenCV
@@ -49,17 +77,16 @@ def detect_face(face_img_file):
             (hog_from_cv(cv2.resize(face2, (128, 128))), LBP_from_cv(cv2.resize(face2, (128, 128)))))
 
         cos_sim = cal_cos_sim(feature1, feature2)
-        print('Cosine Similarity = %f' % cos_sim)
+        print('Appearance Similarity = %f' % cos_sim)
 
         # detect with dlib
-        from mateface import face_beauty_regressor
-        ldmk = face_beauty_regressor.det_landmarks(face_img_file)
+        ldmk = det_landmarks(face_img_file)
         geo_dis = cal_geo_dis(get_geo_feature(ldmk[0]['landmarks']), get_geo_feature(ldmk[1]['landmarks']))
-        print('Geo distance = %f' % geo_dis)
+        print('Geo Distance = %f' % geo_dis)
 
         similarity = 0.8 * cos_sim + (1 - 0.8) * geo_dis
 
-        print('Mate Index is %f ' % similarity)
+        print('Mate Index is %.2f ' % (similarity * 100))
 
         text_height = 50
         img_new = 255 * np.ones([img.shape[0] + text_height, img.shape[1], 3], dtype=np.uint8)
@@ -78,7 +105,7 @@ def detect_face(face_img_file):
         cv2.imshow('img_new', img_new)
         cv2.waitKey()
         cv2.destroyAllWindows()
-        cv2.imwrite('./m_jay.jpg', img_new)
+        cv2.imwrite('./meteface.jpg', img_new)
 
 
 def get_geo_feature(face_ldmk):
@@ -88,40 +115,40 @@ def get_geo_feature(face_ldmk):
     :return:
     """
     # dis between left outmost eye and right outmost eye
-    d1 = np.linalg.norm(np.array(face_ldmk[37]) - np.array(face_ldmk[26]))
+    d1 = np.linalg.norm(np.array(face_ldmk[36]) - np.array(face_ldmk[45]))
 
     # width of mouth
-    d2 = np.linalg.norm(np.array(face_ldmk[49]) - np.array(face_ldmk[65]))
+    d2 = np.linalg.norm(np.array(face_ldmk[48]) - np.array(face_ldmk[55]))
 
     # height of mouth
-    d3 = np.linalg.norm(np.array(face_ldmk[52]) - np.array(face_ldmk[58]))
+    d3 = np.linalg.norm(np.array(face_ldmk[57]) - np.array(face_ldmk[51]))
 
     # width of left eye
-    d4 = np.linalg.norm(np.array(face_ldmk[43]) - np.array(face_ldmk[46]))
+    d4 = np.linalg.norm(np.array(face_ldmk[36]) - np.array(face_ldmk[39]))
 
     # height of left eye
-    d5 = np.linalg.norm(np.array(face_ldmk[48]) - np.array(face_ldmk[44]))
+    d5 = np.linalg.norm(np.array(face_ldmk[37]) - np.array(face_ldmk[41]))
 
     # width of right eye
-    d6 = np.linalg.norm(np.array(face_ldmk[40]) - np.array(face_ldmk[37]))
+    d6 = np.linalg.norm(np.array(face_ldmk[42]) - np.array(face_ldmk[45]))
 
     # height of right eye
-    d7 = np.linalg.norm(np.array(face_ldmk[42]) - np.array(face_ldmk[38]))
+    d7 = np.linalg.norm(np.array(face_ldmk[44]) - np.array(face_ldmk[46]))
 
     # dis between eyes' center and nose
-    d8 = np.linalg.norm(np.array(face_ldmk[34]) - np.array(face_ldmk[28]))
+    d8 = np.linalg.norm(np.array(face_ldmk[27]) - np.array(face_ldmk[33]))
 
     # face width
-    d9 = np.linalg.norm(np.array(face_ldmk[2]) - np.array(face_ldmk[16]))
+    d9 = np.linalg.norm(np.array(face_ldmk[1]) - np.array(face_ldmk[15]))
 
     # face height
-    d10 = np.linalg.norm(np.array(face_ldmk[9]) - (np.array(face_ldmk[22]) + np.array(face_ldmk[23])) / 2)
+    d10 = np.linalg.norm(np.array(face_ldmk[8]) - (np.array(face_ldmk[20]) + np.array(face_ldmk[23])) / 2)
 
     # width of left eyebrow
-    d11 = np.linalg.norm(np.array(face_ldmk[18]) - np.array(face_ldmk[22]))
+    d11 = np.linalg.norm(np.array(face_ldmk[17]) - np.array(face_ldmk[21]))
 
     # width of right eyebrow
-    d12 = np.linalg.norm(np.array(face_ldmk[43]) - np.array(face_ldmk[46]))
+    d12 = np.linalg.norm(np.array(face_ldmk[22]) - np.array(face_ldmk[26]))
 
     return np.array([d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12])
 
@@ -150,4 +177,4 @@ def cal_geo_dis(face_ldmk_list1, face_ldmk_list2):
 
 
 if __name__ == '__main__':
-    detect_face('./jay.jpg')
+    detect_face('./lt.jpg')

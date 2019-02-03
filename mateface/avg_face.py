@@ -6,10 +6,10 @@ import os
 import numpy as np
 from PIL import Image
 
-BASE_DIR = 'D:/DataSet/hzau'
+BASE_DIR = 'E:/DataSet/HZAU'
 
 
-def avg_face(college='coi', shape=[192, 144, 3]):
+def avg_face(year=2016, college=317, shape=None):
     """
     calculate the average face by cascading all face images
     :param college:
@@ -17,24 +17,19 @@ def avg_face(college='coi', shape=[192, 144, 3]):
     :return:
     :Verson:1.0
     """
+    if shape is None:
+        shape = [192, 144, 3]
+
     sum_face = np.zeros(shape)
-    for _ in os.listdir(os.path.join(BASE_DIR, college)):
-        im = Image.open(os.path.join(BASE_DIR, college, _))
+    for _ in os.listdir(os.path.join(BASE_DIR, str(year), str(college))):
+        im = Image.open(os.path.join(BASE_DIR, str(year), str(college), _))
+        im = im.resize((144, 192), Image.ANTIALIAS)
         sum_face = np.add(sum_face, im)
 
-    return sum_face / len(os.listdir(os.path.join(BASE_DIR, college)))
+    return sum_face / len(os.listdir(os.path.join(BASE_DIR, str(year), str(college))))
 
 
 if __name__ == '__main__':
-    # avg_face = avg_face('plant')
-    # im = Image.fromarray(np.uint8(avg_face))
-    # im.show()
-    dir = '/media/lucasx/Document/DataSet/Face/SCUT-FBP/Faces'
-    sum_face = np.zeros([128, 128, 3])
-    for _ in os.listdir(dir):
-        im = Image.open(os.path.join(dir, _))
-        sum_face = np.add(sum_face, im)
-
-    avg_face = sum_face / len(os.listdir(dir))
+    avg_face = avg_face()
     im = Image.fromarray(np.uint8(avg_face))
     im.show()

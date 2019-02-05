@@ -36,24 +36,23 @@ def text_reply(msg):
     p = Pinyin()
 
     # it's probability a group send message
-    if 'lu' not in p.get_pinyin(msg['Text']) or 'xu' not in p.get_pinyin(msg['Text']):
-        if msg['Type'] == 'Text':
-            flag = False
-            for keyword in keywords:
-                if keyword in msg['Text']:
-                    flag = True
-                    break
-            if flag:
-                msg_content = wechat_msgs[random.randint(0, len(wechat_msgs) - 1)]
+    if msg['Type'] == 'Text':
+        flag = False
+        for keyword in keywords:
+            if keyword in msg['Text']:
+                flag = True
+                break
+        if flag:
+            msg_content = wechat_msgs[random.randint(0, len(wechat_msgs) - 1)]
 
-                friend_info = wechat_friends[msg['User']['NickName']]
+            friend_info = wechat_friends[msg['User']['NickName']]
 
-                if friend_info['sex'] == 1:
-                    msg_content += '事业有成，越来越帅！'
-                elif friend_info['sex'] == 2:
-                    msg_content += '越来越漂亮！'
+            if friend_info['sex'] == 1:
+                msg_content += '事业有成，越来越帅！'
+            elif friend_info['sex'] == 2:
+                msg_content += '越来越漂亮！'
 
-                itchat.send(msg_content, toUserName=msg['FromUserName'])
+            itchat.send(msg_content, toUserName=msg['FromUserName'])
     elif msg['Type'] == 'PICTURE':
         itchat.send("新年快乐!", toUserName=msg['FromUserName'])
     else:

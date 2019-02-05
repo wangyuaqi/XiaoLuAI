@@ -33,9 +33,7 @@ def text_reply(msg):
     keywords = read_keywords()
 
     print(msg)
-    p = Pinyin()
 
-    # it's probability a group send message
     if msg['Type'] == 'Text':
         flag = False
         for keyword in keywords:

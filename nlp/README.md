@@ -20,4 +20,4 @@ when precisely picked [user dict](./user_dict.txt) and [stopwords](./stopwords.t
 
 
 ## Note
-If the hyperlink is out of date, please contact me by sending me an email AT [xulu0620@qq.com](mailto:xulu0620@qq.com) or leave me a message AT [Zhihu](https://www.zhihu.com/people/xulu-0620/activities).
+For more details, please contact [Yu Cheng](https://github.com/fypns) for more details.

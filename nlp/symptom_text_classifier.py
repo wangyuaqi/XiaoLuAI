@@ -186,7 +186,7 @@ def text_classify(X_train, X_test, y_train, y_test):
     dtree = tree.DecisionTreeClassifier()
     dtree.fit(X_train, y_train)
     print('finish launching Decision Tree Classifier, the test accuracy is {:.5%}'.format(
-        accuracy_score(dtree.fit(X_test), y_test)))
+        accuracy_score(dtree.predict(X_test), y_test)))
 
     print('=' * 100)
     print('start launching KNN Classifier......')
@@ -200,7 +200,7 @@ def text_classify(X_train, X_test, y_train, y_test):
     rf = RandomForestClassifier(n_estimators=20)
     rf.fit(X_train, y_train)
     print('finish launching Random Forest Classifier, the test accuracy is {:.5%}'.format(
-        accuracy_score(rf.fit(X_test), y_test)))
+        accuracy_score(rf.predict(X_test), y_test)))
 
 
 if __name__ == '__main__':
